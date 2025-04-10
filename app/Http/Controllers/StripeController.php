@@ -1,0 +1,92 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Routing\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Stripe\StripeClient;
+
+
+class StripeController extends Controller
+{
+
+    public function ChargeInvestmentWallet(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+            'amount' => 'required|numeric|min:1',
+            'description' => 'nullable|string',
+            'payment_method'=>'required|string',
+            'currency'=>'nullable|string'
+        ]);
+        try {
+            // تحقق من البيانات
+
+            $user=auth()->user();
+            $walletType=$user->wallets()->where('wallet_type','investment');
+            if(!$walletType)
+            {
+                return response()->json(['message'=>trans('messages.unauthorized')]);
+            }
+
+            $stripe = new StripeClient(env('STRIPE_SECRET'));
+
+            // تنفيذ الشحنة
+            $charge = $stripe->charges->create([
+                'amount' => $request->amount,
+                'currency' => $request->currency,
+                'source' => $request->token,
+                'description' => $request->description ?? 'عملية بدون وصف',
+            ]);
+
+            // تحويل المبلغ من سنت إلى دولار
+            $amountInDollars = $request->amount / 100;
+
+            DB::transaction(function () use ($request, $charge, $amountInDollars,$user) {
+                // جلب محفظة الاستثمار
+                $wallet = \App\Models\Wallet::where('user_id',$user->id )
+                    ->where('wallet_type', 'investment')
+                    ->firstOrFail();
+
+                // تسجيل المعاملة
+                $transaction = \App\Models\Transaction::create([
+                    'user_id' => $user->id,
+                    'wallet_id' => $wallet->id,
+                    'amount' => $amountInDollars,
+                    'type' => 'deposit',
+                    'status' => 'completed',
+                    'stripe_payment_id' => $charge->id,
+                ]);
+
+                // تسجيل في جدول Stripe
+                \App\Models\StripePayment::create([
+                    'transaction_id' => $transaction->id,
+                    'payment_intent_id' => $charge->id,
+                    'amount' => $amountInDollars,
+                    'currency' => $charge->currency,
+                    'payment_method' => $charge->payment_method ?? 'unknown',
+                    'status' => $charge->status,
+                    'receipt_url' => $charge->receipt_url ?? null,
+                ]);
+
+                // تحديث رصيد المحفظة
+                $wallet->increment('balance', $amountInDollars);
+            });
+
+            return response()->json(['message' => __('messages.operation_success')]);
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            $stripeCode = $e->getError()->code ?? 'generic_error';
+            $translatedMessage = trans('stripe.' . $stripeCode);
+
+            return response()->json([
+                'message' => trans('messages.operation_failed') . $translatedMessage
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => trans('messages.operation_failed') . $e->getMessage()
+            ], 500);
+        }
+    }
+
+}

@@ -12,6 +12,7 @@ class Role extends Model
     protected $primaryKey ='id';
     public $timestamps = true;
     protected $fillable = [
+        'id',
         'type',
     ];
 

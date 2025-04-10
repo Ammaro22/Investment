@@ -23,4 +23,7 @@ return [
 
     'unauthorized' => 'You are not authorized to perform this action.',
     'not_found' => 'Resource not found.',
+
+    'fingerPrint_failed'=>'FingerPrint verification failed.',
+    'fingerPrint_success'=>'FingerPrint has been verified.the fingerPrint is correct',
 ];

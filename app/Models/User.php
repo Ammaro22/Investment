@@ -27,9 +27,16 @@ class User extends Authenticatable
         'phone',
         'verification_code',
         'role_id',
+        'fingerPrint',
     ];
     public function role(){
         return $this->belongsTo(Role::class,'role_id');
+    }
+
+
+    public function wallets()
+    {
+        return $this->hasMany(Wallet::class);
     }
 
 
