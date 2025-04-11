@@ -21,15 +21,10 @@ class WalletController extends Controller
     {
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
-            'fingerPrint' => 'required|string',
         ]);
 
         $user = auth()->user();
-        $fingerPrintRecord = User::select('fingerPrint')->where('id', $user->id)->first();
 
-        if (!$fingerPrintRecord || $fingerPrintRecord->fingerPrint !== $request->fingerPrint ) {
-            return response()->json(['message' => trans('messages.fingerPrint_failed')], 422);
-        }
 
 
         $amount = $request->amount;
