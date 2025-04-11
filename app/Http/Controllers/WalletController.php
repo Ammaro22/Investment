@@ -26,7 +26,6 @@ class WalletController extends Controller
         $user = auth()->user();
 
 
-
         $amount = $request->amount;
 
         DB::transaction(function () use ($user, $amount) {
@@ -44,6 +43,7 @@ class WalletController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            $admin=User::select('id')->where('role_id',1)->firstOrFail();
 
             if ($investmentWallet->balance < $amount) {
                 abort(422, 'رصيد غير كافي في محفظة الاستثمار');
@@ -58,7 +58,7 @@ class WalletController extends Controller
             ]);
 
             $transferIn = Transaction::create([
-                'user_id' => $user->id,
+                'user_id' => $admin->id,
                 'wallet_id' => $platformWallet->id,
                 'amount' => $amount,
                 'type' => 'transfer_in',
