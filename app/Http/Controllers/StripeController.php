@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\StripePayment;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,6 @@ class StripeController extends Controller
             'currency'=>'nullable|string'
         ]);
         try {
-            // تحقق من البيانات
 
             $user=auth()->user();
             $walletType=$user->wallets()->where('wallet_type','investment');
@@ -32,7 +32,6 @@ class StripeController extends Controller
 
             $stripe = new StripeClient(env('STRIPE_SECRET'));
 
-            // تنفيذ الشحنة
             $charge = $stripe->charges->create([
                 'amount' => $request->amount,
                 'currency' => $request->currency,
@@ -40,7 +39,6 @@ class StripeController extends Controller
                 'description' => $request->description ?? 'عملية بدون وصف',
             ]);
 
-            // تحويل المبلغ من سنت إلى دولار
             $amountInDollars = $request->amount / 100;
 
             DB::transaction(function () use ($request, $charge, $amountInDollars,$user) {
@@ -59,8 +57,7 @@ class StripeController extends Controller
                     'stripe_payment_id' => $charge->id,
                 ]);
 
-                // تسجيل في جدول Stripe
-                \App\Models\StripePayment::create([
+                StripePayment::create([
                     'transaction_id' => $transaction->id,
                     'payment_intent_id' => $charge->id,
                     'amount' => $amountInDollars,
@@ -70,7 +67,6 @@ class StripeController extends Controller
                     'receipt_url' => $charge->receipt_url ?? null,
                 ]);
 
-                // تحديث رصيد المحفظة
                 $wallet->increment('balance', $amountInDollars);
             });
 
