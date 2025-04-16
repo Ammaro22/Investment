@@ -5,19 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Role extends Model
+class Help extends Model
 {
     use HasFactory;
-    protected $table = 'roles';
+    protected $table ='helps';
     protected $primaryKey ='id';
     public $timestamps = true;
-    protected $fillable = [
-        'id',
-        'type',
+    protected $fillable =[
+        'question',
+        'Answer',
+        'user_id'
     ];
-
-    public function User(){
-        return $this->hasmany(User::class,'role_id');
+    public function user(){
+        return $this->belongsTo(User::class,'user_id');
     }
-
 }

@@ -27,7 +27,6 @@ class User extends Authenticatable
         'phone',
         'verification_code',
         'role_id',
-        'fingerPrint',
     ];
     public function role(){
         return $this->belongsTo(Role::class,'role_id');
@@ -36,9 +35,16 @@ class User extends Authenticatable
 
     public function wallets()
     {
-        return $this->hasMany(Wallet::class);
+        return $this->hasMany(Wallet::class,'user_id');
+    }
+    public function help()
+    {
+        return $this->hasMany(Help::class,'user_id');
     }
 
+    public function propertySale(){
+        return $this->hasmany(Property_for_sale::class,'user_id');
+    }
 
     /**
      * The attributes that should be hidden for serialization.

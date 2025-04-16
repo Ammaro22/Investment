@@ -1,47 +1,61 @@
 <?php
 
 namespace App\Traits;
-use App\Models\Image;
+use App\Models\id_image;
+use App\Models\Property_document;
+use App\Models\Property_image;
 //use http\Env\Request;
 
 trait Imageable
 {
-    public static function ssave($getImages,$id)
+
+    public static function propertyImage($getImages, $id)
+    {
+        foreach ($getImages as $getImage) {
+            $filename = $getImage->getClientOriginalName();
+            $name = pathinfo($filename, PATHINFO_FILENAME) . '' . time() . '.' . $getImage->getClientOriginalExtension();
+            $path = 'Property_image' ;
+            $getImage->move($path, $name);
+            Property_image::create([
+                'name' => $name,
+                'path' => $path . '/' . $name,
+                'property_for_sale_id' => $id
+            ]);
+        }
+    }
+
+    public static function propertyDocument($getImages,$id)
     {
         foreach($getImages as $getImage) {
             $filename = $getImage->getClientOriginalName();
             $name = pathinfo($filename, PATHINFO_FILENAME) . '' . time() . '.' . $getImage->getClientOriginalExtension();
-            $path = 'items';
+            $path = 'Property_document';
             $getImage->move($path, $name);
-            $save = Image::create([
+           Property_document::create([
                 'name' => $name,
-                'path' => $path,
-                'item_id' => $id
+               'path' => $path . '/' . $name,
+                'property_for_sale_id' => $id
             ]);
         }
 
 
     }
-    public static  function ss($getImage){
-    $filename=$getImage->getClientOriginalName();
-    $name = pathinfo($filename, PATHINFO_FILENAME).''.time().'.'.$getImage->extension();
-    $path = 'users';
-    $getImage->move($path, $name);
-    return $name;
-}
-    public static  function sss($getImage){
-        $filename=$getImage->getClientOriginalName();
-        $name = pathinfo($filename, PATHINFO_FILENAME).''.time().'.'.$getImage->extension();
-        $path = 'comments';
-        $getImage->move($path, $name);
-        return $name;
-    }
-    public static  function ssss($getImage){
-        $filename=$getImage->getClientOriginalName();
-        $name = pathinfo($filename, PATHINFO_FILENAME).''.time().'.'.$getImage->extension();
-        $path = 'products';
-        $getImage->move($path, $name);
-        return $name;
+
+    public static function idImage($getImages,$id)
+    {
+        foreach($getImages as $getImage) {
+            $filename = $getImage->getClientOriginalName();
+            $name = pathinfo($filename, PATHINFO_FILENAME) . '' . time() . '.' . $getImage->getClientOriginalExtension();
+            $path = 'id_image';
+            $getImage->move($path, $name);
+             id_image::create([
+                'name' => $name,
+                 'path' => $path . '/' . $name,
+                'property_for_sale_id' => $id
+            ]);
+        }
+
+
     }
 
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\StripePayment;
+use App\Models\Transaction;
+use App\Models\Wallet;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -43,12 +45,12 @@ class StripeController extends Controller
 
             DB::transaction(function () use ($request, $charge, $amountInDollars,$user) {
                 // جلب محفظة الاستثمار
-                $wallet = \App\Models\Wallet::where('user_id',$user->id )
+                $wallet = Wallet::where('user_id',$user->id )
                     ->where('wallet_type', 'investment')
                     ->firstOrFail();
 
                 // تسجيل المعاملة
-                $transaction = \App\Models\Transaction::create([
+                $transaction = Transaction::create([
                     'user_id' => $user->id,
                     'wallet_id' => $wallet->id,
                     'amount' => $amountInDollars,

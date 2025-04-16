@@ -16,7 +16,6 @@ use App\Http\Controllers\AuthController;
 class WalletController extends Controller
 {
 
-
     public function transferToPlatform(Request $request)
     {
         $request->validate([
@@ -24,61 +23,60 @@ class WalletController extends Controller
         ]);
 
         $user = auth()->user();
-
-
         $amount = $request->amount;
 
-        DB::transaction(function () use ($user, $amount) {
-            $investmentWallet = $user->wallets()
-                ->where('wallet_type', 'investment')
-                ->lockForUpdate()
-                ->firstOrFail();
+        try {
+            DB::transaction(function () use ($user, $amount) {
+                $investmentWallet = $user->wallets()
+                    ->where('wallet_type', 'investment')
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
+                $platformWallet = Wallet::where('wallet_type', 'platform')
+                    ->whereHas('user', function ($query) {
+                        $query->where('role_id', 1);
+                    })
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
+                $admin = User::select('id')->where('role_id', 1)->firstOrFail();
 
-            $platformWallet = Wallet::where('wallet_type', 'platform')
-                ->whereHas('user', function ($query) {
-                    $query->where('role_id', 1);
-                })
-                ->lockForUpdate()
-                ->firstOrFail();
+                if ($investmentWallet->balance < $amount) {
+                    throw new \Exception('رصيد غير كافي في محفظة الاستثمار');
+                }
 
-            $admin=User::select('id')->where('role_id',1)->firstOrFail();
+                $transferOut = Transaction::create([
+                    'user_id' => $user->id,
+                    'wallet_id' => $investmentWallet->id,
+                    'amount' => -$amount,
+                    'type' => 'transfer_out',
+                    'status' => 'completed',
+                ]);
 
-            if ($investmentWallet->balance < $amount) {
-                abort(422, 'رصيد غير كافي في محفظة الاستثمار');
-            }
+                $transferIn = Transaction::create([
+                    'user_id' => $admin->id,
+                    'wallet_id' => $platformWallet->id,
+                    'amount' => $amount,
+                    'type' => 'transfer_in',
+                    'status' => 'completed',
+                    'related_transaction_id' => $transferOut->id,
+                ]);
 
-            $transferOut = Transaction::create([
-                'user_id' => $user->id,
-                'wallet_id' => $investmentWallet->id,
-                'amount' => -$amount,
-                'type' => 'transfer_out',
-                'status' => 'completed',
-            ]);
+                InternalTransfer::create([
+                    'sender_wallet_id' => $investmentWallet->id,
+                    'receiver_wallet_id' => $platformWallet->id,
+                    'amount' => $amount,
+                    'notes' => 'تحويل إلى محفظة المنصة',
+                ]);
 
-            $transferIn = Transaction::create([
-                'user_id' => $admin->id,
-                'wallet_id' => $platformWallet->id,
-                'amount' => $amount,
-                'type' => 'transfer_in',
-                'status' => 'completed',
-                'related_transaction_id' => $transferOut->id,
-            ]);
+                $investmentWallet->decrement('balance', $amount);
+                $platformWallet->increment('balance', $amount);
+            });
 
-            InternalTransfer::create([
-                'sender_wallet_id' => $investmentWallet->id,
-                'receiver_wallet_id' => $platformWallet->id,
-                'amount' => $amount,
-                'notes' => 'تحويل إلى محفظة المنصة',
-            ]);
-
-            $investmentWallet->decrement('balance', $amount);
-            $platformWallet->increment('balance', $amount);
-        });
-
-        return response()->json(['message' => trans('messages.operation_success')]);
+            return response()->json(['message' => trans('messages.operation_success')]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
-
 
 }

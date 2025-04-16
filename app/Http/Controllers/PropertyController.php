@@ -1,0 +1,371 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Broadcasting\ImageUploadChannel;
+use App\Models\Property_for_sale;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
+use App\Models\Requests;
+
+class PropertyController extends Controller
+{
+    public function store(Request $request)
+    {
+
+        $userId = $request->user()->id;
+
+
+        $validator = Validator::make($request->all(),[
+            'property_type' => 'required|string|max:255',
+            'area' => 'required|numeric|min:0',
+            'number_of_rooms' => 'required|integer|min:0',
+            'number_of_bathrooms' => 'required|integer|min:0',
+            'property_age' => 'required|numeric|min:0',
+            'decoration' => 'required|string|max:255',
+            'kitchen_type' => 'required|string|max:255',
+            'flooring_type' => 'required|string|max:255',
+            'overlook_from' => 'required|numeric|min:0',
+            'balcony_size' => 'required|numeric|min:0',
+            'painting_type' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'pay_way' => 'required|string|max:255',
+            'state' => 'required|string|max:255',
+            'exact_position' => 'required|string|max:255',
+            'property_images' => 'required|array',
+            'property_images.*' => 'image',
+            'property_documents' => 'required|array',
+            'property_documents.*' => 'image',
+            'id_images' => 'required|array',
+            'id_images.*' => 'image',
+        ]);
+
+        if ($validator->fails()) {
+            return response(['errors' => $validator->errors()->all()], 422);
+        }
+        $property = Property_for_sale::create(array_merge($request->all(), ['user_id' => $userId]));
+
+                $propertyid=$property->id;
+
+        dispatch(new ImageUploadChannel(
+            $request->file('property_images'),
+            $request->file('property_documents'),
+            $request->file('id_images'),
+            $propertyid
+        ));
+
+        $requestData = [
+            'property_for_sale_id' => $propertyid,
+            'status' => 'معلق',
+            'description' => $request->input('description', 'طلب جديد لعقار'),
+        ];
+        Requests::create($requestData);
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $property,
+        ], 201);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $userId = $request->user()->id;
+
+        $property = Property_for_sale::find($id);
+
+        if (!$property) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        if ($property->user_id !== $userId) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'property_type' => 'sometimes|string|max:255',
+            'area' => 'sometimes|numeric|min:0',
+            'number_of_rooms' => 'sometimes|integer|min:0',
+            'number_of_bathrooms' => 'sometimes|integer|min:0',
+            'property_age' => 'sometimes|numeric|min:0',
+            'decoration' => 'sometimes|string|max:255',
+            'kitchen_type' => 'sometimes|string|max:255',
+            'flooring_type' => 'sometimes|string|max:255',
+            'overlook_from' => 'sometimes|numeric|min:0',
+            'balcony_size' => 'sometimes|numeric|min:0',
+            'painting_type' => 'sometimes|string|max:255',
+            'price' => 'sometimes|numeric|min:0',
+            'pay_way' => 'sometimes|string|max:255',
+            'state' => 'sometimes|string|max:255',
+            'exact_position' => 'sometimes|string|max:255',
+            'property_images' => 'array|nullable',
+            'property_images.*' => 'image',
+            'property_documents' => 'array|nullable',
+            'property_documents.*' => 'image',
+            'id_images' => 'array|nullable',
+            'id_images.*' => 'image',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->all()], 422);
+        }
+
+
+        $property->update(array_filter($request->only([
+            'property_type',
+            'area',
+            'number_of_rooms',
+            'number_of_bathrooms',
+            'property_age',
+            'decoration',
+            'kitchen_type',
+            'flooring_type',
+            'overlook_from',
+            'balcony_size',
+            'painting_type',
+            'price',
+            'pay_way',
+            'state',
+            'exact_position',
+        ])));
+
+        if ($request->hasFile('property_images') || $request->hasFile('property_documents') || $request->hasFile('id_images')) {
+            dispatch(new ImageUploadChannel(
+                $request->file('property_images'),
+                $request->file('property_documents'),
+                $request->file('id_images'),
+                $property->id
+            ));
+        }
+        $property->load('Property_image', 'Property_document', 'id_image');
+
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'property' => $property,
+                'images' => $property->Property_image,
+                'documents' => $property->Property_document,
+                'id_images' => $property->id_image,
+            ],
+        ], 200);
+    }
+
+    public function updatebyadmin(Request $request, $id)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+        $property = Property_for_sale::find($id);
+
+        if (!$property) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+
+        $validator = Validator::make($request->all(), [
+            'property_type' => 'sometimes|string|max:255',
+            'area' => 'sometimes|numeric|min:0',
+            'number_of_rooms' => 'sometimes|integer|min:0',
+            'number_of_bathrooms' => 'sometimes|integer|min:0',
+            'property_age' => 'sometimes|numeric|min:0',
+            'decoration' => 'sometimes|string|max:255',
+            'kitchen_type' => 'sometimes|string|max:255',
+            'flooring_type' => 'sometimes|string|max:255',
+            'overlook_from' => 'sometimes|numeric|min:0',
+            'balcony_size' => 'sometimes|numeric|min:0',
+            'painting_type' => 'sometimes|string|max:255',
+            'price' => 'sometimes|numeric|min:0',
+            'pay_way' => 'sometimes|string|max:255',
+            'state' => 'sometimes|string|max:255',
+            'exact_position' => 'sometimes|string|max:255',
+            'property_images' => 'array|nullable',
+            'property_images.*' => 'image',
+            'property_documents' => 'array|nullable',
+            'property_documents.*' => 'image',
+            'id_images' => 'array|nullable',
+            'id_images.*' => 'image',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->all()], 422);
+        }
+
+
+        $property->update(array_filter($request->only([
+            'property_type',
+            'area',
+            'number_of_rooms',
+            'number_of_bathrooms',
+            'property_age',
+            'decoration',
+            'kitchen_type',
+            'flooring_type',
+            'overlook_from',
+            'balcony_size',
+            'painting_type',
+            'price',
+            'pay_way',
+            'state',
+            'exact_position',
+        ])));
+
+        if ($request->hasFile('property_images') || $request->hasFile('property_documents') || $request->hasFile('id_images')) {
+            dispatch(new ImageUploadChannel(
+                $request->file('property_images'),
+                $request->file('property_documents'),
+                $request->file('id_images'),
+                $property->id
+            ));
+        }
+        $property->load('Property_image', 'Property_document', 'id_image');
+
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'property' => $property,
+                'images' => $property->Property_image,
+                'documents' => $property->Property_document,
+                'id_images' => $property->id_image,
+            ],
+        ], 200);
+    }
+
+    public function destroy($id)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 2 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+        $property = Property_for_sale::findOrFail($id);
+
+        foreach ($property->property_image as $image) {
+            $filePath = public_path('property_image/' . basename($image->path));
+
+            \Log::info("Attempting to delete file: " . $filePath);
+
+            if (File::exists($filePath)) {
+                if (File::delete($filePath)) {
+                    \Log::info("Successfully deleted: " . $filePath);
+                } else {
+                    \Log::warning("Failed to delete: " . $filePath);
+                }
+            } else {
+                \Log::warning("File not found for deletion: " . $filePath);
+            }
+
+            $image->delete();
+        }
+
+        foreach ($property->property_document as $document) {
+            $filePath = public_path('property_document/' . basename($document->path));
+
+            \Log::info("Attempting to delete file: " . $filePath);
+
+            if (File::exists($filePath)) {
+                if (File::delete($filePath)) {
+                    \Log::info("Successfully deleted: " . $filePath);
+                } else {
+                    \Log::warning("Failed to delete: " . $filePath);
+                }
+            } else {
+                \Log::warning("File not found for deletion: " . $filePath);
+            }
+
+            $document->delete();
+        }
+
+        foreach ($property->id_image as $idImage) {
+            $filePath = public_path('id_image/' . basename($idImage->path));
+
+            \Log::info("Attempting to delete file: " . $filePath);
+
+            if (File::exists($filePath)) {
+                if (File::delete($filePath)) {
+                    \Log::info("Successfully deleted: " . $filePath);
+                } else {
+                    \Log::warning("Failed to delete: " . $filePath);
+                }
+            } else {
+                \Log::warning("File not found for deletion: " . $filePath);
+            }
+
+            $idImage->delete();
+        }
+        $property->delete();
+
+        return response()->json([
+            'message' => trans('messages.delete_success'),
+        ], 200);
+    }
+
+
+    public function getPropertiesByToken(Request $request)
+    {
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'message' => __('messages.unauthorized'),
+            ], 403);
+        }
+
+        $properties = Property_for_sale::where('user_id', $user->id)->get();
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $properties,
+        ], 200);
+    }
+
+    public function getPropertyById($id)
+    {
+
+        $property = Property_for_sale::find($id);
+
+        if (!$property) {
+            return response()->json(['message' => __('messages.not_found')], 404);
+        }
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $property,
+        ], 200);
+    }
+
+    public function getImageForPropertyById($id)
+    {
+        $property = Property_for_sale::with(['Property_image', 'Property_document', 'id_image'])->find($id);
+
+        if (!$property) {
+            return response()->json(['message' => __('messages.not_found')], 404);
+        }
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => [
+                'Property_image' => $property->Property_image,
+                'Property_document' => $property->Property_document,
+                'id_images' => $property->id_image,
+            ],
+        ], 200);
+    }
+
+}

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\URL;
@@ -18,8 +19,8 @@ class UserController extends Controller
             'name' => 'required|string|min:4|max:255|',
             'password' => 'required|string|min:6|confirmed',
             'email' => 'required|string|email|unique:users,email|max:255',
-            'phone'=>'required|string|max:255',
-            'role_id'=>'required|exists:roles,id',
+            'phone' => 'required|string|max:255',
+            'role_id' => 'required|exists:roles,id',
         ]);
 
         if ($validator->fails()) {
@@ -33,6 +34,7 @@ class UserController extends Controller
             'phone' => $request->phone,
             'role_id' => $request->role_id,
         ]);
+        $this->createWallets($user, $request->role_id);
 
         $accessToken = $user->createToken('authToken')->accessToken;
 
@@ -87,35 +89,7 @@ class UserController extends Controller
         ]);
     }
 
-//    public function update(Request $request)
-//    {
-//        $user = auth()->user();
-//
-//        $validator = Validator::make($request->all(), [
-//            'name' => 'required|string|min:4|max:255|',
-//            'password' => 'required|string|min:6',
-//            'email' => 'required|string|email|unique:users,email|max:255',
-//            'phone'=>'required|string|max:255',
-//            'role_id'=>'required|exists:roles,id',
-//        ]);
-//
-//        if ($validator->fails()) {
-//            return response()->json(['errors' => $validator->errors()], 400);
-//        }
-//
-//        $user->update([
-//            'name' => $request->input('name', $user->name),
-//            'password' => $request->input('password') ? bcrypt($request->input('password')) : $user->password,
-//            'email' => $request->input('email', $user->email),
-//            'phone' => $request->input('phone', $user->phone),
-//            'role_id' => $request->input('role_id', $user->role_id),
-//        ]);
-//
-//        return response()->json([
-//            'message' => trans('messages.update_success'),
-//            'user' => $user,
-//        ]);
-//    }
+
     public function update(Request $request)
     {
         $user = auth()->user();
@@ -123,7 +97,7 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'nullable|string|min:4|max:255',
             'password' => 'nullable|string|min:6',
-            'email' => 'nullable|string|email|unique:users,email,'.$user->id.'|max:255',
+            'email' => 'nullable|string|email|unique:users,email,' . $user->id . '|max:255',
             'phone' => 'nullable|string|max:255',
             'role_id' => 'nullable|exists:roles,id',
         ]);
@@ -153,4 +127,33 @@ class UserController extends Controller
         ]);
     }
 
+    private function createWallets(User $user, $roleId)
+    {
+        if ($roleId == 1) {
+            Wallet::create([
+                'user_id' => $user->id,
+                'balance' => 0,
+                'currency' => 'USD',
+                'wallet_type' => 'platform',
+                'is_active' => true,
+            ]);
+        } elseif ($roleId == 2) {
+
+            Wallet::create([
+                'user_id' => $user->id,
+                'balance' => 0,
+                'currency' => 'USD',
+                'wallet_type' => 'investment',
+                'is_active' => true,
+            ]);
+
+            Wallet::create([
+                'user_id' => $user->id,
+                'balance' => 0,
+                'currency' => 'USD',
+                'wallet_type' => 'profits',
+                'is_active' => true,
+            ]);
+        }
+    }
 }
