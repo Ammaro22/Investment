@@ -33,11 +33,11 @@ class PropertyController extends Controller
             'pay_way' => 'required|string|max:255',
             'state' => 'required|string|max:255',
             'exact_position' => 'required|string|max:255',
-            'property_images' => '|array',
+            'property_images' => 'required|array',
             'property_images.*' => 'image',
-            'property_documents' => '|array',
+            'property_documents' => 'required|array',
             'property_documents.*' => 'image',
-            'id_images' => '|array',
+            'id_images' => 'required|array',
             'id_images.*' => 'image',
 
         ]);
