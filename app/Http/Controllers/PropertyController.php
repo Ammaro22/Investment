@@ -17,8 +17,6 @@ class PropertyController extends Controller
     {
 
         $userId = $request->user()->id;
-
-
         $validator = Validator::make($request->all(),[
             'property_type' => 'required|string|max:255',
             'area' => 'required|numeric|min:0',
@@ -35,18 +33,25 @@ class PropertyController extends Controller
             'pay_way' => 'required|string|max:255',
             'state' => 'required|string|max:255',
             'exact_position' => 'required|string|max:255',
-            'property_images' => 'required|array',
+            'property_images' => '|array',
             'property_images.*' => 'image',
-            'property_documents' => 'required|array',
+            'property_documents' => '|array',
             'property_documents.*' => 'image',
-            'id_images' => 'required|array',
+            'id_images' => '|array',
             'id_images.*' => 'image',
+
         ]);
 
         if ($validator->fails()) {
             return response(['errors' => $validator->errors()->all()], 422);
         }
-        $property = Property_for_sale::create(array_merge($request->all(), ['user_id' => $userId]));
+        $property = Property_for_sale::create(array_merge($request->all(), [
+            'user_id' => $userId,
+            'legal_check'=>false,
+            'expert_check'=>false,
+            'accept'=>false,
+        ]));
+
 
                 $propertyid=$property->id;
 

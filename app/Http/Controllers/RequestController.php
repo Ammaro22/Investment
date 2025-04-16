@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\Property_for_sale;
 use App\Models\Requests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -30,6 +31,12 @@ class RequestController extends Controller
         $request->status = 'مقبول';
         $request->description = 'تم قبول الطلب قانونياً';
         $request->save();
+
+        $property = Property_for_sale::find($request->property_for_sale_id);
+        if ($property) {
+            $property->legal_check = true;
+            $property->save();
+        }
 
         return response()->json([
             'message' => trans('messages.operation_success'),

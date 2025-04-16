@@ -37,8 +37,6 @@ Route::post('send_verification_code', [AuthController::class, 'sendVerificationC
 Route::post('verify_code', [AuthController::class, 'verifyCode']);
 Route::post('reset_password', [AuthController::class, 'resetPassword']);
 
-
-
 //Route::post('/wallets/requestOtpForConfirmTransform',[WalletController::class,'requestOtpForConfirmTransform'])->middleware('throttle:5,1');
 
 /*اضافة بيت للبيع من قبل المستخدم*/

@@ -28,6 +28,9 @@ class Property_for_sale extends Model
         'pay_way',
         'state',
         'exact_position',
+        'legal_check',
+        'expert_check',
+        'accept',
     ];
 
     public function Property_image(){
