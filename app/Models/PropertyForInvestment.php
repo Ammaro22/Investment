@@ -14,13 +14,15 @@ class PropertyForInvestment extends Model
     public $timestamps = true;
     protected $fillable= [
             'property_id',
-            'total_chance',
+            'number_of_chances',
             'expected_price',
-            'return_rate',
+            'profit_percent',
             'chance_price',
-            'deadline_investment',
-            'investment_type',
+            'investment_time',
+            'incoming_time',
+            'investment_mode',
             'progress_percent',
+            'property_management',
             'is_completed'
     ];
 

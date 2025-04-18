@@ -40,12 +40,14 @@ class InvestmentController extends Controller
         if (($property->legal_check && $property->expert_check && $property->accept)) {
             PropertyForInvestment::create([
                 'property_id' => $evaluation->property_id,
-                'total_chance' => $evaluation->total_chance,
+                'number_of_chances' => $evaluation->number_of_chances,
                 'expected_price' => $evaluation->expected_price,
-                'return_rate' => $evaluation->expected_return,
+                'profit_percent' => $evaluation->profit_percent,
                 'chance_price'=>$evaluation->chance_price,
-                'deadline_investment'=>$evaluation->deadline_investment,
-                'investment_type'=>$evaluation->investment_type,
+                'investment_time'=>$evaluation->investment_time,
+                'incoming_time'=>$evaluation->incoming_time,
+                'investment_mode'=>$evaluation->investment_mode,
+                'property_management'=>'investment',
                 'progress_percent' => 0,
                 'is_completed' => false,
             ]);

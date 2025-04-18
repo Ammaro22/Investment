@@ -13,12 +13,16 @@ class EconomicEvaluation extends Model
     public $timestamps = true;
     protected $fillable=[
         'property_id',
-        'total_chance',
+        'number_of_chances',
         'expected_price',
-        'expected_return',
-        'evaluation_note',
-        'deadline_investment',
-        'investment_type',
+        'profit_percent',
+        'total_expected_taxes',
+        'baying_price',
+        'chance_price',
+        'investment_time',
+        'incoming_time',
+        'investment_mode',
+        'property_management',
         'status'
     ];
 
