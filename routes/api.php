@@ -30,6 +30,9 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('update',[UserController::class,'update']);
     Route::post('/stripe/ChargeInvestmentWallet',[StripeController::class,'ChargeInvestmentWallet'])->middleware('throttle:5,1');
     Route::post('/wallets/transferToPlatform',[WalletController::class,'transferToPlatform'])->middleware('throttle:5,1');
+    Route::post('/admin/approve_property/{evaluation_id}',[\App\Http\Controllers\InvestmentController::class,'approve_property']);
+
+
 
 });
 /*تغير كلمة المرور*/

@@ -49,4 +49,13 @@ class Property_for_sale extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+    public function property_investment()
+    {
+        return $this->hasOne(PropertyForInvestment::class);
+    }
+
+    public function economicEvaluation()
+    {
+        return $this->hasOne(EconomicEvaluation::class);
+    }
 }
