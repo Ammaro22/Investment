@@ -18,6 +18,8 @@ class PropertyForInvestment extends Model
             'expected_price',
             'return_rate',
             'chance_price',
+            'deadline_investment',
+            'investment_type',
             'progress_percent',
             'is_completed'
     ];

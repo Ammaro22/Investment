@@ -17,6 +17,8 @@ class EconomicEvaluation extends Model
         'expected_price',
         'expected_return',
         'evaluation_note',
+        'deadline_investment',
+        'investment_type',
         'status'
     ];
 
