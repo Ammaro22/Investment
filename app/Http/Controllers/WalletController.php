@@ -6,6 +6,7 @@ use App\Models\InternalTransfer;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use App\Mail\SendEmailOtp;
@@ -78,5 +79,102 @@ class WalletController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
     }
+
+
+
+    public function ShowInvestmentWallet()
+    {
+        $user=auth()->user();
+
+        $userRole=$user->role_id;
+
+        if(!$user||$userRole!=2)
+        {
+            return response()->json(['message'=>trans('messages.unauthorized')]);
+        }
+
+
+         $InvestmentWallet=Wallet::where('user_id',$user->id)->where('wallet_type','investment')->get();
+
+        $Wallets=$InvestmentWallet->map(function ($wallet)
+        {
+            return $this->Format_timeStamp_Map($wallet);
+        });
+
+
+        return  response()->json([
+            'message'=>trans('messages.operation_success'),
+            'data'=>$Wallets
+         ]);
+    }
+
+
+    public function ShowProfitWallet()
+    {
+        $user=auth()->user();
+
+        $userRole=$user->role_id;
+
+        if( !$user||$userRole!=2)
+        {
+            return response()->json(['message'=>trans('messages.unauthorized')]);
+        }
+
+
+        $profitWallet=Wallet::where('user_id',$user->id)->where('wallet_type','profits')->get();
+
+        $Wallets=$profitWallet->map(function ($wallet)
+        {
+            return $this->Format_timeStamp_Map($wallet);
+        });
+
+        return  response()->json([
+            'message'=>trans('messages.operation_success'),
+            'data'=>$Wallets
+        ]);
+    }
+
+
+
+    public function ShowPlatformWallet()
+    {
+        $user=auth()->user();
+
+        $userRole=$user->role_id;
+
+        if( !$user||$userRole!=1)
+        {
+            return response()->json(['message'=>trans('messages.unauthorized')]);
+        }
+
+
+        $platformWallet=Wallet::where('user_id',$user->id)->where('wallet_type','platform')->get();
+
+        $Wallets=$platformWallet->map(function ($wallet)
+        {
+           return $this->Format_timeStamp_Map($wallet);
+        });
+        return  response()->json([
+            'message'=>trans('messages.operation_success'),
+            'data'=>$Wallets
+        ]);
+    }
+
+
+
+
+    public function Format_timeStamp_Map($wallets)
+    {
+
+        $ArrayWallet=$wallets->toArray();
+        $ArrayWallet['created_at']=Carbon::parse($wallets->created_at)->format('Y-m-d');
+        $ArrayWallet['updated_at']=Carbon::parse($wallets->updated_at)->format('Y-m-d');
+        return $ArrayWallet;
+
+
+    }
+
+
+
 
 }

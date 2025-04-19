@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FrequentlyQuestionsController;
 use App\Http\Controllers\HelpController;
+use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\StripeController;
 use App\Http\Controllers\UserController;
@@ -30,11 +31,18 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('update',[UserController::class,'update']);
     Route::post('/stripe/ChargeInvestmentWallet',[StripeController::class,'ChargeInvestmentWallet'])->middleware('throttle:5,1');
     Route::post('/wallets/transferToPlatform',[WalletController::class,'transferToPlatform'])->middleware('throttle:5,1');
-    Route::post('/admin/approve_property/{evaluation_id}',[\App\Http\Controllers\InvestmentController::class,'approve_property']);
+    Route::post('/admin/approve_property/{evaluation_id}',[InvestmentController::class,'approve_property']);
+    Route::get('/wallets/ShowInvestmentWallet',[WalletController::class,'ShowInvestmentWallet'])->middleware('throttle:5,1');
+    Route::get('/wallets/ShowProfitWallet',[WalletController::class,'ShowProfitWallet'])->middleware('throttle:5,1');
+    Route::get('/wallets/ShowPlatformWallet',[WalletController::class,'ShowPlatformWallet'])->middleware('throttle:5,1');
+    Route::get('/showPropertyInvestedByUser',[InvestmentController::class,'showPropertyInvestedByUser'])->middleware('throttle:5,1');
+    Route::post('/invest',[InvestmentController::class,'invest'])->middleware('throttle:5,1');
 
 
 
 });
+
+
 /*تغير كلمة المرور*/
 Route::post('send_verification_code', [AuthController::class, 'sendVerificationCode']);
 Route::post('verify_code', [AuthController::class, 'verifyCode']);
@@ -77,3 +85,33 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::post('/create_FrequentlyQuestions', [FrequentlyQuestionsController::class, 'create']);
     Route::delete('delete_FrequentlyQuestions/{Frequently_Questions_id}',[FrequentlyQuestionsController::class,'destroy']);
 });
+
+
+/*عملية الاستثمار والعمليات على المحافظ*/
+
+Route::group(["middleware"=>["auth:api"]],function (){
+
+    Route::post('/stripe/ChargeInvestmentWallet',[StripeController::class,'ChargeInvestmentWallet'])->middleware('throttle:5,1');
+    Route::post('/admin/approve_property/{evaluation_id}',[InvestmentController::class,'approve_property']);
+    Route::get('/wallets/ShowInvestmentWallet',[WalletController::class,'ShowInvestmentWallet']);
+    Route::get('/wallets/ShowProfitWallet',[WalletController::class,'ShowProfitWallet']);
+    Route::get('/wallets/ShowPlatformWallet',[WalletController::class,'ShowPlatformWallet']);
+    Route::post('/invest',[InvestmentController::class,'invest'])->middleware('throttle:5,1');
+    Route::get('/showPropertyInvestedByUser',[InvestmentController::class,'showPropertyInvestedByUser']);
+    Route::get('/ShowListOfUserInvestment',[InvestmentController::class,'ShowListOfUserInvestment']);
+    Route::get('/ShowPercentageOfInvestments',[InvestmentController::class,'ShowPercentageOfInvestments']);
+
+
+
+});
+
+
+
+/*عرض العقارات للاستثمار*/
+Route::get('/ShowProperty',[InvestmentController::class,'ShowProperty']);
+Route::post('/ShowPropertyByType',[InvestmentController::class,'ShowPropertyByType']);
+Route::post('/ShowPropertyByInvestmentType',[InvestmentController::class,'ShowPropertyByInvestmentType']);
+Route::post('/ShowPropertyById/{property_id}',[InvestmentController::class,'ShowPropertyById']);
+
+
+

@@ -29,4 +29,16 @@ return [
 
     'fingerPrint_failed'=>'فشل التحقق من البصمة.',
     'fingerPrint_success'=>'تم التحقق من البصمة.البصمة صحيحة.',
+
+    'no_properties_found'=>'لا يوجد عقارات من هذا النوع',
+    'properties_found'=>'يوجد عقارات من هذا النوع',
+
+    'no_chance_available'=>'لا فرص استثمارية متاحة',
+    'chance_available'=>'يوجد فرص استثمارية متاحة',
+
+    'insufficient_balance'=>'رصيد غير كافي',
+    'sufficient_balance'=>'يوجد رصيد',
+
+    'already_approved'=>'تم الموافقة عليه مسبقاً',
+    'refused'=>'تم الرفض',
 ];

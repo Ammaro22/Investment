@@ -26,4 +26,17 @@ return [
 
     'fingerPrint_failed'=>'FingerPrint verification failed.',
     'fingerPrint_success'=>'FingerPrint has been verified.the fingerPrint is correct',
+
+    'no_properties_found'=>'There is no property of this kind',
+    'properties_found'=>'There is a property of this kind',
+
+    'no_chance_available'=>'no chance available',
+    'chance_available'=>'chance available',
+
+    'insufficient_balance'=>'insufficient_balance',
+    'sufficient_balance'=>'sufficient_balance',
+
+     'already_approved'=>'already approved',
+     'refused'=>'rejected',
 ];
+

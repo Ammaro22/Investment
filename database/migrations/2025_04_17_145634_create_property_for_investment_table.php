@@ -21,7 +21,7 @@ return new class extends Migration
             $table->decimal('chance_price', 10, 2);
             $table->date('investment_time');
             $table->date('incoming_time');
-            $table->enum('investment_mode',['capital_growth','high_incoming','balanced']);
+            $table->enum('investment_mode',['CapitalGrowth','HighIncoming','Balanced']);
             $table->enum('property_management',['selling','investment','rent']);
             $table->boolean('is_completed')->default(false);
             $table->timestamps();
