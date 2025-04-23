@@ -29,14 +29,7 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('logout',[UserController::class,'logout']);
     Route::get('profile',[UserController::class,'profile']);
     Route::post('update',[UserController::class,'update']);
-    Route::post('/stripe/ChargeInvestmentWallet',[StripeController::class,'ChargeInvestmentWallet'])->middleware('throttle:5,1');
-    Route::post('/wallets/transferToPlatform',[WalletController::class,'transferToPlatform'])->middleware('throttle:5,1');
-    Route::post('/admin/approve_property/{evaluation_id}',[InvestmentController::class,'approve_property']);
-    Route::get('/wallets/ShowInvestmentWallet',[WalletController::class,'ShowInvestmentWallet'])->middleware('throttle:5,1');
-    Route::get('/wallets/ShowProfitWallet',[WalletController::class,'ShowProfitWallet'])->middleware('throttle:5,1');
-    Route::get('/wallets/ShowPlatformWallet',[WalletController::class,'ShowPlatformWallet'])->middleware('throttle:5,1');
-    Route::get('/showPropertyInvestedByUser',[InvestmentController::class,'showPropertyInvestedByUser'])->middleware('throttle:5,1');
-    Route::post('/invest',[InvestmentController::class,'invest'])->middleware('throttle:5,1');
+
 
 
 
@@ -92,17 +85,12 @@ Route::group(["middleware"=>["auth:api"]],function() {
 Route::group(["middleware"=>["auth:api"]],function (){
 
     Route::post('/stripe/ChargeInvestmentWallet',[StripeController::class,'ChargeInvestmentWallet'])->middleware('throttle:5,1');
-    Route::post('/admin/approve_property/{evaluation_id}',[InvestmentController::class,'approve_property']);
     Route::get('/wallets/ShowInvestmentWallet',[WalletController::class,'ShowInvestmentWallet']);
     Route::get('/wallets/ShowProfitWallet',[WalletController::class,'ShowProfitWallet']);
-    Route::get('/wallets/ShowPlatformWallet',[WalletController::class,'ShowPlatformWallet']);
     Route::post('/invest',[InvestmentController::class,'invest'])->middleware('throttle:5,1');
     Route::get('/showPropertyInvestedByUser',[InvestmentController::class,'showPropertyInvestedByUser']);
     Route::get('/ShowListOfUserInvestment',[InvestmentController::class,'ShowListOfUserInvestment']);
     Route::get('/ShowPercentageOfInvestments',[InvestmentController::class,'ShowPercentageOfInvestments']);
-
-
-
 
 
 });
@@ -117,11 +105,11 @@ Route::post('/ShowPropertyById/{property_id}',[InvestmentController::class,'Show
 
 
 
-/*الفريق الاقتصادي*/
+/*الادمن */
 Route::group(["middleware"=>["auth:api"]],function (){
 
-    Route::post('/updatePropertyManagementStatus',[InvestmentController::class,'updatePropertyManagementStatus'])->middleware('throttle:5,1');
-    Route::get('/getCompletedProperty',[InvestmentController::class,'getCompletedProperty'])->middleware('throttle:5,1');
+    Route::get('/wallets/ShowPlatformWallet',[WalletController::class,'ShowPlatformWallet']);
+    Route::post('/admin/approve_property/{evaluation_id}',[InvestmentController::class,'approve_property']);
 
 
 });
