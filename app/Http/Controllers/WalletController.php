@@ -81,6 +81,69 @@ class WalletController extends Controller
     }
 
 
+    public function transferFromPlatform(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $user = User::find($request->user_id);
+        $amount = $request->amount;
+
+
+        try {
+            DB::transaction(function () use ($user, $amount) {
+                $profit_wallet = $user->wallets()
+                    ->where('wallet_type', 'profits')
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $platformWallet = Wallet::where('wallet_type', 'platform')
+                    ->whereHas('user', function ($query) {
+                        $query->where('role_id', 1);
+                    })
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+
+                $admin = User::select('id')->where('role_id', 1)->firstOrFail();
+
+                $transferOut = Transaction::create([
+                    'user_id' => $admin->id,
+                    'wallet_id' => $platformWallet->id,
+                    'amount' => -$amount,
+                    'type' => 'transfer_out',
+                    'status' => 'completed',
+                ]);
+
+                $transferIn = Transaction::create([
+                    'user_id' => $user->id,
+                    'wallet_id' => $profit_wallet->id,
+                    'amount' => $amount,
+                    'type' => 'transfer_in',
+                    'status' => 'completed',
+                    'related_transaction_id' => $transferOut->id,
+                ]);
+
+                InternalTransfer::create([
+                    'sender_wallet_id' => $platformWallet->id,
+                    'receiver_wallet_id' => $profit_wallet->id,
+                    'amount' => $amount,
+                    'notes' => 'تحويل إلى محفظة الأرباح',
+                ]);
+
+                $platformWallet->decrement('balance', $amount);
+                $profit_wallet->increment('balance', $amount);
+            });
+
+            return response()->json(['message' => trans('messages.operation_success')]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
+
 
     public function ShowInvestmentWallet()
     {

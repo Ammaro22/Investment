@@ -31,6 +31,7 @@ return new class extends Migration
             $table->string('pay_way');
             $table->string('state');
             $table->string('exact_position');
+            $table->enum('contract',['buying','investment']);
             $table->boolean('legal_check');
             $table->boolean('expert_check');
             $table->boolean('accept');

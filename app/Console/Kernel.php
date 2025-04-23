@@ -4,17 +4,23 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
     /**
      * Define the application's command schedule.
      */
-    protected function schedule(Schedule $schedule): void
+    protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
-    }
+        Log::info('Scheduler function is being called at ' . now());
 
+        $schedule->job(new \App\Jobs\TransferProfitJob())
+            ->dailyAt('00:00')
+            ->timezone('Asia/Damascus');
+
+        Log::info('Scheduled job has been added.');
+    }
     /**
      * Register the commands for the application.
      */

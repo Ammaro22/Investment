@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers;
+use App\Models\CompletedProperty;
 use App\Models\EconomicEvaluation;
 use App\Models\Investment;
+use App\Models\Profit;
 use App\Models\PropertyForInvestment;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use Carbon\Carbon;
+use http\Env\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -67,7 +70,7 @@ class InvestmentController extends Controller
                 'investment_time' => $evaluation->investment_time,
                 'incoming_time' => $evaluation->incoming_time,
                 'investment_mode' => $evaluation->investment_mode,
-                'property_management' => 'investment',
+                'property_management' => $evaluation->property_management,
                 'progress_percent' => 0,
                 'is_completed' => false,
             ]);
@@ -197,12 +200,9 @@ class InvestmentController extends Controller
 
 
     /*سيناريو الاستثمار*/
-
     public function invest(Request $request)
     {
-
         $user = auth()->user();
-
         $userRole = $user->role_id;
 
         if (!$user || $userRole != 2) {
@@ -210,62 +210,73 @@ class InvestmentController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-
             'chance_invested' => 'required|integer',
             'property_for_investment_id' => 'required|exists:property_for_investment,id',
-
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-
         $property = PropertyForInvestment::with('investment')->find($request->property_for_investment_id);
 
+        if (!$property) {
+            return response()->json(['message' => trans('messages.not_found')]);
+        }
 
-        if ($property->number_of_chances < $request->chance_invested) {
+        $originalChances = $property->getOriginal('number_of_chances');
+
+        if ($originalChances < $request->chance_invested) {
             return response()->json(['message' => trans('messages.no_chance_available')]);
         }
 
-
         $amount = $property->chance_price * $request->chance_invested;
-
 
         $investmentWallet = $user->wallets()->where('wallet_type', 'investment')->first();
         if (!$investmentWallet || $investmentWallet->balance < $amount) {
             return response()->json(['message' => trans('messages.insufficient_balance')], 422);
         }
 
-
-        $property->number_of_chances -= $request->chance_invested;
-
-        $property->save();
-
         $walletController = new WalletController();
-
         $walletController->transferToPlatform(new Request(['amount' => $amount]));
 
-
         Investment::create([
-
             'user_id' => $user->id,
             'property_for_investment_id' => $property->id,
             'chance_invested' => $request->chance_invested,
             'amount_payed' => $amount,
         ]);
 
-        $total_chances = $property->number_of_chances;
+        $property->number_of_chances -= $request->chance_invested;
+        $property->save();
+        $property->refresh();
 
-        $invested_chances = $property->investment->sum('chance_invested');
-
-        $progress = $total_chances > 0 ? round(($invested_chances / $total_chances) * 100, 2) : 0;
-
+        $totalChances = $originalChances;
+        $investedChances = $property->investment->sum('chance_invested');
+        $progress = $totalChances > 0 ? round(($investedChances / $totalChances) * 100, 2) : 0;
+        $progress = min($progress, 100);
         $property->update(['progress_percent' => $progress]);
 
-        return response()->json(['message' => trans('messages.operation_success')]);
+        $isCompleted = $this->isComplete($property->property_id);
 
+        $existing = CompletedProperty::where('property_for_investment_id', $property->id)->first();
+
+        if (!$existing && $isCompleted) {
+            CompletedProperty::create([
+                'property_for_investment_id' => $property->id,
+                'property_management' => $property->property_management,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        if ($isCompleted) {
+            $this->CalculateNetProfit($property->id);
+        }
+        return response()->json(['message' => trans('messages.operation_success')]);
     }
+
+
 
 
     /*عرض العقارات التي استثمرها المستخدم مع تفاصيلها*/
@@ -343,8 +354,7 @@ class InvestmentController extends Controller
     }
 
 
-
-
+    /*للنسبة في portfolio*/
 
     public function ShowPercentageOfInvestments()
     {
@@ -387,6 +397,159 @@ class InvestmentController extends Controller
 
 
 
+
+
+
+
+
+
+
+  /* call within invest function*/
+
+    public function CalculateNetProfit($property_id)
+    {
+        $property = PropertyForInvestment::with('investment')->find($property_id);
+
+        if (!$property || !$property->is_completed)
+        {
+            return response()->json(['message' => trans('messages.operation_failed')]);
+        }
+
+        $economic = EconomicEvaluation::where('property_id', $property_id)->first();
+
+        if (!$economic)
+        {
+            return response()->json(['message' => trans('messages.not_found')]);
+        }
+
+        $existingProfits = Profit::whereHas('completedProperty', function($q) use ($property_id) {
+            $q->where('property_for_investment_id', $property_id);
+        })->count();
+
+        if ($existingProfits > 0)
+        {
+            return response()->json(['message' => trans('messages.profits_already_calculated')]);
+        }
+
+        $total_expected_taxes = $economic->total_expected_taxes;
+
+        $profit_percent = $property->profit_percent;
+
+        $renting = $economic->renting_price;
+
+        $selling=$economic->baying_price;
+
+        $total_chances = $property->number_of_chances + $property->investment->sum('chance_invested');
+
+        foreach ($property->investment as $investment) {
+
+            $user = $investment->user;
+
+            $chance_invested = $investment->chance_invested;
+
+            $person_profit = $chance_invested * $profit_percent;
+
+            $total_profit = $total_chances * $profit_percent;
+
+            if ($total_profit == 0) {
+                continue;
+            }
+
+            $taxes_of_one_user = ($total_expected_taxes * $chance_invested) / $total_chances;
+
+            $profit_ratio = $person_profit / $total_profit;
+
+            if($economic->property_management=='rent')
+            {
+                $profit_amount = $renting * $profit_ratio;
+            }
+            else
+            {
+                $profit_amount = $selling * $profit_ratio;
+            }
+
+            $net_profit = $profit_amount - $taxes_of_one_user;
+
+            $this->profit($net_profit, $property_id, $user->id);
+        }
+
+        return response()->json(['message' => trans('messages.operation_success')]);
+    }
+
+
+
+
+    /* call within CalculateNetProfit function*/
+
+    public function profit($net_profit, $property_id, $user_id)
+    {
+
+        $completedProperty = CompletedProperty::where('property_for_investment_id', $property_id)->first();
+
+        if (!$completedProperty)
+        {
+            return response()->json(['message' => trans('messages.not_found')]);
+        }
+
+        $existingProfit = Profit::where('completed_property_id' , $completedProperty->id)->where('user_id' , $user_id)->first();
+
+        if ($existingProfit)
+        {
+            return response()->json(['message' => trans('messages.profit_already_exists')]);
+        }
+
+        $economic = EconomicEvaluation::where('property_id', $property_id)->first();
+
+        if (!$economic->incoming_time)
+        {
+            return response()->json(['message' => trans('messages.not_found')]);
+        }
+        Profit::create([
+            'completed_property_id' => $completedProperty->id,
+            'user_id' => $user_id,
+            'profit_amount' => $net_profit,
+            'scheduled_date'=>$economic->incoming_time,
+            'transfer_status'=>'pending',
+            'transfer_attempts'=>0,
+            'processed_at'=>now()->format('Y-m-d'),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+
+
+        return response()->json(['message' => 'success']);
+    }
+
+
+
+
+
+
+    /* call within invest function*/
+    public function isComplete($property_id)
+    {
+        if(!$property_id) {
+            return false;
+        }
+
+        $investment = PropertyForInvestment::where('property_id', $property_id)->first();
+        if(!$investment) {
+            return false;
+        }
+
+        if($investment->number_of_chances == 0) {
+            $investment->update(['is_completed' => true]);
+            return true;
+        }
+
+        return false;
+    }
+
+
+
+
+
     public function re_arrange($property)
     {
 
@@ -415,6 +578,66 @@ class InvestmentController extends Controller
 
 
     }
+
+
+
+
+
+
+
+
+
+
+
+//
+//    public function getCompletedProperty()
+//    {
+//
+//        $user = auth()->user();
+//
+//        $userRole = $user->role_id;
+//
+//        if (!$user || $userRole != 3) {
+//            return response()->json(['message' => trans('messages.unauthorized')]);
+//        }
+//
+//        $properties = PropertyForInvestment::with('property')
+//            ->where('is_completed', true)
+//            ->get();
+//
+//
+//        if ($properties->isEmpty()) {
+//            return response()->json(['message' => trans('messages.no_properties_found')]);
+//        }
+//
+//        foreach ($properties as $property){
+//            $existing = CompletedProperty::where('property_for_investment_id', $property->id)->first();
+//
+//            if (!$existing) {
+//
+//                CompletedProperty::create([
+//                    'property_for_investment_id' => $property->id,
+//                    'property_management' => $property->property_management,
+//                    'created_at' => now(),
+//                    'updated_at' => now()
+//                ]);
+//
+//
+//            }
+//        }
+//        $formatted = $properties->map(function ($item) {
+//            return $this->re_arrange($item);
+//
+//        });
+//
+//        return  response()->json([
+//            'message'=>trans('messages.properties_found'),
+//            'data'=>$formatted
+//        ]);
+//    }
+
+
+
 
 }
 

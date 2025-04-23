@@ -28,6 +28,7 @@ class Property_for_sale extends Model
         'pay_way',
         'state',
         'exact_position',
+        'contract',
         'legal_check',
         'expert_check',
         'accept',

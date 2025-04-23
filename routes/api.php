@@ -103,6 +103,8 @@ Route::group(["middleware"=>["auth:api"]],function (){
 
 
 
+
+
 });
 
 
@@ -114,4 +116,13 @@ Route::post('/ShowPropertyByInvestmentType',[InvestmentController::class,'ShowPr
 Route::post('/ShowPropertyById/{property_id}',[InvestmentController::class,'ShowPropertyById']);
 
 
+
+/*الفريق الاقتصادي*/
+Route::group(["middleware"=>["auth:api"]],function (){
+
+    Route::post('/updatePropertyManagementStatus',[InvestmentController::class,'updatePropertyManagementStatus'])->middleware('throttle:5,1');
+    Route::get('/getCompletedProperty',[InvestmentController::class,'getCompletedProperty'])->middleware('throttle:5,1');
+
+
+});
 

@@ -17,13 +17,14 @@ return new class extends Migration
             $table->integer('number_of_chances');
             $table->decimal('profit_percent',10,2);
             $table->decimal('expected_price', 12, 2);
-            $table->decimal('baying_price', 12, 2);
+            $table->decimal('buying_price', 12, 2);
+            $table->decimal('renting_price',12,2);
             $table->decimal('total_expected_taxes', 10, 2);
             $table->decimal('chance_price', 10, 2);
             $table->date('investment_time');
             $table->date('incoming_time');
             $table->enum('investment_mode',['CapitalGrowth','HighIncoming','Balanced']);
-            $table->enum('property_management',['selling','investment','rent']);
+            $table->enum('property_management',['selling','rent']);
             $table->enum('status',['pending','rejected','approved','negotiation'])->default('pending');
             $table->timestamps();
         });

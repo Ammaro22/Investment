@@ -41,4 +41,7 @@ return [
 
     'already_approved'=>'تم الموافقة عليه مسبقاً',
     'refused'=>'تم الرفض',
+
+    'profit_already_exists'=>'المحفظة موجودة مسبقا',
+    'profits_already_calculated'=>'تم الحساب مسبقا',
 ];
