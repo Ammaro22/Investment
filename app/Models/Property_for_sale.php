@@ -57,6 +57,19 @@ class Property_for_sale extends Model
 
     public function economicEvaluation()
     {
-        return $this->hasOne(EconomicEvaluation::class);
+        return $this->hasOne(EconomicEvaluation::class,'property_for_sale_id');
+    }
+    public function request_from_lawyer()
+    {
+        return $this->hasOne(request_from_lawyer::class,'property_for_sale_id');
+    }
+    public function Agreed_negotiao()
+    {
+        return $this->hasOne(Agreed_negotiation::class, 'property_for_sale_id');
+    }
+
+    public function Request_from_admin()
+    {
+        return $this->hasOne(Request_from_admin::class, 'property_for_sale_id');
     }
 }

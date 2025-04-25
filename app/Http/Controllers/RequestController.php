@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Property_for_sale;
+use App\Models\Request_from_admin;
+use App\Models\request_from_lawyer;
 use App\Models\Requests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -37,6 +39,11 @@ class RequestController extends Controller
             $property->legal_check = true;
             $property->save();
         }
+
+        $lawyerRequest = new request_from_lawyer();
+        $lawyerRequest->property_for_sale_id = $request->property_for_sale_id;
+        $lawyerRequest->status = 'معلق';
+        $lawyerRequest->save();
 
         return response()->json([
             'message' => trans('messages.operation_success'),
@@ -80,15 +87,17 @@ class RequestController extends Controller
             , 'data' => $requestToReject]);
     }
 
-    public function getAllRequests()
+    public function getSeparatedRequests()
     {
         $userRole = auth()->user()->role_id;
-        if ($userRole !== 4 ) {
+        if ($userRole !== 4) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
         }
-        $requests = Requests::with('property_for_sale.user:id,name')->get()->map(function ($request) {
+
+
+        $requests = Requests::with(['property_for_sale.user:id,name'])->get()->map(function ($request) {
             return [
                 'id' => $request->id,
                 'status' => $request->status,
@@ -98,9 +107,23 @@ class RequestController extends Controller
             ];
         });
 
+        $adminRequests = Request_from_admin::with(['proprtsseale.user:id,name'])->get()->map(function ($adminRequest) {
+            return [
+                'id' => $adminRequest->id,
+                'status' => $adminRequest->status,
+                'type_request' => $adminRequest->type_request,
+                'user_name' => $adminRequest->proprtsseale->user->name ?? null,
+                'created_at' => $adminRequest->created_at->format('Y-m-d'),
+            ];
+        });
+
         return response()->json([
-            'message' => trans('messages.operation_success')
-            , 'data' => $requests]);
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'legal check' => $requests,
+                'buy requests' => $adminRequests,
+            ],
+        ]);
     }
 
     public function getMyRequests()

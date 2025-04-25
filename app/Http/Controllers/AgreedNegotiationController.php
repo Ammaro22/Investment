@@ -1,0 +1,173 @@
+<?php
+
+namespace App\Http\Controllers;
+
+
+use App\Models\Agreed_negotiation;
+use App\Models\Property_for_sale;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Validator;
+
+class AgreedNegotiationController extends Controller
+{
+
+    public function createAgreedNegotiation(Request $request)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 3 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(),[
+            'Text_of_the_agreement' => 'required|string',
+            'property_for_sale_id' => 'required|exists:property_for_sales,id',
+            'Payment_Mechanism' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->all()], 422);
+        }
+        $negotiation = new Agreed_negotiation();
+        $negotiation->Text_of_the_agreement = $request->Text_of_the_agreement;
+        $negotiation->Payment_Mechanism = $request->Payment_Mechanism;
+        $negotiation->status = 'معلق';
+        $negotiation->property_for_sale_id = $request->property_for_sale_id;
+        $negotiation->save();
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $negotiation,
+        ], 201);
+    }
+
+    public function updateAgreedNegotiation(Request $request, $id)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 3 && $userRole !== 1 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'Text_of_the_agreement' => 'required|string',
+            'Payment_Mechanism' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->all()], 422);
+        }
+
+        $negotiation = Agreed_negotiation::find($id);
+        if (!$negotiation) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        $negotiation->Text_of_the_agreement = $request->Text_of_the_agreement;
+        $negotiation->Payment_Mechanism = $request->Payment_Mechanism;
+        $negotiation->status = 'تم قبول من قبل المستخدم';
+        $negotiation->save();
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $negotiation,
+        ], 200);
+    }
+
+    public function rejectAgreedNegotiation($id)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 2 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+        $negotiation = Agreed_negotiation::find($id);
+        if (!$negotiation) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        $negotiation->status = 'تم الرفض من قبل المستخدد';
+        $negotiation->save();
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $negotiation,
+        ], 200);
+    }
+
+    public function acceptAgreedNegotiation($id)
+    {
+
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 2 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+        $negotiation = Agreed_negotiation::find($id);
+        if (!$negotiation) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        $negotiation->status =  'تم قبول الطلب من قبل المستخدم';
+        $negotiation->save();
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $negotiation,
+        ], 200);
+    }
+
+    public function getAgreedNegotiationsByPropertyId($propertyId)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 3 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+        $negotiations = Agreed_negotiation::where('property_for_sale_id', $propertyId)->get();
+
+        if ($negotiations->isEmpty()) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $negotiations,
+        ], 200);
+    }
+
+    public function getAgreedNegotiationsForUser(Request $request)
+    {
+        $user = $request->user();
+
+        $properties = Property_for_sale::where('user_id', $user->id)->pluck('id');
+
+        $negotiations = Agreed_negotiation::whereIn('property_for_sale_id', $properties)->get();
+
+        if ($negotiations->isEmpty()) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $negotiations,
+        ], 200);
+    }
+}

@@ -1,13 +1,19 @@
 <?php
 
+use App\Http\Controllers\AgreedNegotiationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ElectronicPropertyCertificateController;
 use App\Http\Controllers\FrequentlyQuestionsController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\InvestmentController;
+use App\Http\Controllers\ReqeustFromAdminController;
 use App\Http\Controllers\RequestController;
+use App\Http\Controllers\RequestFromExpertController;
+use App\Http\Controllers\RequestFromLawyerController;
 use App\Http\Controllers\StripeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WalletController;
+use App\Models\Request_from_admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PropertyController;
@@ -56,13 +62,15 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::get('/get_my_properties', [PropertyController::class, 'getPropertiesByToken']);
 });
 
+
 /*مراجعة طلبات بيع العقارات*/
 Route::group(["middleware"=>["auth:api"]],function() {
     Route::post('/accept_Request/{requests_id}', [RequestController::class, 'acceptRequest']);
     Route::post('/reject_Request/{requests_id}', [RequestController::class, 'rejectRequest']);
-    Route::get('/get_all_Request', [RequestController::class, 'getAllRequests']);
+    Route::get('/get_all_Request', [RequestController::class, 'getSeparatedRequests']);
     Route::get('/get_Request_for_user', [RequestController::class, 'getMyRequests']);
 });
+
 
 /*اسئلة المساعدة*/
 Route::delete('delete_question/{help_id}',[HelpController::class,'deleteQuestion']);
@@ -73,12 +81,62 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::get('/get_myQuestion', [HelpController::class, 'getMyQuestions']);
 });
 
+
 Route::get('/get_FrequentlyQuestions', [FrequentlyQuestionsController::class, 'index']);
 Route::group(["middleware"=>["auth:api"]],function() {
     Route::post('/create_FrequentlyQuestions', [FrequentlyQuestionsController::class, 'create']);
     Route::delete('delete_FrequentlyQuestions/{Frequently_Questions_id}',[FrequentlyQuestionsController::class,'destroy']);
 });
 
+/*ارسال طلب منمحامي الى الفرق الاقصادي*/
+
+Route::group(["middleware"=>["auth:api"]],function() {
+    Route::get('/get_all_request_from_lawyer', [RequestFromLawyerController::class, 'getRequestWithUser']);
+    Route::get('/get_propertyBy_request_from_lawyer/{request_from_lawyer_id}', [RequestFromLawyerController::class, 'getPropertyByRequestId']);
+    Route::delete('delete_request_from_lawyer/{request_from_lawyer_id}',[RequestFromLawyerController::class,'deleteRequest']);
+});
+
+/*انشاء اتفاق بين المستخدم ولفريق الخبير*/
+
+Route::group(["middleware"=>["auth:api"]],function() {
+    Route::post('/create_Agreed_Negotiation', [AgreedNegotiationController::class, 'createAgreedNegotiation']);
+    Route::post('/update_Agreed_Negotiation/{Agreed_Negotiation_id}', [AgreedNegotiationController::class, 'updateAgreedNegotiation']);
+    Route::post('/accept_Agreed_Negotiation_by_user/{Agreed_Negotiation_id}',[AgreedNegotiationController::class,'acceptAgreedNegotiation']);
+    Route::post('/reject_Agreed_Negotiation_by_user/{Agreed_Negotiation_id}',[AgreedNegotiationController::class,'rejectAgreedNegotiation']);
+    Route::get('/get_Agreed_Negotiation_for_property/{property_for_sale_id}',[AgreedNegotiationController::class,'getAgreedNegotiationsByPropertyId']);
+    Route::get('/get_Agreed_Negotiation_for_user',[AgreedNegotiationController::class,'getAgreedNegotiationsForUser']);
+});
+
+/*ارسال طلب مع تقرير من الفريق الخبير االى اللادمن*/
+
+Route::group(["middleware"=>["auth:api"]],function() {
+    Route::post('/create_request_from_expert', [RequestFromExpertController::class, 'createRequestFromExpert']);
+    Route::post('/update_request_from_expert/{request_from_expert_id}', [RequestFromExpertController::class, 'updateEconomicEvaluation']);
+    Route::get('/get_all_Rejected_requests', [RequestFromExpertController::class, 'getRejectedRequests']);
+    Route::delete('delete_request_expert/{request_from_expert_id}',[RequestFromExpertController::class,'deleteRequest']);
+});
+
+/*تعامل مع ا لتقاري القادمة من الفرق الخبير من قبل الادمن*/
+Route::group(["middleware"=>["auth:api"]],function() {
+    Route::post('/accept_request_from_expert/{request_from_expert_id}', [RequestFromExpertController::class, 'acceptRequest']);
+    Route::post('/reject_request_from_expert/{request_from_expert_id}', [RequestFromExpertController::class, 'rejectRequest']);
+    Route::get('/get_all_requests', [RequestFromExpertController::class, 'getAllRequestsForAdmin']);
+    Route::get('/get_requests_by_id/{request_from_expert_id}',[RequestFromExpertController::class,'getRequestFromExpertById']);
+});
+
+/*ارسال تقير من الادمن الى المحامي لشراء العقار*/
+
+Route::group(["middleware"=>["auth:api"]],function() {
+    Route::post('/add_image_for_Document/{Request_from_admin_id}', [ReqeustFromAdminController::class, 'addImagesAndCompleteRequest']);
+    Route::get('/get_buy_request_completed', [ReqeustFromAdminController::class, 'getCompletedRequests']);
+    Route::get('/get_buy_request/{Request_from_admin_id}', [ReqeustFromAdminController::class, 'getRequestWithImages']);
+});
+
+Route::group(["middleware"=>["auth:api"]],function() {
+
+    Route::get('/get_all_Electronic_Property_Certificate_for_lawyer', [ElectronicPropertyCertificateController::class, 'showCertificates']);
+    Route::get('/get_Electronic_Property_Certificate_for_user', [ElectronicPropertyCertificateController::class, 'showUserCertificates']);
+});
 
 /*عملية الاستثمار والعمليات على المحافظ*/
 
@@ -92,10 +150,7 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::get('/ShowListOfUserInvestment',[InvestmentController::class,'ShowListOfUserInvestment']);
     Route::get('/ShowPercentageOfInvestments',[InvestmentController::class,'ShowPercentageOfInvestments']);
 
-
 });
-
-
 
 /*عرض العقارات للاستثمار*/
 Route::get('/ShowProperty',[InvestmentController::class,'ShowProperty']);
@@ -104,13 +159,11 @@ Route::post('/ShowPropertyByInvestmentType',[InvestmentController::class,'ShowPr
 Route::post('/ShowPropertyById/{property_id}',[InvestmentController::class,'ShowPropertyById']);
 
 
-
 /*الادمن */
 Route::group(["middleware"=>["auth:api"]],function (){
 
     Route::get('/wallets/ShowPlatformWallet',[WalletController::class,'ShowPlatformWallet']);
     Route::post('/admin/approve_property/{evaluation_id}',[InvestmentController::class,'approve_property']);
-
 
 });
 

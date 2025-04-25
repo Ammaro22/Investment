@@ -32,6 +32,7 @@ class PropertyController extends Controller
             'price' => 'required|numeric|min:0',
             'pay_way' => 'required|string|max:255',
             'state' => 'required|string|max:255',
+            'contract'=>'required|string|max:255',
             'exact_position' => 'required|string|max:255',
             'property_images' => 'required|array',
             'property_images.*' => 'image',
@@ -65,6 +66,7 @@ class PropertyController extends Controller
         $requestData = [
             'property_for_sale_id' => $propertyid,
             'status' => 'معلق',
+            'type_request' => 'legal check',
             'description' => $request->input('description', 'طلب جديد لعقار'),
         ];
         Requests::create($requestData);
@@ -108,6 +110,7 @@ class PropertyController extends Controller
             'price' => 'sometimes|numeric|min:0',
             'pay_way' => 'sometimes|string|max:255',
             'state' => 'sometimes|string|max:255',
+            'contract' => 'sometimes|string|max:255',
             'exact_position' => 'sometimes|string|max:255',
             'property_images' => 'array|nullable',
             'property_images.*' => 'image',
@@ -136,6 +139,7 @@ class PropertyController extends Controller
             'painting_type',
             'price',
             'pay_way',
+            'contract',
             'state',
             'exact_position',
         ])));
@@ -195,6 +199,7 @@ class PropertyController extends Controller
             'price' => 'sometimes|numeric|min:0',
             'pay_way' => 'sometimes|string|max:255',
             'state' => 'sometimes|string|max:255',
+            'contract' => 'sometimes|string|max:255',
             'exact_position' => 'sometimes|string|max:255',
             'property_images' => 'array|nullable',
             'property_images.*' => 'image',
@@ -223,6 +228,7 @@ class PropertyController extends Controller
             'painting_type',
             'price',
             'pay_way',
+            'contract',
             'state',
             'exact_position',
         ])));
@@ -319,7 +325,6 @@ class PropertyController extends Controller
             'message' => trans('messages.delete_success'),
         ], 200);
     }
-
 
     public function getPropertiesByToken(Request $request)
     {

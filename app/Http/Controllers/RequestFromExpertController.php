@@ -1,0 +1,341 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\EconomicEvaluation;
+use App\Models\Property_for_sale;
+use App\Models\Request_from_admin;
+use App\Models\request_from_expert;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Validator;
+
+class RequestFromExpertController extends Controller
+{
+    public function createRequestFromExpert(Request $request)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 3 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+        $validator = Validator::make($request->all(),[
+            'economic_evaluation' => 'required|array',
+            'economic_evaluation.number_of_chances' => 'required|integer',
+            'economic_evaluation.expected_price' => 'required',
+            'economic_evaluation.profit_percent' => 'required',
+            'economic_evaluation.total_expected_taxes' => 'required',
+            'economic_evaluation.buying_price' => 'required',
+            'economic_evaluation.renting_price' => 'required',
+            'economic_evaluation.chance_price' => 'required',
+            'economic_evaluation.investment_time' => 'required|date',
+            'economic_evaluation.incoming_time' => 'required|date',
+            'economic_evaluation.investment_mode' => 'required|string',
+            'economic_evaluation.property_management' => 'required|string',
+            'note_admin' => 'string',
+            'economic_evaluation.property_for_sale_id' => 'required|exists:property_for_sales,id',
+            'economic_evaluation.agreed_negotiations_id' => 'nullable',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->all()], 422);
+        }
+
+        $economicEvaluation = new EconomicEvaluation();
+        $economicEvaluation->fill($request->economic_evaluation);
+        $economicEvaluation->save();
+
+        $propertyForSale = Property_for_sale::find($request->economic_evaluation['property_for_sale_id']);
+        if ($propertyForSale) {
+            $propertyForSale->expert_check = true;
+            $propertyForSale->save();
+        }
+
+
+        $requestFromExpert = new request_from_expert();
+        $requestFromExpert->economic_evaluation_id = $economicEvaluation->id;
+        $requestFromExpert->note_admin = $request->note_admin;
+        $requestFromExpert->status ='معلق' ;
+        $requestFromExpert->save();
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $requestFromExpert,
+        ], 201);
+    }
+
+    public function getRejectedRequests()
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 3 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+        $rejectedRequests = request_from_expert::where('status', 'مرفوض')->get();
+
+        $responseData = $rejectedRequests->map(function ($request) {
+            return [
+                'id' => $request->id,
+                'economic_evaluation_id' => $request->economic_evaluation_id,
+                'note_admin' => $request->note_admin,
+                'status' => $request->status,
+            ];
+        });
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $responseData,
+        ], 200);
+    }
+
+    public function updateEconomicEvaluation(Request $request, $id)
+    {
+        // البحث عن الطلب بواسطة ID
+        $requestFromExpert = request_from_expert::find($id);
+
+        if (!$requestFromExpert) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'economic_evaluation' => 'required|array',
+            'economic_evaluation.number_of_chances' => 'sometimes|integer',
+            'economic_evaluation.expected_price' => 'sometimes|numeric',
+            'economic_evaluation.profit_percent' => 'sometimes|numeric',
+            'economic_evaluation.total_expected_taxes' => 'sometimes',
+            'economic_evaluation.buying_price' => 'sometimes',
+            'economic_evaluation.renting_price' => 'required',
+            'economic_evaluation.chance_price' => 'sometimes',
+            'economic_evaluation.investment_time' => 'sometimes|date',
+            'economic_evaluation.incoming_time' => 'sometimes|date',
+            'economic_evaluation.investment_mode' => 'sometimes|string',
+            'economic_evaluation.property_management' => 'sometimes|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->all()], 422);
+        }
+
+        $economicEvaluation = $requestFromExpert->economic_evaluation;
+
+        if ($economicEvaluation) {
+            $economicEvaluation->fill($request->economic_evaluation);
+            $economicEvaluation->save();
+        }
+        $requestFromExpert->status = 'معلق';
+        $requestFromExpert->save();
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $economicEvaluation,
+        ], 200);
+    }
+
+    public function deleteRequest($id)
+    {
+
+        $requestFromExpert = request_from_expert::find($id);
+
+        if (!$requestFromExpert) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        $requestFromExpert->delete();
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+        ], 200);
+    }
+
+    /* من اجل الاددمن*/
+    public function getRequestFromExpertById($id)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+        $request = request_from_expert::with(['economic_evaluation.property', 'economic_evaluation.agreed_negotiation'])->find($id);
+
+        if (!$request) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        $property = $request->economic_evaluation->property;
+
+        $images = $property->Property_image;
+        $documents = $property->Property_document;
+        $idImages = $property->id_image;
+
+        $responseData = [
+            'id' => $request->id,
+            'economic_evaluation_id' => $request->economic_evaluation_id,
+            'note_admin' => $request->note_admin,
+            'status' => $request->status,
+            'created_at' => $request->created_at->format('Y-m-d'),
+            'economic_evaluation' => [
+                'number_of_chances' => $request->economic_evaluation->number_of_chances,
+                'expected_price' => $request->economic_evaluation->expected_price,
+                'profit_percent' => $request->economic_evaluation->profit_percent,
+                'total_expected_taxes' => $request->economic_evaluation->total_expected_taxes,
+                'buying_price' => $request->economic_evaluation->buying_price,
+                'renting_price' => $request->economic_evaluation->renting_price,
+                'chance_price' => $request->economic_evaluation->chance_price,
+                'investment_time' => $request->economic_evaluation->investment_time,
+                'incoming_time' => $request->economic_evaluation->incoming_time,
+                'investment_mode' => $request->economic_evaluation->investment_mode,
+                'property_management' => $request->economic_evaluation->property_management,
+                'property' => [  // معلومات العقار
+                    'id' => $property->id,
+                    'user_id' => $property->user_id,
+                    'property_type' => $property->property_type,
+                    'area' => $property->area,
+                    'number_of_rooms' => $property->number_of_rooms,
+                    'number_of_bathrooms' => $property->number_of_bathrooms,
+                    'property_age' => $property->property_age,
+                    'decoration' => $property->decoration,
+                    'kitchen_type' => $property->kitchen_type,
+                    'flooring_type' => $property->flooring_type,
+                    'overlook_from' => $property->overlook_from,
+                    'balcony_size' => $property->balcony_size,
+                    'painting_type' => $property->painting_type,
+                    'price' => $property->price,
+                    'pay_way' => $property->pay_way,
+                    'state' => $property->state,
+                    'exact_position' => $property->exact_position,
+                    'contract' => $property->contract,
+                    'legal_check' => $property->legal_check,
+                    'expert_check' => $property->expert_check,
+                    'accept' => $property->accept,
+                    'images' => $images,
+                    'documents' => $documents,
+                    'id_images' => $idImages,
+                ],
+                'agreed_negotiation' => $request->economic_evaluation->agreed_negotiation,
+            ],
+        ];
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $responseData,
+        ], 200);
+    }
+
+    public function getAllRequestsForAdmin()
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+        $requests = request_from_expert::all();
+
+        $responseData = $requests->map(function ($request) {
+            return [
+                'id' => $request->id,
+                'economic_evaluation_id' => $request->economic_evaluation_id,
+                'note_admin' => $request->note_admin,
+                'status' => $request->status,
+                'created_at' => $request->created_at->format('Y-m-d'),
+            ];
+        });
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $responseData,
+        ], 200);
+    }
+
+    public function acceptRequest($id)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+        $request = request_from_expert::find($id);
+
+        if (!$request) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        $request->status = 'مقبول';
+        $request->save();
+
+        if (!$request->economic_evaluation) {
+            return response()->json([
+                'message' => __('messages.evaluation_not_found'),
+            ], 404);
+        }
+
+        $property = Property_for_sale::find($request->economic_evaluation->property_for_sale_id);
+        if ($property) {
+            $property->accept = true;
+            $property->save();
+        } else {
+            return response()->json([
+                'message' => __('messages.property_not_found'),
+            ], 404);
+        }
+
+        $newRequest = new Request_from_admin();
+        $newRequest->property_for_sale_id = $property->id;
+        $newRequest->type_request = 'buy request';
+        $newRequest->status = 'Stuck';
+        $newRequest->save();
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $request,
+        ], 200);
+    }
+
+    public function rejectRequest(Request $request, $id)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+        $requestFromExpert = request_from_expert::find($id);
+
+        if (!$requestFromExpert) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+        $validator = Validator::make($request->all(), [
+            'note_admin' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->all()], 422);
+        }
+
+        $requestFromExpert->status = 'مرفوض';
+        $requestFromExpert->note_admin = $request->note_admin;
+        $requestFromExpert->save();
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $requestFromExpert,
+        ], 200);
+    }
+
+}
+
