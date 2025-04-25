@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('property_for_sale_id')->constrained('property_for_sales')->cascadeOnDelete();
             $table->string('status');
+            $table->string('type_request');
             $table->string('description')->nullable();
             $table->timestamps();
         });
