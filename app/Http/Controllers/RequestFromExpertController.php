@@ -293,6 +293,7 @@ class RequestFromExpertController extends Controller
             ], 404);
         }
 
+
         if($property->accept) {
             PropertyForInvestment::create([
                 'property_id' => $request->economic_evaluation->property_for_sale_id,

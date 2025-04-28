@@ -14,6 +14,7 @@ class Requests extends Model
     protected $fillable =[
         'property_for_sale_id',
         'status',
+        'type_request',
         'description'
     ];
     public function property_for_sale(){
