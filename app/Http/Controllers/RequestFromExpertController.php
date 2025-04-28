@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\EconomicEvaluation;
 use App\Models\Property_for_sale;
+use App\Models\PropertyForInvestment;
 use App\Models\Request_from_admin;
 use App\Models\request_from_expert;
 use Illuminate\Http\Request;
@@ -292,7 +293,24 @@ class RequestFromExpertController extends Controller
             ], 404);
         }
 
+        if($property->accept) {
+            PropertyForInvestment::create([
+                'property_id' => $request->economic_evaluation->property_for_sale_id,
+                'number_of_chances' => $request->economic_evaluation->number_of_chances,
+                'expected_price' => $request->economic_evaluation->expected_price,
+                'profit_percent' => $request->economic_evaluation->profit_percent,
+                'chance_price' => $request->economic_evaluation->chance_price,
+                'investment_time' => $request->economic_evaluation->investment_time,
+                'incoming_time' => $request->economic_evaluation->incoming_time,
+                'investment_mode' => $request->economic_evaluation->investment_mode,
+                'property_management' => $request->economic_evaluation->property_management,
+                'progress_percent' => 0,
+                'is_completed' => false,
+            ]);
+        }
+
         $newRequest = new Request_from_admin();
+        $newRequest->request_from_expert_id = $request->id;
         $newRequest->property_for_sale_id = $property->id;
         $newRequest->type_request = 'buy request';
         $newRequest->status = 'Stuck';

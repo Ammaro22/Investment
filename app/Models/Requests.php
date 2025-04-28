@@ -14,7 +14,8 @@ class Requests extends Model
     protected $fillable =[
         'property_for_sale_id',
         'status',
-        'description'
+        'description',
+        'type_request'
     ];
     public function property_for_sale(){
         return $this->belongsTo(Property_for_sale::class,'property_for_sale_id');
