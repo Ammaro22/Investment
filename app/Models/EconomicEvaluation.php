@@ -24,7 +24,7 @@ class EconomicEvaluation extends Model
         'incoming_time',
         'investment_mode',
         'property_management',
-        'agreed_negotiations_id'
+        'agreed_negotiation_id'
     ];
 
 
@@ -35,7 +35,7 @@ class EconomicEvaluation extends Model
     }
     public function agreed_negotiation()
     {
-        return$this->belongsTo(Agreed_negotiation::class,'agreed_negotiations_id');
+        return$this->belongsTo(Agreed_negotiation::class,'agreed_negotiation_id');
     }
     public function request_from_expert()
     {

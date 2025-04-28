@@ -25,7 +25,7 @@ return new class extends Migration
             $table->date('incoming_time');
             $table->enum('investment_mode',['CapitalGrowth','HighIncoming','Balanced']);
             $table->enum('property_management',['selling','rent']);
-            $table->foreignId('agreed_negotiations_id')->nullable();
+            $table->foreignId('agreed_negotiation_id')->nullable();
             $table->timestamps();
         });
     }
