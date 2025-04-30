@@ -80,7 +80,6 @@ class InvestmentController extends Controller
         return response()->json(['message' => trans('messages.operation_failed')]);
     }
 
-
     public function ShowProperty()
     {
 
@@ -101,48 +100,98 @@ class InvestmentController extends Controller
 
     }
 
+//    public function ShowPropertyByType(Request $request)
+//    {
+//
+//        $validator = Validator::make($request->all(), [
+//
+//            'property_type' => 'required|string'
+//        ]);
+//
+//
+//        if ($validator->fails()) {
+//            return response()->json(['errors' => $validator->errors()->all()], 422);
+//        }
+//
+//
+//        $property_type = $request->property_type;
+//
+//
+//        $property = PropertyForInvestment::with('property')->whereHas('property', function ($query) use ($property_type) {
+//            $query->where('property_type', $property_type);
+//
+//        })->get();
+//
+//
+//        if ($property->isEmpty()) {
+//            return response()->json(['message' => trans('messages.no_properties_found')]);
+//        }
+//
+//
+//        $properties = $property->map(function ($item) {
+//
+//            return $this->re_arrange($item);
+//
+//        });
+//
+//        return response()->json([
+//            'message' => trans('messages.properties_found'),
+//            'data' => $properties
+//        ]);
+//
+//    }
 
     public function ShowPropertyByType(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
-
             'property_type' => 'required|string'
         ]);
-
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()->all()], 422);
         }
 
-
         $property_type = $request->property_type;
 
-
-        $property = PropertyForInvestment::with('property')->whereHas('property', function ($query) use ($property_type) {
-            $query->where('property_type', $property_type);
-
-        })->get();
-
+        $property = PropertyForInvestment::with('property')
+            ->whereHas('property', function ($query) use ($property_type) {
+                $query->where('property_type', $property_type);
+            })
+            ->paginate(5);
 
         if ($property->isEmpty()) {
             return response()->json(['message' => trans('messages.no_properties_found')]);
         }
 
-
         $properties = $property->map(function ($item) {
+            $rearrangedItem = $this->re_arrange($item);
+            if ($rearrangedItem instanceof \Illuminate\Support\Collection) {
+                $rearrangedItem = $rearrangedItem->toArray();
+            }
+            $rearrangedItem = array_merge(['property_for_investment_id' => $item->id], $rearrangedItem);
 
-            return $this->re_arrange($item);
-
+            return $rearrangedItem;
         });
 
-        return response()->json([
+
+
+        $data = [
             'message' => trans('messages.properties_found'),
-            'data' => $properties
-        ]);
+            'data' => [
+                'properties' => $properties,
+                'pagination' => [
+                    'current_page' => $property->currentPage(),
+                    'last_page' => $property->lastPage(),
+                    'per_page' => $property->perPage(),
+                    'total' => $property->total(),
+                    'next_page_url' => $property->nextPageUrl(),
+                    'prev_page_url' => $property->previousPageUrl(),
+                ]
+            ]
+        ];
 
+        return response()->json($data);
     }
-
 
     public function ShowPropertyByInvestmentType(Request $request)
     {
@@ -177,7 +226,6 @@ class InvestmentController extends Controller
 
     }
 
-
     public function ShowPropertyById($PropertyId)
     {
 
@@ -198,8 +246,8 @@ class InvestmentController extends Controller
 
     }
 
-
     /*سيناريو الاستثمار*/
+
     public function invest(Request $request)
     {
         $user = auth()->user();
@@ -276,9 +324,6 @@ class InvestmentController extends Controller
         return response()->json(['message' => trans('messages.operation_success')]);
     }
 
-
-
-
     /*عرض العقارات التي استثمرها المستخدم مع تفاصيلها*/
 
     public function showPropertyInvestedByUser()
@@ -352,7 +397,6 @@ class InvestmentController extends Controller
         ]);
 
     }
-
 
     /*للنسبة في portfolio*/
 
