@@ -26,18 +26,37 @@ class InvestmentController extends Controller
     public function ShowProperty()
     {
 
-        $property = PropertyForInvestment::with('property')->get();
+        $property = PropertyForInvestment::with('property')->paginate(5);
 
 
         $properties = $property->map(function ($item) {
 
-            return $this->re_arrange($item);
+            $rearrangedItem = $this->re_arrange($item);
+            if ($rearrangedItem instanceof \Illuminate\Support\Collection) {
+                $rearrangedItem = $rearrangedItem->toArray();
+            }
+            $rearrangedItem = array_merge([
+                'property_for_investment_id' => $item->id],
+                $rearrangedItem, [
+                 'property_images'=>$item->property->Property_image]);
+
+            return $rearrangedItem;
         });
 
 
         return response()->json([
             'message' => trans('messages.operation_success'),
-            'data' => $properties
+            'data' => [
+                'properties'=>$properties,
+                'pagination' => [
+                    'current_page' => $property->currentPage(),
+                    'last_page' => $property->lastPage(),
+                    'per_page' => $property->perPage(),
+                    'total' => $property->total(),
+                    'next_page_url' => $property->nextPageUrl(),
+                    'prev_page_url' => $property->previousPageUrl(),
+                ]
+        ]
         ]);
 
 
