@@ -23,63 +23,6 @@ class InvestmentController extends Controller
 {
 
 
-    public function approve_property($evaluation_id)
-    {
-        $user = auth()->user();
-
-        if ($user->role_id != 1) {
-            return response()->json(['message' => trans('messages.unauthorized')]);
-        }
-
-
-        $evaluation = EconomicEvaluation::with('property')->find($evaluation_id);
-
-
-        if (!$evaluation) {
-            return response()->json(['message' => trans('messages.not_found')]);
-        }
-
-
-        $property = $evaluation->property;
-
-
-        if ($property->legal_check && $property->expert_check) {
-            $property->accept = true;
-            $property->save();
-
-            $evaluation->status = 'approved';
-            $evaluation->save();
-        }
-
-
-        $is_exists = PropertyForInvestment::where('property_id', $property->id)->first();
-
-
-        if ($is_exists) {
-            return response()->json(['message' => trans('messages.already_approved')]);
-        }
-
-
-        if ($property->accept) {
-            PropertyForInvestment::create([
-                'property_id' => $evaluation->property_id,
-                'number_of_chances' => $evaluation->number_of_chances,
-                'expected_price' => $evaluation->expected_price,
-                'profit_percent' => $evaluation->profit_percent,
-                'chance_price' => $evaluation->chance_price,
-                'investment_time' => $evaluation->investment_time,
-                'incoming_time' => $evaluation->incoming_time,
-                'investment_mode' => $evaluation->investment_mode,
-                'property_management' => $evaluation->property_management,
-                'progress_percent' => 0,
-                'is_completed' => false,
-            ]);
-
-            return response()->json(['message' => trans('messages.operation_success')]);
-        }
-        return response()->json(['message' => trans('messages.operation_failed')]);
-    }
-
     public function ShowProperty()
     {
 
@@ -99,47 +42,6 @@ class InvestmentController extends Controller
 
 
     }
-
-//    public function ShowPropertyByType(Request $request)
-//    {
-//
-//        $validator = Validator::make($request->all(), [
-//
-//            'property_type' => 'required|string'
-//        ]);
-//
-//
-//        if ($validator->fails()) {
-//            return response()->json(['errors' => $validator->errors()->all()], 422);
-//        }
-//
-//
-//        $property_type = $request->property_type;
-//
-//
-//        $property = PropertyForInvestment::with('property')->whereHas('property', function ($query) use ($property_type) {
-//            $query->where('property_type', $property_type);
-//
-//        })->get();
-//
-//
-//        if ($property->isEmpty()) {
-//            return response()->json(['message' => trans('messages.no_properties_found')]);
-//        }
-//
-//
-//        $properties = $property->map(function ($item) {
-//
-//            return $this->re_arrange($item);
-//
-//        });
-//
-//        return response()->json([
-//            'message' => trans('messages.properties_found'),
-//            'data' => $properties
-//        ]);
-//
-//    }
 
     public function ShowPropertyByType(Request $request)
     {
@@ -168,7 +70,10 @@ class InvestmentController extends Controller
             if ($rearrangedItem instanceof \Illuminate\Support\Collection) {
                 $rearrangedItem = $rearrangedItem->toArray();
             }
-            $rearrangedItem = array_merge(['property_for_investment_id' => $item->id], $rearrangedItem);
+            $rearrangedItem = array_merge([
+                'property_for_investment_id' => $item->id],
+                 $rearrangedItem, [
+                'property_images'=>$item->property->Property_image]);
 
             return $rearrangedItem;
         });
@@ -207,7 +112,7 @@ class InvestmentController extends Controller
         }
 
 
-        $property = PropertyForInvestment::with('property')->where('investment_mode', $request->investment_mode)->get();
+        $property = PropertyForInvestment::with('property')->where('investment_mode', $request->investment_mode)->paginate(5);
 
         if ($property->isEmpty()) {
             return response()->json(['message' => trans('messages.no_properties_found')]);
@@ -215,13 +120,32 @@ class InvestmentController extends Controller
 
 
         $properties = $property->map(function ($item) {
-            return $this->re_arrange($item);
+            $rearrangedItem= $this->re_arrange($item);
+            if ($rearrangedItem instanceof \Illuminate\Support\Collection) {
+                $rearrangedItem = $rearrangedItem->toArray();
+            }
+            $rearrangedItem = array_merge([
+                'property_for_investment_id' => $item->id],
+                $rearrangedItem, [
+                 'property_images'=>$item->property->Property_image]);
+
+            return $rearrangedItem;
 
         });
 
         return response()->json([
             'message' => trans('messages.properties_found'),
-            'data' => $properties
+            'data' =>[
+                 'properties'=>$properties,
+                  'pagination' => [
+                       'current_page' => $property->currentPage(),
+                       'last_page' => $property->lastPage(),
+                       'per_page' => $property->perPage(),
+                       'total' => $property->total(),
+                       'next_page_url' => $property->nextPageUrl(),
+                       'prev_page_url' => $property->previousPageUrl(),
+            ]
+            ]
         ]);
 
     }
@@ -336,7 +260,7 @@ class InvestmentController extends Controller
             return response()->json(['message' => trans('messages.unauthorized')]);
         }
 
-        $property_invested = Investment::with('property_invested')->where('user_id', $user->id)->get();
+        $property_invested = Investment::with('property_invested')->where('user_id', $user->id)->paginate(5);
 
 
         if ($property_invested->isEmpty()) {
@@ -347,20 +271,39 @@ class InvestmentController extends Controller
             $main = collect($item->toArray())->except('property_invested');
 
             $related = collect($item->property_invested)->except('property_management', 'property_id');
-
-            $re_arrange = $main->merge($related);
+            $related2=collect($item->property_invested->property)->except('legal_check', 'expert_check', 'accept', 'user_id', 'price');
+            $re_arrange = $main->merge($related)->merge($related2);
 
             $created_at = Carbon::parse($re_arrange->pull('created_at'))->format('Y-m-d');
             $updated_at = Carbon::parse($re_arrange->pull('updated_at'))->format('Y-m-d');
 
-            return $re_arrange->put('created_at', $created_at)->put('updated_at', $updated_at);
+            $rearrangedItem= $re_arrange->put('created_at', $created_at)->put('updated_at', $updated_at);
 
+
+            if ($rearrangedItem instanceof \Illuminate\Support\Collection) {
+                $rearrangedItem = $rearrangedItem->toArray();
+            }
+            $rearrangedItem = array_merge(
+                $rearrangedItem, [
+                'property_images'=>$item->property_invested->property->Property_image]);
+
+            return $rearrangedItem;
 
         });
 
         return response()->json([
             'message' => trans('messages.operation_success'),
-            'data' => $investments
+            'data' => [
+                 'properties'=>$investments,
+                 'pagination' => [
+                     'current_page' => $property_invested->currentPage(),
+                     'last_page' => $property_invested->lastPage(),
+                     'per_page' => $property_invested->perPage(),
+                     'total' => $property_invested->total(),
+                     'next_page_url' => $property_invested->nextPageUrl(),
+                     'prev_page_url' => $property_invested->previousPageUrl(),
+            ]
+            ]
         ]);
 
 
@@ -379,7 +322,7 @@ class InvestmentController extends Controller
             return response()->json(['message' => trans('messages.unauthorized')]);
         }
 
-        $investments = Investment::where('user_id', $user->id)->get();
+        $investments = Investment::where('user_id', $user->id)->paginate(5);
 
 
         if ($investments->isEmpty()) {
@@ -393,7 +336,17 @@ class InvestmentController extends Controller
 
         return response()->json([
             'message' => trans('messages.operation_success'),
-            'data' => $listOfInvestment
+            'data' => [
+                'properties'=> $listOfInvestment,
+                'pagination' => [
+                         'current_page' => $investments->currentPage(),
+                         'last_page' => $investments->lastPage(),
+                         'per_page' => $investments->perPage(),
+                         'total' => $investments->total(),
+                         'next_page_url' => $investments->nextPageUrl(),
+                         'prev_page_url' => $investments->previousPageUrl(),
+    ]
+        ]
         ]);
 
     }
