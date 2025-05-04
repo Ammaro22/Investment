@@ -158,7 +158,7 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::get('/ShowListOfUserProfit',[InvestmentController::class,'ShowListOfUserProfit']);
     Route::post('/ShowListOfUserProfitByInvestMode',[InvestmentController::class,'ShowListOfUserProfitByInvestMode']);
 
-    
+
 
 
 });

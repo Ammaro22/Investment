@@ -342,7 +342,7 @@ class InvestmentController extends Controller
             return response()->json(['message' => trans('messages.unauthorized')]);
         }
 
-        $investments = Investment::where('user_id', $user->id)->paginate(5);
+        $investments = Investment::with('property_invested.property ')->where('user_id', $user->id)->paginate(5);
 
 
         if ($investments->isEmpty()) {
@@ -382,6 +382,88 @@ class InvestmentController extends Controller
         ]);
 
     }
+
+
+
+
+
+
+
+
+
+
+    public function ShowListOfUserInvestmentByInvestMode(Request $request)
+    {
+
+
+        $user = auth()->user();
+
+        $userRole = $user->role_id;
+
+        if (!$user || $userRole != 2) {
+            return response()->json(['message' => trans('messages.unauthorized')]);
+        }
+
+        $validator=Validator::make($request->all(),[
+            'investment_mode'=>'required|string'
+        ]);
+
+        if($validator->fails())
+        {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $investment_mode=$request->input('investment_mode');
+
+        $investments = Investment::with('property_invested.property')->where('user_id', $user->id)->whereHas('property_invested',function ($query)use ($investment_mode)
+        {
+            $query->where('investment_mode',$investment_mode);
+        })->paginate(5);
+
+
+        if ($investments->isEmpty()) {
+            return response()->json(['message' => trans('messages.not_found')]);
+        }
+
+        $listOfInvestment = $investments->map(function ($investment) {
+            $propertyForSaleInfo=$investment->property_invested->property ??null;
+
+            return [
+                'id'=>$investment->id,
+                'user_id'=>$investment->user_id,
+                'property_for_investment_id' => $investment->property_for_investment_id,
+                'amount_payed' => $investment->amount_payed,
+                'chance_invested'=>$investment->chance_invested,
+                'property_type' => $propertyForSaleInfo?->property_type,
+                'exact_position' => $propertyForSaleInfo?->exact_position,
+                'created_at' => $investment->created_at->format('Y-m-d'),
+                'updated_at' => $investment->updated_at->format('Y-m-d'),
+            ];
+        });
+
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'properties'=> $listOfInvestment,
+                'pagination' => [
+                    'current_page' => $investments->currentPage(),
+                    'last_page' => $investments->lastPage(),
+                    'per_page' => $investments->perPage(),
+                    'total' => $investments->total(),
+                    'next_page_url' => $investments->nextPageUrl(),
+                    'prev_page_url' => $investments->previousPageUrl(),
+                ]
+            ]
+        ]);
+
+    }
+
+
+
+
+
+
 
 
 
@@ -503,82 +585,6 @@ class InvestmentController extends Controller
         ]);
 
     }
-
-
-
-
-
-    public function ShowListOfUserInvestmentByInvestMode(Request $request)
-    {
-
-
-        $user = auth()->user();
-
-        $userRole = $user->role_id;
-
-        if (!$user || $userRole != 2) {
-            return response()->json(['message' => trans('messages.unauthorized')]);
-        }
-
-        $validator=Validator::make($request->all(),[
-            'investment_mode'=>'required|string'
-        ]);
-
-        if($validator->fails())
-        {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $investment_mode=$request->input('investment_mode');
-
-        $investments = Investment::with('property_invested.property')->where('user_id', $user->id)->whereHas('property_invested',function ($query)use ($investment_mode)
-            {
-                $query->where('investment_mode',$investment_mode);
-            })->paginate(5);
-
-
-        if ($investments->isEmpty()) {
-            return response()->json(['message' => trans('messages.not_found')]);
-        }
-
-        $listOfInvestment = $investments->map(function ($investment) {
-            $propertyForSaleInfo=$investment->property_invested->property ??null;
-
-            return [
-                'id'=>$investment->id,
-                'user_id'=>$investment->user_id,
-                'property_for_investment_id' => $investment->property_for_investment_id,
-                'amount_payed' => $investment->amount_payed,
-                'chance_invested'=>$investment->chance_invested,
-                'property_type' => $propertyForSaleInfo?->property_type,
-                'exact_position' => $propertyForSaleInfo?->exact_position,
-                'created_at' => $investment->created_at->format('Y-m-d'),
-                'updated_at' => $investment->updated_at->format('Y-m-d'),
-            ];
-        });
-
-
-        return response()->json([
-            'message' => trans('messages.operation_success'),
-            'data' => [
-                'properties'=> $listOfInvestment,
-                'pagination' => [
-                    'current_page' => $investments->currentPage(),
-                    'last_page' => $investments->lastPage(),
-                    'per_page' => $investments->perPage(),
-                    'total' => $investments->total(),
-                    'next_page_url' => $investments->nextPageUrl(),
-                    'prev_page_url' => $investments->previousPageUrl(),
-                ]
-            ]
-        ]);
-
-    }
-
-
-
-
-
 
 
 
