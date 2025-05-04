@@ -103,7 +103,9 @@ class RequestController extends Controller
                 'status' => $request->status,
                 'description' => $request->description,
                 'user_name' => $request->property_for_sale->user->name ?? null,
-                'created_at' => $request->created_at->format('Y-m-d'),
+                'property_type' => $request->property_for_sale->property_type ?? null,
+                'location' => trim($request->property_for_sale->state . ' ' . $request->property_for_sale->exact_position),
+                'created_at' => $request->created_at->format('Y-m-d H:i:s')
             ];
         });
 
@@ -113,7 +115,9 @@ class RequestController extends Controller
                 'status' => $adminRequest->status,
                 'type_request' => $adminRequest->type_request,
                 'user_name' => $adminRequest->proprtsseale->user->name ?? null,
-                'created_at' => $adminRequest->created_at->format('Y-m-d'),
+                'property_type' => $adminRequest->proprtsseale->property_type ?? null,
+                'location' => trim($adminRequest->proprtsseale->state . ' ' . $adminRequest->proprtsseale->exact_position),
+                'created_at' => $adminRequest->created_at->format('Y-m-d H:i:s')
             ];
         });
 
