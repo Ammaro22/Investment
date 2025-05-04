@@ -74,6 +74,7 @@ class InvestmentController extends Controller
 
         $property_type = $request->property_type;
 
+
         $property = PropertyForInvestment::with('property')
             ->whereHas('property', function ($query) use ($property_type) {
                 $query->where('property_type', $property_type);
@@ -349,7 +350,19 @@ class InvestmentController extends Controller
         }
 
         $listOfInvestment = $investments->map(function ($investment) {
-            return $this->Format_timeStamp_Map($investment);
+            $propertyForSaleInfo=$investment->property_invested->property ??null;
+
+            return [
+                'id'=>$investment->id,
+                'user_id'=>$investment->user_id,
+                'property_for_investment_id' => $investment->property_for_investment_id,
+                'amount_payed' => $investment->amount_payed,
+                'chance_invested'=>$investment->chance_invested,
+                'property_type' => $propertyForSaleInfo?->property_type,
+                'exact_position' => $propertyForSaleInfo?->exact_position,
+                'created_at' => $investment->created_at->format('Y-m-d'),
+                'updated_at' => $investment->updated_at->format('Y-m-d'),
+            ];
         });
 
 
@@ -369,6 +382,207 @@ class InvestmentController extends Controller
         ]);
 
     }
+
+
+
+
+
+    public function ShowListOfUserProfitByInvestMode(Request $request)
+    {
+
+        $user = auth()->user();
+
+        $userRole = $user->role_id;
+
+        if (!$user || $userRole != 2) {
+            return response()->json(['message' => trans('messages.unauthorized')]);
+        }
+
+        $validator=Validator::make($request->all(),[
+            'investment_mode'=>'required|string'
+        ]);
+
+        if($validator->fails())
+        {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $investment_mode=$request->input('investment_mode');
+
+        $profits = Profit::with('completedProperty.property.property')->where('user_id', $user->id)
+            ->whereHas('completedProperty.property',function ($query)use ($investment_mode)
+        {
+            $query->where('investment_mode',$investment_mode);
+        })->paginate(5);
+
+
+        if ($profits->isEmpty()) {
+            return response()->json(['message' => trans('messages.not_found')]);
+        }
+
+        $listOfProfits = $profits->map(function ($profit) {
+            $propertyInfo=$profit->completedProperty->property->property ??null;
+            return [
+                'id'=>$profit->id,
+                'completed_property_id'=>$profit->completed_property_id,
+                'user_id'=>$profit->user_id,
+                'profit_amount'=>$profit->profit_amount,
+                'property_type'=>$propertyInfo?->property_type,
+                'exact_position' => $propertyInfo?->exact_position,
+                'scheduled_date'=>$profit->scheduled_date,
+                'transfer_status'=>$profit->transfer_status
+            ];
+        });
+
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'properties'=> $listOfProfits,
+                'pagination' => [
+                    'current_page' => $profits->currentPage(),
+                    'last_page' => $profits->lastPage(),
+                    'per_page' => $profits->perPage(),
+                    'total' => $profits->total(),
+                    'next_page_url' => $profits->nextPageUrl(),
+                    'prev_page_url' => $profits->previousPageUrl(),
+                ]
+            ]
+        ]);
+
+    }
+
+
+
+    public function ShowListOfUserProfit()
+    {
+
+        $user = auth()->user();
+
+        $userRole = $user->role_id;
+
+        if (!$user || $userRole != 2) {
+            return response()->json(['message' => trans('messages.unauthorized')]);
+        }
+
+        $profits = Profit::with('completedProperty.property.property')->where('user_id', $user->id)->paginate(5);
+
+
+        if ($profits->isEmpty()) {
+            return response()->json(['message' => trans('messages.not_found')]);
+        }
+
+        $listOfProfits = $profits->map(function ($profit) {
+            $propertyInfo=$profit->completedProperty->property->property ??null;
+            return [
+                'id'=>$profit->id,
+                'completed_property_id'=>$profit->completed_property_id,
+                'user_id'=>$profit->user_id,
+                'profit_amount'=>$profit->profit_amount,
+                'property_type'=>$propertyInfo?->property_type,
+                'exact_position' => $propertyInfo?->exact_position,
+                'scheduled_date'=>$profit->scheduled_date,
+                'transfer_status'=>$profit->transfer_status
+            ];
+        });
+
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'properties'=> $listOfProfits,
+                'pagination' => [
+                    'current_page' => $profits->currentPage(),
+                    'last_page' => $profits->lastPage(),
+                    'per_page' => $profits->perPage(),
+                    'total' => $profits->total(),
+                    'next_page_url' => $profits->nextPageUrl(),
+                    'prev_page_url' => $profits->previousPageUrl(),
+                ]
+            ]
+        ]);
+
+    }
+
+
+
+
+
+    public function ShowListOfUserInvestmentByInvestMode(Request $request)
+    {
+
+
+        $user = auth()->user();
+
+        $userRole = $user->role_id;
+
+        if (!$user || $userRole != 2) {
+            return response()->json(['message' => trans('messages.unauthorized')]);
+        }
+
+        $validator=Validator::make($request->all(),[
+            'investment_mode'=>'required|string'
+        ]);
+
+        if($validator->fails())
+        {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $investment_mode=$request->input('investment_mode');
+
+        $investments = Investment::with('property_invested.property')->where('user_id', $user->id)->whereHas('property_invested',function ($query)use ($investment_mode)
+            {
+                $query->where('investment_mode',$investment_mode);
+            })->paginate(5);
+
+
+        if ($investments->isEmpty()) {
+            return response()->json(['message' => trans('messages.not_found')]);
+        }
+
+        $listOfInvestment = $investments->map(function ($investment) {
+            $propertyForSaleInfo=$investment->property_invested->property ??null;
+
+            return [
+                'id'=>$investment->id,
+                'user_id'=>$investment->user_id,
+                'property_for_investment_id' => $investment->property_for_investment_id,
+                'amount_payed' => $investment->amount_payed,
+                'chance_invested'=>$investment->chance_invested,
+                'property_type' => $propertyForSaleInfo?->property_type,
+                'exact_position' => $propertyForSaleInfo?->exact_position,
+                'created_at' => $investment->created_at->format('Y-m-d'),
+                'updated_at' => $investment->updated_at->format('Y-m-d'),
+            ];
+        });
+
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'properties'=> $listOfInvestment,
+                'pagination' => [
+                    'current_page' => $investments->currentPage(),
+                    'last_page' => $investments->lastPage(),
+                    'per_page' => $investments->perPage(),
+                    'total' => $investments->total(),
+                    'next_page_url' => $investments->nextPageUrl(),
+                    'prev_page_url' => $investments->previousPageUrl(),
+                ]
+            ]
+        ]);
+
+    }
+
+
+
+
+
+
+
+
+
 
     /*للنسبة في portfolio*/
 
@@ -431,7 +645,7 @@ class InvestmentController extends Controller
             return response()->json(['message' => trans('messages.operation_failed')]);
         }
 
-        $economic = EconomicEvaluation::where('property_id', $property_id)->first();
+        $economic = EconomicEvaluation::where('property_for_sale_id', $property_id)->first();
 
         if (!$economic)
         {
@@ -514,7 +728,7 @@ class InvestmentController extends Controller
             return response()->json(['message' => trans('messages.profit_already_exists')]);
         }
 
-        $economic = EconomicEvaluation::where('property_id', $property_id)->first();
+        $economic = EconomicEvaluation::where('property_for_sale_id', $property_id)->first();
 
         if (!$economic->incoming_time)
         {
@@ -584,12 +798,12 @@ class InvestmentController extends Controller
 
 
 
-    public function Format_timeStamp_Map($investment)
+    public function Format_timeStamp_Map($type)
     {
 
-        $ArrayWallet = $investment->toArray();
-        $ArrayWallet['created_at'] = Carbon::parse($investment->created_at)->format('Y-m-d');
-        $ArrayWallet['updated_at'] = Carbon::parse($investment->updated_at)->format('Y-m-d');
+        $ArrayWallet = $type->toArray();
+        $ArrayWallet['created_at'] = Carbon::parse($type->created_at)->format('Y-m-d');
+        $ArrayWallet['updated_at'] = Carbon::parse($type->updated_at)->format('Y-m-d');
         return $ArrayWallet;
 
 

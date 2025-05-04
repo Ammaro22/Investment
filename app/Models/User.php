@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
@@ -27,6 +28,7 @@ class User extends Authenticatable
         'phone',
         'verification_code',
         'role_id',
+        'fcm_token'
     ];
     public function role(){
         return $this->belongsTo(Role::class,'role_id');
@@ -50,6 +52,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Investment::class);
     }
+
+    public function logs()
+    {
+        return $this->hasMany(Log::class, 'user_id');
+    }
+
 
     /**
      * The attributes that should be hidden for serialization.

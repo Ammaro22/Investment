@@ -4,14 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Wallet;
+use App\Services\FirebaseNotificationService;
+use DatabaseLogger;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 
-
 class UserController extends Controller
 {
+
+    protected $firebaseNotification;
+
+    public function __construct(FirebaseNotificationService $firebaseNotification)
+    {
+        $this->firebaseNotification=$firebaseNotification;
+    }
 
     public function signup(Request $request)
     {
@@ -37,7 +46,8 @@ class UserController extends Controller
         $this->createWallets($user, $request->role_id);
 
         $accessToken = $user->createToken('authToken')->accessToken;
-
+        DatabaseLogger::log('info','user sign up',['user_id'=>$user->id,
+            'user_name'=>$user->name]);
         return response([
             'message' => trans('messages.account_created'),
             'user' => $user,
@@ -65,6 +75,10 @@ class UserController extends Controller
         $user = auth()->user();
         $token = $user->createToken('Personal Access Token')->accessToken;
 
+        DatabaseLogger::log('info','user logged in',['user_id'=>$user->id,
+            'user_name'=>$user->name]);
+
+        $this->firebaseNotification->sendToUser($user,'login','you are logged in');
         return response([
             'message' => trans('messages.login_success'),
             'data' => $user,
@@ -156,4 +170,75 @@ class UserController extends Controller
             ]);
         }
     }
+
+
+
+
+
+    public function getLogsForUser($user_id)
+    {
+        if(!$user_id)
+        {
+            return response()->json(['message'=>'messages.not_found']);
+        }
+
+        $user=auth()->user();
+        $userRole=$user->role_id;
+        if(!$user||$userRole!=1)
+        {
+            return response()->json(['message'=>trans('messages.unauthorized')]);
+        }
+
+        $logs=\App\Models\Log::where('user_id',$user_id)->paginate(5);
+
+        $pagination = $logs->getCollection()->map(function ($paginate) {
+            $context = json_decode($paginate->context, true);
+            return [
+                'id' => $paginate->id,
+                'user_id' => $paginate->user_id,
+                'message' => $paginate->message,
+                'level' => $paginate->level,
+                'record_datetime' => $paginate->record_datetime->format('Y-m-d'),
+                'context' => $context,
+            ];
+        });
+
+
+        return response()->json(['message'=>trans('messages.operation_success'),
+            'data'=>[
+                'logs'=>$pagination,
+                'pagination' => [
+                    'current_page' => $logs->currentPage(),
+                    'last_page' => $logs->lastPage(),
+                    'per_page' => $logs->perPage(),
+                    'total' => $logs->total(),
+                    'next_page_url' => $logs->nextPageUrl(),
+                    'prev_page_url' => $logs->previousPageUrl(),
+                ]
+        ]]);
+    }
+
+
+    public function storeFcmToken(Request $request)
+    {
+        $user=auth()->user();
+
+        if(!$user)
+        {
+            return response()->json(['message'=>trans('messages.not_found')]);
+        }
+        $validator=Validator::make($request->all(),[
+            'fcm_token'=>'required|string'
+        ]);
+
+        if($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()],400);
+        }
+
+        $user->update(['fcm_token'=>$request->fcm_token]);
+
+        return response()->json(['message'=>trans('messages.operation_success')]);
+    }
+
 }

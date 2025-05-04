@@ -35,6 +35,7 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('logout',[UserController::class,'logout']);
     Route::get('profile',[UserController::class,'profile']);
     Route::post('update',[UserController::class,'update']);
+    Route::post('/storeFcmToken',[UserController::class,'storeFcmToken']);
 
 
 
@@ -122,6 +123,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::post('/reject_request_from_expert/{request_from_expert_id}', [RequestFromExpertController::class, 'rejectRequest']);
     Route::get('/get_all_requests', [RequestFromExpertController::class, 'getAllRequestsForAdmin']);
     Route::get('/get_requests_by_id/{request_from_expert_id}',[RequestFromExpertController::class,'getRequestFromExpertById']);
+
 });
 
 /*ارسال تقير من الادمن الى المحامي لشراء العقار*/
@@ -130,6 +132,9 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::post('/add_image_for_Document/{Request_from_admin_id}', [ReqeustFromAdminController::class, 'addImagesAndCompleteRequest']);
     Route::get('/get_buy_request_completed', [ReqeustFromAdminController::class, 'getCompletedRequests']);
     Route::get('/get_buy_request/{Request_from_admin_id}', [ReqeustFromAdminController::class, 'getRequestWithImages']);
+    Route::get('/wallets/ShowPlatformWallet',[WalletController::class,'ShowPlatformWallet']);
+    Route::get('/getLogsForUser/{user_id}',[UserController::class,'getLogsForUser']);
+
 });
 
 Route::group(["middleware"=>["auth:api"]],function() {
@@ -149,6 +154,12 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::get('/showPropertyInvestedByUser',[InvestmentController::class,'showPropertyInvestedByUser']);
     Route::get('/ShowListOfUserInvestment',[InvestmentController::class,'ShowListOfUserInvestment']);
     Route::get('/ShowPercentageOfInvestments',[InvestmentController::class,'ShowPercentageOfInvestments']);
+    Route::post('/ShowListOfUserInvestmentByInvestMode',[InvestmentController::class,'ShowListOfUserInvestmentByInvestMode']);
+    Route::get('/ShowListOfUserProfit',[InvestmentController::class,'ShowListOfUserProfit']);
+    Route::post('/ShowListOfUserProfitByInvestMode',[InvestmentController::class,'ShowListOfUserProfitByInvestMode']);
+
+    
+
 
 });
 
@@ -162,7 +173,6 @@ Route::post('/ShowPropertyById/{property_id}',[InvestmentController::class,'Show
 /*الادمن */
 Route::group(["middleware"=>["auth:api"]],function (){
 
-    Route::get('/wallets/ShowPlatformWallet',[WalletController::class,'ShowPlatformWallet']);
     Route::post('/admin/approve_property/{evaluation_id}',[InvestmentController::class,'approve_property']);
 
 });

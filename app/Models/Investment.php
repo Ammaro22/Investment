@@ -29,4 +29,11 @@ class Investment extends Model
     {
         return $this->belongsTo(PropertyForInvestment::class,'property_for_investment_id');
     }
+
+
+//    public function property_for_sale()
+//    {
+//        return $this->hasOneThrough(Property_for_sale::class,PropertyForInvestment::class,'id','id','property_for_investment_id','property_id');
+//    }
 }
+

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\FcmTokenProviderService;
+use App\Services\FirebaseNotificationService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +13,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(FcmTokenProviderService::class);
+
+        $this->app->singleton(FirebaseNotificationService::class, function ($app) {
+            return new FirebaseNotificationService(
+                $app->make(FcmTokenProviderService::class)
+            );
+        });
     }
 
     /**
