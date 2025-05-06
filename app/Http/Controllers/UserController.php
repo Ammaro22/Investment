@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Services\FirebaseNotificationService;
+use App\Services\FireStoreTokenService;
 use DatabaseLogger;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -14,13 +16,18 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-
+    protected $fireStoreToken;
     protected $firebaseNotification;
 
-    public function __construct(FirebaseNotificationService $firebaseNotification)
+    public function __construct(FirebaseNotificationService $firebaseNotification,FireStoreTokenService $fireStoreToken)
     {
         $this->firebaseNotification=$firebaseNotification;
+        $this->fireStoreToken=$fireStoreToken;
+
     }
+
+
+
 
     public function signup(Request $request)
     {
@@ -75,14 +82,19 @@ class UserController extends Controller
         $user = auth()->user();
         $token = $user->createToken('Personal Access Token')->accessToken;
 
+        $uid='user_'.$user->id;
+        $firebaseToken=$this->fireStoreToken->createCustomToken($uid);
+
         DatabaseLogger::log('info','user logged in',['user_id'=>$user->id,
             'user_name'=>$user->name]);
 
-        $this->firebaseNotification->sendToUser($user,'login','you are logged in');
+        $this->firebaseNotification->sendToUser($user,'login_success');
         return response([
             'message' => trans('messages.login_success'),
             'data' => $user,
             'token' => $token,
+            'firebaseToken'=>$firebaseToken,
+            'uid'=>$uid
         ]);
     }
 
@@ -225,7 +237,7 @@ class UserController extends Controller
 
         if(!$user)
         {
-            return response()->json(['message'=>trans('messages.not_found')]);
+            return response()->json(['message'=>trans('messages.unauthorized')]);
         }
         $validator=Validator::make($request->all(),[
             'fcm_token'=>'required|string'
@@ -241,4 +253,42 @@ class UserController extends Controller
         return response()->json(['message'=>trans('messages.operation_success')]);
     }
 
+
+
+    public function showNotificationByType(Request $request)
+    {
+        $user=auth()->user();
+        if(!$user)
+        {
+            return response()->json(['message'=>trans('messages.unauthorized')]);
+        }
+
+        $validator=Validator::make($request->all(), [
+            'type'=>'required|string'
+
+        ]);
+        if($validator->fails())
+        {
+            return response()->json(['errors'=>$validator->errors()],400);
+        }
+
+        $notifications=Notification::where('user_id',$user->id)
+            ->where('type',$request->type)
+            ->get()->map(function ($notification)
+        {
+            return[
+                'id'=>$notification->id,
+                'user_id'=>$notification->user_id,
+                'type'=>$notification->type,
+                'title'=>$notification->title,
+                'body'=>$notification->body,
+                'created_at'=>$notification->created_at_formatted,
+                'updated_at'=>$notification->updated_at_formatted
+            ];
+        });
+
+        return response()->json(['message'=>trans('messages.operation_success'),'data'=>$notifications]);
+
+
+    }
 }

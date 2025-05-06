@@ -44,4 +44,5 @@ return [
 
     'profit_already_exists'=>'المحفظة موجودة مسبقا',
     'profits_already_calculated'=>'تم الحساب مسبقا',
+
 ];

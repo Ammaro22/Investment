@@ -36,6 +36,10 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::get('profile',[UserController::class,'profile']);
     Route::post('update',[UserController::class,'update']);
     Route::post('/storeFcmToken',[UserController::class,'storeFcmToken']);
+    Route::post('/showNotificationByType',[UserController::class,'showNotificationByType']);
+
+
+
 
 
 
@@ -168,6 +172,7 @@ Route::get('/ShowProperty',[InvestmentController::class,'ShowProperty']);
 Route::post('/ShowPropertyByType',[InvestmentController::class,'ShowPropertyByType']);
 Route::post('/ShowPropertyByInvestmentType',[InvestmentController::class,'ShowPropertyByInvestmentType']);
 Route::post('/ShowPropertyById/{property_id}',[InvestmentController::class,'ShowPropertyById']);
+
 
 
 /*الادمن */

@@ -342,7 +342,7 @@ class InvestmentController extends Controller
             return response()->json(['message' => trans('messages.unauthorized')]);
         }
 
-        $investments = Investment::with('property_invested.property ')->where('user_id', $user->id)->paginate(5);
+        $investments = Investment::with('property_invested.property')->where('user_id', $user->id)->paginate(5);
 
 
         if ($investments->isEmpty()) {
@@ -821,56 +821,6 @@ class InvestmentController extends Controller
 
 
 
-
-
-
-
-//
-//    public function getCompletedProperty()
-//    {
-//
-//        $user = auth()->user();
-//
-//        $userRole = $user->role_id;
-//
-//        if (!$user || $userRole != 3) {
-//            return response()->json(['message' => trans('messages.unauthorized')]);
-//        }
-//
-//        $properties = PropertyForInvestment::with('property')
-//            ->where('is_completed', true)
-//            ->get();
-//
-//
-//        if ($properties->isEmpty()) {
-//            return response()->json(['message' => trans('messages.no_properties_found')]);
-//        }
-//
-//        foreach ($properties as $property){
-//            $existing = CompletedProperty::where('property_for_investment_id', $property->id)->first();
-//
-//            if (!$existing) {
-//
-//                CompletedProperty::create([
-//                    'property_for_investment_id' => $property->id,
-//                    'property_management' => $property->property_management,
-//                    'created_at' => now(),
-//                    'updated_at' => now()
-//                ]);
-//
-//
-//            }
-//        }
-//        $formatted = $properties->map(function ($item) {
-//            return $this->re_arrange($item);
-//
-//        });
-//
-//        return  response()->json([
-//            'message'=>trans('messages.properties_found'),
-//            'data'=>$formatted
-//        ]);
-//    }
 
 
 

@@ -41,5 +41,7 @@ return [
 
     'profit_already_exists'=>'profit_already_exists',
     'profits_already_calculated'=>'profits_already_calculated',
+
+
 ];
 
