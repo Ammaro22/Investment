@@ -71,7 +71,6 @@ class WalletController extends Controller
     }
 
 
-
     public function ShowPlatformWallet()
     {
         $user=auth()->user();

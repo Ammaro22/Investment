@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\EconomicEvaluation;
 use App\Models\Property_for_sale;
 use App\Models\PropertyForInvestment;

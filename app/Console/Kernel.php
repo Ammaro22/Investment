@@ -21,6 +21,14 @@ class Kernel extends ConsoleKernel
 
         Log::info('Scheduled job has been added.');
     }
+
+    protected function schedule2(Schedule $schedule)
+    {
+        Log::info('Scheduler function is being called at ' . now());
+        $schedule->command('reset:investments-and-rewards')
+            ->yearlyOn(1, 1, '00:00')
+        ->timezone('Asia/Damascus');;
+    }
     /**
      * Register the commands for the application.
      */

@@ -28,7 +28,9 @@ class User extends Authenticatable
         'phone',
         'verification_code',
         'role_id',
-        'fcm_token'
+        'fcm_token',
+        'personal_photo',
+        'active'
     ];
     public function role(){
         return $this->belongsTo(Role::class,'role_id');
@@ -58,6 +60,21 @@ class User extends Authenticatable
         return $this->hasMany(Log::class, 'user_id');
     }
 
+    public function AmountInvested()
+    {
+        return $this->hasOne(AmountInvested::class, 'user_id');
+    }
+
+
+    public function RewardTransactions()
+    {
+        return $this->hasMany(RewardTransactions::class, 'user_id');
+    }
+
+    public function EmployeeInformation()
+    {
+        return $this->hasOne(EmployeeInformation::class, 'user_id');
+    }
 
     /**
      * The attributes that should be hidden for serialization.

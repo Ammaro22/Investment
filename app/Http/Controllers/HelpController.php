@@ -15,7 +15,7 @@ class HelpController extends Controller
     {
 
         $userRole = auth()->user()->role_id;
-        if ($userRole !== 2 ) {
+        if ($userRole !== 2 && $userRole !== 4) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);

@@ -18,6 +18,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('phone');
+            $table->string('personal_photo')->nullable();
+            $table->boolean('active')->default(true);
             $table->string('verification_code')->nullable();
             $table->string('fcm_token')->nullable();
             $table->foreignId('role_id')->constrained('roles')->cascadeOnDelete();

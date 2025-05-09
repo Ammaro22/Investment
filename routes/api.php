@@ -3,6 +3,7 @@
 use App\Http\Controllers\AgreedNegotiationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ElectronicPropertyCertificateController;
+use App\Http\Controllers\EmployeeInformationController;
 use App\Http\Controllers\FrequentlyQuestionsController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\InvestmentController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\ReqeustFromAdminController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\RequestFromExpertController;
 use App\Http\Controllers\RequestFromLawyerController;
+use App\Http\Controllers\RewardController;
 use App\Http\Controllers\StripeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WalletController;
@@ -177,8 +179,24 @@ Route::post('/ShowPropertyById/{property_id}',[InvestmentController::class,'Show
 
 /*الادمن */
 Route::group(["middleware"=>["auth:api"]],function (){
-
     Route::post('/admin/approve_property/{evaluation_id}',[InvestmentController::class,'approve_property']);
-
 });
 
+Route::group(["middleware"=>["auth:api"]],function (){
+    Route::post('/add_info_employee/{user_Id}', [EmployeeInformationController::class, 'addEmployeeInformation']);
+    Route::post('/search_user_by_role_and_name', [EmployeeInformationController::class, 'searchUsers']);
+    Route::get('/get_info_users_by_id/{userId}', [EmployeeInformationController::class, 'getUserWithEmployeeInfo']);
+    Route::post('/get_employee_by_role_and_active', [EmployeeInformationController::class, 'getUsersByRoleAndActive']);
+    Route::post('/deactivate/{userId}', [EmployeeInformationController::class, 'deactivateUser']);
+    Route::post('/activate/{userId}', [EmployeeInformationController::class, 'activateUser']);
+});
+
+/*الجوائز*/
+Route::get('/get_Rewards',[RewardController::class,'getRewards']);
+Route::group(["middleware"=>["auth:api"]],function() {
+    Route::post('/add_reward_by_admin', [RewardController::class, 'addReward']);
+    Route::post('/update_reward_by_admin/{reward_id}', [RewardController::class, 'updateReward']);
+    Route::delete('/delete_reward_by_admin/{reward_id}', [RewardController::class, 'deleteReward']);
+    /*عرض الجوائز لليوزر*/
+    Route::get('/get_User_Investments_And_Rewards',[RewardController::class,'getUserInvestmentsAndRewards']);
+});

@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers;
+use App\Models\AmountInvested;
 use App\Models\CompletedProperty;
 use App\Models\EconomicEvaluation;
 use App\Models\Investment;
 use App\Models\Profit;
 use App\Models\PropertyForInvestment;
+use App\Models\Reward;
+use App\Models\RewardTransactions;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use Carbon\Carbon;
@@ -265,6 +268,7 @@ class InvestmentController extends Controller
         if ($isCompleted) {
             $this->CalculateNetProfit($property->id);
         }
+        $this->calculateRewards($user, $amount);
         return response()->json(['message' => trans('messages.operation_success')]);
     }
 
@@ -384,14 +388,6 @@ class InvestmentController extends Controller
     }
 
 
-
-
-
-
-
-
-
-
     public function ShowListOfUserInvestmentByInvestMode(Request $request)
     {
 
@@ -458,15 +454,6 @@ class InvestmentController extends Controller
         ]);
 
     }
-
-
-
-
-
-
-
-
-
 
 
     public function ShowListOfUserProfitByInvestMode(Request $request)
@@ -627,16 +614,6 @@ class InvestmentController extends Controller
             'data'=>['percentage'=>$percentage]
         ]);
     }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -819,9 +796,55 @@ class InvestmentController extends Controller
 
 
 
+    protected function calculateRewards($user, $investmentAmount)
+    {
+        $amountInvested = AmountInvested::where('user_id', $user->id)->first();
 
+        if ($amountInvested) {
+            $amountInvested->amount_invested += $investmentAmount;
+            $amountInvested->save();
+        } else {
+            AmountInvested::create([
+                'user_id' => $user->id,
+                'amount_invested' => $investmentAmount,
+            ]);
+        }
 
+        // حساب المجموع الكلي للمبالغ المستثمرة
+        $totalInvested = AmountInvested::where('user_id', $user->id)->sum('amount_invested');
 
+        // الحصول على الجوائز المتاحة
+        $rewards = Reward::where('amount_threshold', '<=', $totalInvested)->get();
+
+        foreach ($rewards as $reward) {
+
+            $existingReward = RewardTransactions::where('user_id', $user->id)
+                ->where('reward_id', $reward->id)
+                ->first();
+
+            if (!$existingReward) {
+
+                $rewardAmount = ($totalInvested * $reward->percentage) / 100;
+
+                RewardTransactions::create([
+                    'user_id' => $user->id,
+                    'reward_id' => $reward->id,
+                    'amount_profit' => $rewardAmount,
+                    'state'=>'completed'
+                ]);
+
+                DB::transaction(function () use ($user, $rewardAmount) {
+                    $profitWallet = $user->wallets()
+                        ->where('wallet_type', 'profits')
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                    $profitWallet->balance += $rewardAmount;
+                    $profitWallet->save();
+                });
+        }
+    }
+
+    }
 
 
 
