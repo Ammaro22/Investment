@@ -13,6 +13,7 @@ class Agreed_negotiation extends Model
     protected $primaryKey ='id';
     public $timestamps = true;
     protected $fillable=[
+        'expert_id',
         'property_for_sale_id',
         'Text_of_the_agreement',
         'Payment_Mechanism',
@@ -24,7 +25,12 @@ class Agreed_negotiation extends Model
         return $this->hasOne(EconomicEvaluation::class, 'agreed_negotiations_id');
     }
 
-    public function proprtsseale()
+    public function expert()
+    {
+        return $this->belongsTo(User::class,'expert_id');
+    }
+
+    public function propertySale()
     {
         return $this->belongsTo(Property_for_sale::class, 'property_for_sale_id');
     }

@@ -13,9 +13,9 @@ class AgreedNegotiationController extends Controller
 {
 
     public function createAgreedNegotiation(Request $request)
-    {
-        $userRole = auth()->user()->role_id;
-        if ($userRole !== 3 ) {
+    {   $user=auth()->user();
+        $userRole = $user->role_id;
+        if (!$user|$userRole !== 3 ) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
@@ -31,6 +31,7 @@ class AgreedNegotiationController extends Controller
             return response()->json(['errors' => $validator->errors()->all()], 422);
         }
         $negotiation = new Agreed_negotiation();
+        $negotiation->expert_id=$user->id;
         $negotiation->Text_of_the_agreement = $request->Text_of_the_agreement;
         $negotiation->Payment_Mechanism = $request->Payment_Mechanism;
         $negotiation->status = 'معلق';
@@ -154,10 +155,29 @@ class AgreedNegotiationController extends Controller
     public function getAgreedNegotiationsForUser(Request $request)
     {
         $user = $request->user();
-
         $properties = Property_for_sale::where('user_id', $user->id)->pluck('id');
 
-        $negotiations = Agreed_negotiation::whereIn('property_for_sale_id', $properties)->get();
+        $negotiations = Agreed_negotiation::with('expert')->whereIn('property_for_sale_id', $properties)
+            ->whereHas('expert',function ($query)
+            {
+                $query->where('role_id',3);
+            })->get();
+
+        $results=$negotiations->map(function ($negotiation)
+        {
+            $info=$negotiation->expert??null;
+            return[
+                'id'=>$negotiation->id,
+                'expert_id'=>$info->id,
+                'expert_name'=>$info->name,
+                'property_for_sale_id'=>$negotiation->property_for_sale_id,
+                'Text_of_the_agreement'=>$negotiation->Text_of_the_agreement,
+                'Payment_Mechanism'=>$negotiation->Payment_Mechanism,
+                'status'=>$negotiation->status,
+                'created_at'=>now()->format('Y-m-d'),
+                'updated_at'=>now()->format('Y-m-d')
+            ];
+        });
 
         if ($negotiations->isEmpty()) {
             return response()->json([
@@ -167,7 +187,8 @@ class AgreedNegotiationController extends Controller
 
         return response()->json([
             'message' => __('messages.operation_success'),
-            'data' => $negotiations,
+            'data' => $results,
         ], 200);
     }
+
 }

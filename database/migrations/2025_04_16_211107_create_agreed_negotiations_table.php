@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('agreed_negotiations', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('expert_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('property_for_sale_id')->constrained('property_for_sales')->cascadeOnDelete();
             $table->text('Text_of_the_agreement');
             $table->string('Payment_Mechanism');
