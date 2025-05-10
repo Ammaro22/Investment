@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Services\FirebaseNotificationService;
+use App\Services\FireStoreTokenService;
 use DatabaseLogger;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -17,10 +18,11 @@ class UserController extends Controller
 {
 
     protected $firebaseNotification;
-
-    public function __construct(FirebaseNotificationService $firebaseNotification)
+    protected $fireStoreTokenService;
+    public function __construct(FirebaseNotificationService $firebaseNotification,FireStoreTokenService $fireStoreTokenService)
     {
         $this->firebaseNotification=$firebaseNotification;
+        $this->fireStoreTokenService=$fireStoreTokenService;
     }
 
     public function signup(Request $request)
@@ -47,6 +49,7 @@ class UserController extends Controller
         $this->createWallets($user, $request->role_id);
 
         $accessToken = $user->createToken('authToken')->accessToken;
+
         DatabaseLogger::log('info','user sign up',['user_id'=>$user->id,
             'user_name'=>$user->name]);
         return response([
@@ -76,6 +79,9 @@ class UserController extends Controller
         $user = auth()->user();
         $token = $user->createToken('Personal Access Token')->accessToken;
 
+        $uid='user_'.$user->id;
+        $firebaseToken=$this->fireStoreTokenService->createCustomToken($uid);
+
         DatabaseLogger::log('info','user logged in',['user_id'=>$user->id,
             'user_name'=>$user->name]);
 
@@ -84,6 +90,8 @@ class UserController extends Controller
             'message' => trans('messages.login_success'),
             'data' => $user,
             'token' => $token,
+            'firebase_token'=>$firebaseToken,
+            'uid'=>$uid
         ]);
     }
 
