@@ -30,6 +30,9 @@ class RequestFromLawyerController extends Controller
             $property = $request->property_for_sale;
             $propertyInfo = $property ? $property->state . ' ' . $property->exact_position : null;
 
+            $expertRequest = $request->Request_from_expert;
+            $agreedNegotiationStatus = $expertRequest && $expertRequest->economic_evaluation->agreed_negotiation ? $expertRequest->economic_evaluation->agreed_negotiation->status : null;
+
             return [
                 'request_from_lawyer_id' => $request->id,
                 'property_for_sale_id' => $request->property_for_sale_id,
@@ -37,7 +40,7 @@ class RequestFromLawyerController extends Controller
                 'accept_admin' => $request->accept_admin,
                 'user_name' => $property->user->name,
                 'created_at' => $request->created_at->format('Y-m-d'),
-                'agreed_negotiation_status' => $request->Request_from_expert->economic_evaluation->agreed_negotiation ? $request->Request_from_expert->economic_evaluation->agreed_negotiation->status : null,
+                'agreed_negotiation_status' => $agreedNegotiationStatus,
                 'property_info' => $propertyInfo,
             ];
         });
