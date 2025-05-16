@@ -43,6 +43,7 @@ class RequestController extends Controller
         $lawyerRequest = new request_from_lawyer();
         $lawyerRequest->property_for_sale_id = $request->property_for_sale_id;
         $lawyerRequest->status = 'معلق';
+        $lawyerRequest->accept_admin = 'معلق';
         $lawyerRequest->save();
 
         return response()->json([

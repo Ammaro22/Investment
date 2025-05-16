@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Electronic_Property_Certificate extends Model
 {
     use HasFactory;
+    protected $primaryKey ='id';
+    public $timestamps = true;
     protected $fillable=[
         'request_from_admin_id',
         'Seller_Name',

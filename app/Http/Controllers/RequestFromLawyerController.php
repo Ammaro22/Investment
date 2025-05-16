@@ -18,8 +18,7 @@ class RequestFromLawyerController extends Controller
             ], 403);
         }
 
-
-        $requests = request_from_lawyer::with('property_for_sale.user')->get();
+        $requests = request_from_lawyer::with(['property_for_sale.user', 'Request_from_expert.economic_evaluation.agreed_negotiation'])->get();
 
         if ($requests->isEmpty()) {
             return response()->json([
@@ -27,14 +26,19 @@ class RequestFromLawyerController extends Controller
             ], 404);
         }
 
-
         $responseData = $requests->map(function ($request) {
+            $property = $request->property_for_sale;
+            $propertyInfo = $property ? $property->state . ' ' . $property->exact_position : null;
+
             return [
-                'request_id' => $request->id,
+                'request_from_lawyer_id' => $request->id,
                 'property_for_sale_id' => $request->property_for_sale_id,
-                'status' => $request->status,
-                'user_name' => $request->property_for_sale->user->name,
+                'status_request' => $request->status,
+                'accept_admin' => $request->accept_admin,
+                'user_name' => $property->user->name,
                 'created_at' => $request->created_at->format('Y-m-d'),
+                'agreed_negotiation_status' => $request->Request_from_expert->economic_evaluation->agreed_negotiation ? $request->Request_from_expert->economic_evaluation->agreed_negotiation->status : null,
+                'property_info' => $propertyInfo,
             ];
         });
 

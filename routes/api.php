@@ -40,12 +40,6 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('/storeFcmToken',[UserController::class,'storeFcmToken']);
     Route::post('/showNotificationByType',[UserController::class,'showNotificationByType']);
 
-
-
-
-
-
-
 });
 
 

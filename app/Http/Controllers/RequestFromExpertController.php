@@ -8,6 +8,7 @@ use App\Models\Property_for_sale;
 use App\Models\PropertyForInvestment;
 use App\Models\Request_from_admin;
 use App\Models\request_from_expert;
+use App\Models\request_from_lawyer;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
@@ -23,6 +24,7 @@ class RequestFromExpertController extends Controller
             ], 403);
         }
         $validator = Validator::make($request->all(),[
+            'request_from_lawyer_id'=>'required|exists:request_from_lawyers,id',
             'economic_evaluation' => 'required|array',
             'economic_evaluation.number_of_chances' => 'required|integer',
             'economic_evaluation.expected_price' => 'required',
@@ -48,15 +50,20 @@ class RequestFromExpertController extends Controller
         $economicEvaluation->fill($request->economic_evaluation);
         $economicEvaluation->save();
 
+        $requestForLawyer = request_from_lawyer::find($request->request_from_lawyer_id);
+        if ($requestForLawyer) {
+            $requestForLawyer->status = 'مقبول';
+            $requestForLawyer->save();
+        }
         $propertyForSale = Property_for_sale::find($request->economic_evaluation['property_for_sale_id']);
         if ($propertyForSale) {
             $propertyForSale->expert_check = true;
             $propertyForSale->save();
         }
 
-
         $requestFromExpert = new request_from_expert();
         $requestFromExpert->economic_evaluation_id = $economicEvaluation->id;
+        $requestFromExpert->request_from_lawyer_id = $request->request_from_lawyer_id;
         $requestFromExpert->note_admin = $request->note_admin;
         $requestFromExpert->status ='معلق' ;
         $requestFromExpert->save();
@@ -94,12 +101,19 @@ class RequestFromExpertController extends Controller
 
     public function updateEconomicEvaluation(Request $request, $id)
     {
-        // البحث عن الطلب بواسطة ID
-        $requestFromExpert = request_from_expert::find($id);
+        $requestFromlawyer = request_from_lawyer::find($id);
+
+        if (!$requestFromlawyer) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        $requestFromExpert = $requestFromlawyer->Request_from_expert;
 
         if (!$requestFromExpert) {
             return response()->json([
-                'message' => __('messages.not_found'),
+                'message' => __('messages.expert_request_not_found'),
             ], 404);
         }
 
@@ -130,6 +144,9 @@ class RequestFromExpertController extends Controller
         }
         $requestFromExpert->status = 'معلق';
         $requestFromExpert->save();
+
+        $requestFromlawyer->accept_admin='معلق';
+        $requestFromlawyer->save();
 
         return response()->json([
             'message' => __('messages.operation_success'),
@@ -280,7 +297,17 @@ class RequestFromExpertController extends Controller
 
         if (!$request->economic_evaluation) {
             return response()->json([
-                'message' => __('messages.evaluation_not_found'),
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        $property = request_from_lawyer::find($request->request_from_lawyer_id);
+        if ($property) {
+            $property->accept_admin = 'مقبول';
+            $property->save();
+        } else {
+            return response()->json([
+                'message' => __('messages.not_found'),
             ], 404);
         }
 
@@ -345,6 +372,16 @@ class RequestFromExpertController extends Controller
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()->all()], 422);
+        }
+
+        $property = request_from_lawyer::find($requestFromExpert->request_from_lawyer_id);
+        if ($property) {
+            $property->accept_admin = 'مرفوض';
+            $property->save();
+        } else {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
         }
 
         $requestFromExpert->status = 'مرفوض';
