@@ -42,4 +42,8 @@ class EconomicEvaluation extends Model
         return $this->hasOne(request_from_expert::class, 'economic_evaluation_id');
     }
 
+    public function indicatorValues()
+    {
+        return $this->hasMany(IndicatorValue::class);
+    }
 }

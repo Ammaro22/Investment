@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\Indicator;
+use App\Models\IndicatorValue;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Services\FirebaseNotificationService;
@@ -10,8 +12,6 @@ use App\Services\FireStoreTokenService;
 use DatabaseLogger;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
@@ -85,7 +85,7 @@ class UserController extends Controller
         DatabaseLogger::log('info','user logged in',['user_id'=>$user->id,
             'user_name'=>$user->name]);
 
-        $this->firebaseNotification->sendToUser($user,'login','you are logged in');
+        $this->firebaseNotification->sendToUser($user,'login_success');
         return response([
             'message' => trans('messages.login_success'),
             'data' => $user,
@@ -249,5 +249,9 @@ class UserController extends Controller
 
         return response()->json(['message'=>trans('messages.operation_success')]);
     }
+
+
+
+
 
 }

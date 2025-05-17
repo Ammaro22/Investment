@@ -13,8 +13,10 @@ use App\Models\Reward;
 use App\Models\RewardTransactions;
 use App\Models\Transaction;
 use App\Models\Wallet;
+use App\Services\PropertyAnalysisService;
+use App\Services\UserPreferenceEngine;
 use Carbon\Carbon;
-use http\Env\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -25,32 +27,47 @@ use Illuminate\Support\Facades\Log;
 class InvestmentController extends Controller
 {
 
-
     public function ShowProperty()
     {
+        $user = Auth::guard('api')->user();
 
-        $property = PropertyForInvestment::with('property')->paginate(5);
+        $inferenceEngine = new UserPreferenceEngine();
+        $propertyAnalyzes = new PropertyAnalysisService();
 
+        $property = PropertyForInvestment::with(['property', 'property.economicEvaluation'])->paginate(5);
 
-        $properties = $property->map(function ($item) {
+        $properties = $property->map(function ($item) use ($user, $inferenceEngine, $propertyAnalyzes) {
+            if (isset($item->property)) {
+                unset($item->property->economicEvaluation);
+            }
 
             $rearrangedItem = $this->re_arrange($item);
             if ($rearrangedItem instanceof \Illuminate\Support\Collection) {
                 $rearrangedItem = $rearrangedItem->toArray();
             }
-            $rearrangedItem = array_merge([
-                'property_for_investment_id' => $item->id],
-                $rearrangedItem, [
-                 'property_images'=>$item->property->Property_image]);
 
-            return $rearrangedItem;
+
+            $economicEvaluation = $item->property->economicEvaluation ?? null;
+            $analyze = $economicEvaluation ? $propertyAnalyzes->analyze($economicEvaluation) : null;
+
+
+            $userPreference = ($user && $item->property)
+                ? $inferenceEngine->getRecommendationForInvestment($user, $item->property)
+                : [];
+
+            return array_merge([
+                'property_for_investment_id' => $item->id,
+            ], $rearrangedItem, [
+                'property_images' => $item->property->Property_image ?? [],
+                'economic_advice' => $analyze,
+                'user_advice' => $userPreference,
+            ]);
         });
-
 
         return response()->json([
             'message' => trans('messages.operation_success'),
             'data' => [
-                'properties'=>$properties,
+                'properties' => $properties,
                 'pagination' => [
                     'current_page' => $property->currentPage(),
                     'last_page' => $property->lastPage(),
@@ -59,14 +76,20 @@ class InvestmentController extends Controller
                     'next_page_url' => $property->nextPageUrl(),
                     'prev_page_url' => $property->previousPageUrl(),
                 ]
-        ]
+            ]
         ]);
-
-
     }
+
+
 
     public function ShowPropertyByType(Request $request)
     {
+        $user = Auth::guard('api')->user();
+
+        $inferenceEngine = new UserPreferenceEngine();
+        $propertyAnalyzes = new PropertyAnalysisService();
+
+
         $validator = Validator::make($request->all(), [
             'property_type' => 'required|string'
         ]);
@@ -78,7 +101,7 @@ class InvestmentController extends Controller
         $property_type = $request->property_type;
 
 
-        $property = PropertyForInvestment::with('property')
+        $property = PropertyForInvestment::with(['property','property.economicEvaluation'])
             ->whereHas('property', function ($query) use ($property_type) {
                 $query->where('property_type', $property_type);
             })
@@ -88,15 +111,29 @@ class InvestmentController extends Controller
             return response()->json(['message' => trans('messages.no_properties_found')]);
         }
 
-        $properties = $property->map(function ($item) {
+        $properties = $property->map(function ($item)use ($user, $inferenceEngine, $propertyAnalyzes) {
+            if (isset($item->property)) {
+                unset($item->property->economicEvaluation);
+            }
             $rearrangedItem = $this->re_arrange($item);
             if ($rearrangedItem instanceof \Illuminate\Support\Collection) {
                 $rearrangedItem = $rearrangedItem->toArray();
             }
+
+            $economicEvaluation = $item->property->economicEvaluation;
+            $analyze = $economicEvaluation ? $propertyAnalyzes->analyze($economicEvaluation) : null;
+
+            $userPreference = $user && $item->property
+                ? $inferenceEngine->getRecommendationForInvestment($user, $item->property)
+                : [];
+
             $rearrangedItem = array_merge([
                 'property_for_investment_id' => $item->id],
                  $rearrangedItem, [
-                'property_images'=>$item->property->Property_image]);
+                'property_images'=>$item->property->Property_image ??[],
+                'economic_advice' => $analyze,
+                'user_advice' => $userPreference,
+                ]);
 
             return $rearrangedItem;
         });
@@ -124,6 +161,13 @@ class InvestmentController extends Controller
     public function ShowPropertyByInvestmentType(Request $request)
     {
 
+
+        $user = Auth::guard('api')->user();
+
+        $inferenceEngine = new UserPreferenceEngine();
+        $propertyAnalyzes = new PropertyAnalysisService();
+
+
         $validator = Validator::make($request->all(), [
 
             'investment_mode' => 'required|string'
@@ -135,22 +179,36 @@ class InvestmentController extends Controller
         }
 
 
-        $property = PropertyForInvestment::with('property')->where('investment_mode', $request->investment_mode)->paginate(5);
+        $property = PropertyForInvestment::with(['property','property.economicEvaluation'])->where('investment_mode', $request->investment_mode)->paginate(5);
 
         if ($property->isEmpty()) {
             return response()->json(['message' => trans('messages.no_properties_found')]);
         }
 
 
-        $properties = $property->map(function ($item) {
+        $properties = $property->map(function ($item)use ($user, $inferenceEngine, $propertyAnalyzes) {
+            if (isset($item->property)) {
+                unset($item->property->economicEvaluation);
+            }
             $rearrangedItem= $this->re_arrange($item);
             if ($rearrangedItem instanceof \Illuminate\Support\Collection) {
                 $rearrangedItem = $rearrangedItem->toArray();
             }
+
+            $economicEvaluation = $item->property->economicEvaluation;
+            $analyze = $economicEvaluation ? $propertyAnalyzes->analyze($economicEvaluation) : null;
+
+            $userPreference = $user && $item->property
+                ? $inferenceEngine->getRecommendationForInvestment($user, $item->property)
+                : [];
+
             $rearrangedItem = array_merge([
                 'property_for_investment_id' => $item->id],
                 $rearrangedItem, [
-                 'property_images'=>$item->property->Property_image]);
+                 'property_images'=>$item->property->Property_image ??[],
+                 'economic_advice' => $analyze,
+                 'user_advice' => $userPreference,
+                ]);
 
             return $rearrangedItem;
 
@@ -175,23 +233,94 @@ class InvestmentController extends Controller
 
     public function ShowPropertyById($PropertyId)
     {
+        $user = Auth::guard('api')->user();
+        $inferenceEngine = new UserPreferenceEngine();
+        $propertyAnalyzes = new PropertyAnalysisService();
 
-        $property = PropertyForInvestment::with('property')->find($PropertyId);
+        $property = PropertyForInvestment::with(['property','property.economicEvaluation'])->find($PropertyId);
 
         if (!$property) {
             return response()->json(['message' => trans('messages.operation_failed')]);
         }
 
+        $economicEvaluation = $property->property->economicEvaluation ?? null;
 
-        $properties = $this->re_arrange($property);
+        $analyze = $economicEvaluation
+            ? $propertyAnalyzes->analyze($economicEvaluation)
+            : null;
+
+        $userPreference = ($user && $property->property)
+            ? $inferenceEngine->getRecommendationForInvestment($user, $property->property)
+            : [];
+
+        if (isset($property->property)) {
+            unset($property->property->economicEvaluation);
+        }
+        $formattedData = $this->re_arrange($property);
 
 
         return response()->json([
             'message' => trans('messages.operation_success'),
-            'data' => $properties
+            'data' => $formattedData,
+             'economic_advice' => $analyze,
+             'user_advice' => $userPreference
         ]);
-
     }
+
+    /* public function ShowPropertyById($PropertyId)
+     {
+
+         $property = PropertyForInvestment::with('property')->find($PropertyId);
+
+         if (!$property) {
+             return response()->json(['message' => trans('messages.operation_failed')]);
+         }
+
+
+         $properties = $this->re_arrange($property);
+
+
+         return response()->json([
+             'message' => trans('messages.operation_success'),
+             'data' => $properties
+         ]);
+
+     }
+   /*  public function ShowPropertyById($PropertyId)
+     {
+         $user = Auth::guard('api')->user(); // المستخدم الحالي
+         $inferenceEngine = new UserPreferenceEngine(); // محرك التوصيات
+         $propertyAnalyzes = new PropertyAnalysisService(); // محرك التحليل
+
+         // تحميل العلاقات
+         $property = PropertyForInvestment::with(['property', 'property.economicEvaluation'])->find($PropertyId);
+
+         if (!$property) {
+             return response()->json(['message' => trans('messages.operation_failed')]);
+         }
+
+         // تحليل اقتصادي وتوصيات المستخدم من الكائن الأصلي
+         $economicEvaluation = $property->property->economicEvaluation ?? null;
+
+         $analyze = $economicEvaluation
+             ? $propertyAnalyzes->analyze($economicEvaluation)
+             : null;
+
+         $userPreference = ($user && $property->property)
+             ? $inferenceEngine->getRecommendationForInvestment($user, $property->property)
+             : [];
+
+         // إعادة ترتيب البيانات للعرض فقط
+         $properties = $this->re_arrange($property);
+
+         return response()->json([
+             'message' => trans('messages.operation_success'),
+             'data' => $properties,
+             'economic_advice' => $analyze,
+             'user_advice' => $userPreference
+         ]);
+     }*/
+
 
     /*سيناريو الاستثمار*/
 
@@ -768,7 +897,7 @@ class InvestmentController extends Controller
 
         $main = collect($property->toArray())->except('property', 'property_id', 'property_management');
 
-        $related = collect($property->property)->except(['legal_check', 'expert_check', 'accept', 'user_id', 'price']);
+        $related = collect($property->property)->except(['legal_check', 'expert_check', 'accept', 'user_id', 'price', 'economicEvaluation']);
 
         $re_arrange = $main->merge($related);
 
@@ -854,3 +983,42 @@ class InvestmentController extends Controller
 
 
 
+
+//    public function ShowProperty()
+//    {
+//
+//        $property = PropertyForInvestment::with('property')->paginate(5);
+//
+//
+//        $properties = $property->map(function ($item) {
+//
+//            $rearrangedItem = $this->re_arrange($item);
+//            if ($rearrangedItem instanceof \Illuminate\Support\Collection) {
+//                $rearrangedItem = $rearrangedItem->toArray();
+//            }
+//            $rearrangedItem = array_merge([
+//                'property_for_investment_id' => $item->id],
+//                $rearrangedItem, [
+//                 'property_images'=>$item->property->Property_image]);
+//
+//            return $rearrangedItem;
+//        });
+//
+//
+//        return response()->json([
+//            'message' => trans('messages.operation_success'),
+//            'data' => [
+//                'properties'=>$properties,
+//                'pagination' => [
+//                    'current_page' => $property->currentPage(),
+//                    'last_page' => $property->lastPage(),
+//                    'per_page' => $property->perPage(),
+//                    'total' => $property->total(),
+//                    'next_page_url' => $property->nextPageUrl(),
+//                    'prev_page_url' => $property->previousPageUrl(),
+//                ]
+//        ]
+//        ]);
+//
+//
+//    }

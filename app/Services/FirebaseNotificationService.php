@@ -35,7 +35,7 @@ class FirebaseNotificationService
               ->withNotification(Notification::create($template['title'],$template['body']));
 
           $this->messaging->send($message);
-          DatabaseLogger::log('info','FCM sendToUser success');
+
 
           $this->storeNotification($user->id,$template['title'],$template['body'],$type);
           }
@@ -63,7 +63,6 @@ class FirebaseNotificationService
 
       ]);
 
-   DatabaseLogger::log('info','notification stored successfully',['notification'=>$notification]);
    return response()->json(['message'=>trans('messages.operation_success')]);
 
 
@@ -105,7 +104,6 @@ class FirebaseNotificationService
 
           $this->messaging->sendMulticast($message,$tokens);
 
-          DatabaseLogger::log('info','FCM sendToUser success');
 
       }catch (\Throwable $e) {
 

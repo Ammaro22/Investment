@@ -52,7 +52,7 @@ class Property_for_sale extends Model
     }
     public function property_investment()
     {
-        return $this->hasOne(PropertyForInvestment::class);
+        return $this->hasOne(PropertyForInvestment::class,'property_id');
     }
 
     public function economicEvaluation()

@@ -6,6 +6,7 @@ use App\Http\Controllers\ElectronicPropertyCertificateController;
 use App\Http\Controllers\EmployeeInformationController;
 use App\Http\Controllers\FrequentlyQuestionsController;
 use App\Http\Controllers\HelpController;
+use App\Http\Controllers\IndicatorController;
 use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\ReqeustFromAdminController;
 use App\Http\Controllers\RequestController;
@@ -199,4 +200,18 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::delete('/delete_reward_by_admin/{reward_id}', [RewardController::class, 'deleteReward']);
     /*عرض الجوائز لليوزر*/
     Route::get('/get_User_Investments_And_Rewards',[RewardController::class,'getUserInvestmentsAndRewards']);
+});
+
+
+/*اضافة المؤشرات من قبل الفريق الخبير واضافة قيم لها*/
+Route::group(["middleware"=>["auth:api"]],function() {
+    Route::post('/storeIndicator',[IndicatorController::class,'storeIndicator']);
+    Route::post('/storeValueToIndicator',[IndicatorController::class,'storeValueToIndicator']);
+    Route::delete('/deleteIndicator/{indicator_id}', [IndicatorController::class, 'deleteIndicator']);
+    Route::delete('/deleteValueOfIndicator/{indicatorValue_id}', [IndicatorController::class, 'deleteValueOfIndicator']);
+    Route::post('/updateIndicator/{indicator_id}',[IndicatorController::class,'updateIndicator']);
+    Route::post('/updateValueOfIndicator/{indicatorValue_id}',[IndicatorController::class,'updateValueOfIndicator']);
+
+
+
 });

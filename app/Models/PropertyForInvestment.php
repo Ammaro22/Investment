@@ -29,7 +29,7 @@ class PropertyForInvestment extends Model
 
     public function property(){
 
-        return $this->belongsTo(Property_for_sale::class);
+        return $this->belongsTo(Property_for_sale::class,'property_id');
     }
 
     public function investment()
