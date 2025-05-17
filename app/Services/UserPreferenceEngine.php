@@ -14,6 +14,8 @@ public function getRecommendationForInvestment(?User $user,Property_for_sale $pr
         return [];
     }
 
+
+
        $investmentsInSameArea = $user->investment()
          ->with('property_invested.property')
          ->get()

@@ -16,6 +16,9 @@ class Indicator extends Model
         'recommended_max'
     ];
 
+
+
+
     public function values()
     {
         return $this->hasMany(IndicatorValue::class);

@@ -27,6 +27,8 @@ use Illuminate\Support\Facades\Log;
 class InvestmentController extends Controller
 {
 
+
+
     public function ShowProperty()
     {
         $user = Auth::guard('api')->user();

@@ -156,6 +156,8 @@ class IndicatorController extends Controller
     }
 
 
+
+
     public function deleteValueOfIndicator($indicatorValue_id)
     {
         $user=auth()->user();

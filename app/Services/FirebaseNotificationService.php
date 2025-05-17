@@ -23,6 +23,8 @@ class FirebaseNotificationService
 
   }
 
+
+
   public function sendToUser(User $user,string $type):void
   {
       if(!$user->fcm_token)return;

@@ -19,6 +19,8 @@ class PropertyAnalysisService{
             }
         }
 
+
+
         return $matchingCount >= $threshold
             ? 'نوصيك باستثمار هذا العقار'
             : null;

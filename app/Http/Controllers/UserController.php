@@ -95,6 +95,7 @@ class UserController extends Controller
         ]);
     }
 
+
     public function profile()
     {
         $user_data = auth()->user();

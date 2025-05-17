@@ -16,6 +16,8 @@ class IndicatorValue extends Model
     ];
 
 
+
+
     public function evaluation()
     {
         return $this->belongsTo(EconomicEvaluation::class);
