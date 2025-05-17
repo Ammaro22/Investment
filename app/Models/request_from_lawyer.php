@@ -13,10 +13,15 @@ class request_from_lawyer extends Model
     public $timestamps = true;
     protected $fillable=[
         'property_for_sale_id',
-        'status'
+        'status',
+        'accept_admin'
     ];
     public function property_for_sale()
     {
         return$this->belongsTo(Property_for_sale::class,'property_for_sale_id');
+    }
+    public function Request_from_expert()
+    {
+        return $this->hasOne(request_from_expert::class, 'request_from_lawyer_id');
     }
 }

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('request_from_experts', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('request_from_lawyer_id')->constrained('request_from_lawyers')->cascadeOnDelete();
             $table->foreignId('economic_evaluation_id')->constrained('economic_evaluations')->cascadeOnDelete();
             $table->string('status');
             $table->text('note_admin')->nullable();
