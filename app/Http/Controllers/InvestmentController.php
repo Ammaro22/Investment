@@ -260,6 +260,9 @@ class InvestmentController extends Controller
         }
         $formattedData = $this->re_arrange($property);
 
+        unset($formattedData['property_investment']);
+        unset($formattedData['created_at']);
+        unset($formattedData['updated_at']);
 
         return response()->json([
             'message' => trans('messages.operation_success'),
