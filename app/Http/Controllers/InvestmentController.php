@@ -267,60 +267,6 @@ class InvestmentController extends Controller
         ]);
     }
 
-    /* public function ShowPropertyById($PropertyId)
-     {
-
-         $property = PropertyForInvestment::with('property')->find($PropertyId);
-
-         if (!$property) {
-             return response()->json(['message' => trans('messages.operation_failed')]);
-         }
-
-
-         $properties = $this->re_arrange($property);
-
-
-         return response()->json([
-             'message' => trans('messages.operation_success'),
-             'data' => $properties
-         ]);
-
-     }
-   /*  public function ShowPropertyById($PropertyId)
-     {
-         $user = Auth::guard('api')->user(); // المستخدم الحالي
-         $inferenceEngine = new UserPreferenceEngine(); // محرك التوصيات
-         $propertyAnalyzes = new PropertyAnalysisService(); // محرك التحليل
-
-         // تحميل العلاقات
-         $property = PropertyForInvestment::with(['property', 'property.economicEvaluation'])->find($PropertyId);
-
-         if (!$property) {
-             return response()->json(['message' => trans('messages.operation_failed')]);
-         }
-
-         // تحليل اقتصادي وتوصيات المستخدم من الكائن الأصلي
-         $economicEvaluation = $property->property->economicEvaluation ?? null;
-
-         $analyze = $economicEvaluation
-             ? $propertyAnalyzes->analyze($economicEvaluation)
-             : null;
-
-         $userPreference = ($user && $property->property)
-             ? $inferenceEngine->getRecommendationForInvestment($user, $property->property)
-             : [];
-
-         // إعادة ترتيب البيانات للعرض فقط
-         $properties = $this->re_arrange($property);
-
-         return response()->json([
-             'message' => trans('messages.operation_success'),
-             'data' => $properties,
-             'economic_advice' => $analyze,
-             'user_advice' => $userPreference
-         ]);
-     }*/
-
 
     /*سيناريو الاستثمار*/
 

@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class IndicatorValue extends Model
+{
+    use HasFactory;
+    protected $table='indicator_values';
+    protected $fillable=[
+        'economic_evaluation_id',
+        'indicator_id',
+        'value'
+    ];
+
+
+    public function evaluation()
+    {
+        return $this->belongsTo(EconomicEvaluation::class);
+    }
+
+    public function indicator()
+    {
+        return $this->belongsTo(Indicator::class);
+    }
+}
