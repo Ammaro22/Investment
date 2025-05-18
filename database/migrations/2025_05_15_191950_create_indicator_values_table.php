@@ -9,6 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+
     public function up(): void
     {
         Schema::create('indicator_values', function (Blueprint $table) {
@@ -19,7 +20,6 @@ return new class extends Migration
             $table->timestamps();
         });
     }
-
 
 
     /**
