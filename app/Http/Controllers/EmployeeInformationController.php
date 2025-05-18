@@ -133,6 +133,7 @@ class EmployeeInformationController extends Controller
             'email' => $user->email,
             'phone' => $user->phone,
             'role_id' => $user->role_id,
+            'active'=>$user->active,
             'personal_photo' => $user->personal_photo,
             'current_address' => $user->EmployeeInformation->current_address ?? null,
             'front_id_image' => $user->EmployeeInformation->front_id_image ?? null,

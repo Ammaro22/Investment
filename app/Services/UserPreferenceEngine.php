@@ -14,9 +14,7 @@ public function getRecommendationForInvestment(?User $user,Property_for_sale $pr
         return [];
     }
 
-
-
-       $investmentsInSameArea = $user->investment()
+     $investmentsInSameArea = $user->investment()
          ->with('property_invested.property')
          ->get()
          ->filter(fn($investment) => $investment->property_invested->property->state === $property_for_sale->state);
@@ -25,8 +23,6 @@ public function getRecommendationForInvestment(?User $user,Property_for_sale $pr
 
         $recommendations[] = "ننصحك بتنويع استثمارك خارج منطقة {$property_for_sale->state} لتقليل المخاطر.";
     }
-
-
 
 
 //2
