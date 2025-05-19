@@ -43,5 +43,6 @@ return [
     'profits_already_calculated'=>'profits_already_calculated',
 
     'can_not'=>'Cannot search by father/mother name for this user type',
+
 ];
 
