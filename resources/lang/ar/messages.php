@@ -45,4 +45,5 @@ return [
     'profit_already_exists'=>'المحفظة موجودة مسبقا',
     'profits_already_calculated'=>'تم الحساب مسبقا',
 
+    'can_not'=>'لا يمكن البحث بواسطة اسم الأب أو الأم لهذا النوع من المستخدمين',
 ];

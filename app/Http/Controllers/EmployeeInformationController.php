@@ -19,6 +19,8 @@ class EmployeeInformationController extends Controller
             ], 403);
         }
         $validator = Validator::make($request->all(), [
+            'father_name' => 'required|string|max:255',
+            'mother_name' => 'required|string|max:255',
             'current_address' => 'required|string|max:255',
             'front_id_image' => 'required|image|mimes:jpg,jpeg,png',
             'back_id_image' => 'required|image|mimes:jpg,jpeg,png',
@@ -49,6 +51,8 @@ class EmployeeInformationController extends Controller
 
         $employeeInfo = new EmployeeInformation();
         $employeeInfo->user_id = $userId;
+        $employeeInfo->father_name = $request->father_name;
+        $employeeInfo->mother_name = $request->mother_name;
         $employeeInfo->current_address = $request->current_address;
         $employeeInfo->front_id_image = $frontIdImagePath;
         $employeeInfo->back_id_image = $backIdImagePath;
@@ -80,17 +84,128 @@ class EmployeeInformationController extends Controller
         ]);
     }
 
+//    public function searchUsers(Request $request)
+//    {
+//        $userRole = auth()->user()->role_id;
+//        if ($userRole !== 1 ) {
+//            return response()->json([
+//                'message' => trans('messages.unauthorized'),
+//            ], 403);
+//        }
+//        $validator = Validator::make($request->all(), [
+//            'name' => 'nullable|string|max:255',
+//            'role_id' => 'required|exists:roles,id',
+//            'father_name' => 'nullable|string|max:255',
+//            'mother_name' => 'nullable|string|max:255',
+//        ]);
+//
+//        if ($validator->fails()) {
+//            return response()->json(['errors' => $validator->errors()], 400);
+//        }
+//
+//        $name = $request->input('name');
+//        $roleId = $request->input('role_id');
+//
+//        $users = User::where('name', 'like', '%' . $name . '%')
+//            ->where('role_id', $roleId)
+//            ->get();
+//
+//        return response()->json([
+//            'message' => trans('messages.operation_success'),
+//            'data' => $users,
+//        ]);
+//    }
+
+//    public function searchUsers(Request $request)
+//    {
+//        $userRole = auth()->user()->role_id;
+//        if ($userRole !== 1) {
+//            return response()->json([
+//                'message' => trans('messages.unauthorized'),
+//            ], 403);
+//        }
+//
+//        $validator = Validator::make($request->all(), [
+//            'name' => 'nullable|string|max:255',
+//            'role_id' => 'required|exists:roles,id',
+//            'father_name' => 'nullable|string|max:255',
+//            'mother_name' => 'nullable|string|max:255',
+//        ]);
+//
+//        if ($validator->fails()) {
+//            return response()->json(['errors' => $validator->errors()], 400);
+//        }
+//
+//        $name = $request->input('name');
+//        $roleId = $request->input('role_id');
+//        $fatherName = $request->input('father_name');
+//        $motherName = $request->input('mother_name');
+//
+//        // التحقق إذا كان role_id = 2 وتم إدخال اسم الأب أو الأم
+//        if ($roleId == 2 && (!empty($fatherName) || !empty($motherName))) {
+//            return response()->json([
+//                'message' => 'لا يمكن البحث بواسطة اسم الأب أو الأم لهذا النوع من المستخدمين',
+//            ], 400);
+//        }
+//
+//        $query = User::query();
+//
+//        if($roleId == 2) {
+//            if (!empty($name)) {
+//                $query->where('name', 'like', '%' . $name . '%');
+//            }
+//            if (!$name) {
+//                return response()->json([
+//                    'message' => __('messages.not_found'),
+//                ], 404);
+//            }
+//        }
+//
+//        $query->where('role_id', $roleId);
+//
+//        if (in_array($roleId, [3, 4])) {
+//            if (!empty($name)) {
+//                $query->where('name', 'like', '%' . $name . '%');
+//            }
+//
+//            if (!empty($fatherName)) {
+//                $query->whereHas('EmployeeInformation', function($q) use ($fatherName) {
+//                    $q->where('father_name', 'like', '%' . $fatherName . '%');
+//                });
+//            }
+//
+//            if (!empty($motherName)) {
+//                $query->whereHas('EmployeeInformation', function($q) use ($motherName) {
+//                    $q->where('mother_name', 'like', '%' . $motherName . '%');
+//                });
+//            }
+//        }
+//
+//        if (in_array($roleId, [3, 4])) {
+//            $query->with('EmployeeInformation');
+//        }
+//
+//        $users = $query->get();
+//
+//        return response()->json([
+//            'message' => trans('messages.operation_success'),
+//            'data' => $users,
+//        ]);
+//    }
     public function searchUsers(Request $request)
     {
         $userRole = auth()->user()->role_id;
-        if ($userRole !== 1 ) {
+        if ($userRole !== 1) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
         }
+
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name' => 'nullable|string|max:255',
             'role_id' => 'required|exists:roles,id',
+            'father_name' => 'nullable|string|max:255',
+            'mother_name' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -99,16 +214,67 @@ class EmployeeInformationController extends Controller
 
         $name = $request->input('name');
         $roleId = $request->input('role_id');
+        $fatherName = $request->input('father_name');
+        $motherName = $request->input('mother_name');
 
-        $users = User::where('name', 'like', '%' . $name . '%')
-            ->where('role_id', $roleId)
-            ->get();
+
+        if ($roleId == 2 && (!empty($fatherName) || !empty($motherName))) {
+            return response()->json([
+                'message' => __('messages.can_not'),
+            ], 404);
+        }
+
+        $query = User::query();
+
+        if($roleId == 2) {
+            if (!empty($name)) {
+                $query->where('name', 'like', '%' . $name . '%');
+            }
+            if (empty($name)) {
+                return response()->json([
+                    'message' => __('messages.name_required_for_role_2'),
+                ], 400);
+            }
+        }
+
+        $query->where('role_id', $roleId);
+
+        if (in_array($roleId, [3, 4])) {
+            if (!empty($name)) {
+                $query->where('name', 'like', '%' . $name . '%');
+            }
+
+            if (!empty($fatherName)) {
+                $query->whereHas('EmployeeInformation', function($q) use ($fatherName) {
+                    $q->where('father_name', 'like', '%' . $fatherName . '%');
+                });
+            }
+
+            if (!empty($motherName)) {
+                $query->whereHas('EmployeeInformation', function($q) use ($motherName) {
+                    $q->where('mother_name', 'like', '%' . $motherName . '%');
+                });
+            }
+        }
+
+        if (in_array($roleId, [3, 4])) {
+            $query->with('EmployeeInformation');
+        }
+
+        $users = $query->get();
+
+        if ($users->isEmpty()) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
 
         return response()->json([
-            'message' => trans('messages.user_search_success'),
+            'message' => trans('messages.operation_success'),
             'data' => $users,
         ]);
     }
+
 
     public function getUserWithEmployeeInfo($userId)
     {
@@ -135,6 +301,8 @@ class EmployeeInformationController extends Controller
             'role_id' => $user->role_id,
             'active'=>$user->active,
             'personal_photo' => $user->personal_photo,
+            'father_name' => $user->EmployeeInformation->father_name ?? null,
+            'mother_name' => $user->EmployeeInformation->mother_name ?? null,
             'current_address' => $user->EmployeeInformation->current_address ?? null,
             'front_id_image' => $user->EmployeeInformation->front_id_image ?? null,
             'back_id_image' => $user->EmployeeInformation->back_id_image ?? null,

@@ -42,6 +42,6 @@ return [
     'profit_already_exists'=>'profit_already_exists',
     'profits_already_calculated'=>'profits_already_calculated',
 
-
+    'can_not'=>'Cannot search by father/mother name for this user type',
 ];
 
