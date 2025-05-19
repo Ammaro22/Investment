@@ -97,6 +97,7 @@ class RequestFromLawyerController extends Controller
             if ($request->Request_from_expert->economic_evaluation &&
                 $request->Request_from_expert->economic_evaluation->agreed_negotiation) {
                 $additionalData['text_of_the_agreement'] = $request->Request_from_expert->economic_evaluation->agreed_negotiation->Text_of_the_agreement;
+                $additionalData['negotiation_id'] = $request->Request_from_expert->economic_evaluation->agreed_negotiation->id;
             }
         }
 
