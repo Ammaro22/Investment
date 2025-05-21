@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class InternalTransfer extends Model
 {
     use HasFactory;
+    protected $table='internal_transfers';
     protected $primaryKey ='id';
     public $timestamps = true;
     protected $fillable = [

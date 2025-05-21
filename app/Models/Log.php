@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Log extends Model
 {
     use HasFactory;
-
+    protected $table='logs';
+    protected $primaryKey ='id';
+    public $timestamps = true;
     protected $fillable=[
         'user_id', 'level','message','context','channel',
         'record_datetime','remote_addr','user_agent'

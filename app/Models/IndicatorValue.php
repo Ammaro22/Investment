@@ -9,6 +9,8 @@ class IndicatorValue extends Model
 {
     use HasFactory;
     protected $table='indicator_values';
+    protected $primaryKey ='id';
+    public $timestamps = true;
     protected $fillable=[
         'economic_evaluation_id',
         'indicator_id',

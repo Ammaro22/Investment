@@ -10,6 +10,8 @@ class Indicator extends Model
     use HasFactory;
 
     protected $table='indicators';
+    protected $primaryKey ='id';
+    public $timestamps = true;
     protected $fillable=[
         'name',
         'recommended_min',

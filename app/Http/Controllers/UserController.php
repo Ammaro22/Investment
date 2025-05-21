@@ -50,8 +50,7 @@ class UserController extends Controller
 
         $accessToken = $user->createToken('authToken')->accessToken;
 
-        DatabaseLogger::log('info','user sign up',['user_id'=>$user->id,
-            'user_name'=>$user->name]);
+
         return response([
             'message' => trans('messages.account_created'),
             'user' => $user,
@@ -108,6 +107,9 @@ class UserController extends Controller
     public function logout(Request $request)
     {
         $request->user()->token()->revoke();
+
+        DatabaseLogger::log('info','user logged out',['user_id'=>$request->user()->id,
+            'user_name'=>$request->user()->name]);
         return response()->json([
             'message' => trans('messages.logout_success'),
         ]);

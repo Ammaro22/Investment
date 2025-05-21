@@ -8,7 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class Wallet extends Model
 {
     use HasFactory;
-    protected $fillable = ['user_id', 'balance', 'currency', 'wallet_type', 'is_active'];
+    protected $table='wallets';
+    protected $primaryKey ='id';
+    public $timestamps = true;
+    protected $fillable = [
+        'user_id',
+        'balance',
+        'currency',
+        'wallet_type',
+        'is_active'
+    ];
 
     public function user() {
         return $this->belongsTo(User::class);
