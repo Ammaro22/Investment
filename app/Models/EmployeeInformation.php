@@ -13,11 +13,14 @@ class EmployeeInformation extends Model
     public $timestamps = true;
     protected $fillable = [
         'user_id',
+        'father_name',
+        'mother_name',
         'current_address',
         'front_id_image',
         'back_id_image',
         'date_of_birth'
     ];
+
 
     public function user()
     {

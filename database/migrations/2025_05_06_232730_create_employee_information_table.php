@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('employee_information', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('father_name');
+            $table->string('mother_name');
             $table->string('current_address');
             $table->string('front_id_image');
             $table->string('back_id_image');
@@ -21,6 +23,7 @@ return new class extends Migration
             $table->timestamps();
         });
     }
+
 
     /**
      * Reverse the migrations.
