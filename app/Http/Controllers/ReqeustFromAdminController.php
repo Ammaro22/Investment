@@ -16,7 +16,7 @@ class ReqeustFromAdminController extends Controller
     public function addImagesAndCompleteRequest(Request $request, $id)
     {
         $userRole = auth()->user()->role_id;
-        if ($userRole !== 4 ) {
+        if ($userRole !== 4) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
@@ -32,7 +32,6 @@ class ReqeustFromAdminController extends Controller
             'front_image' => 'required|image|mimes:jpeg,png,jpg,gif',
             'back_image' => 'required|image|mimes:jpeg,png,jpg,gif',
         ]);
-
 
         $frontImage = $request->file('front_image');
         $frontImageName = time() . '_' . $frontImage->getClientOriginalName();
@@ -55,20 +54,16 @@ class ReqeustFromAdminController extends Controller
         $agreedNegotiationId = $economicEvaluation->agreed_negotiations_id;
 
         $agreedNegotiation = Agreed_negotiation::find($agreedNegotiationId);
-        if (!$agreedNegotiation) {
-            return response()->json([
-                'message' => __('messages.agreed_negotiation_not_found'),
-            ], 404);
-        }
+        $paymentMethod = $agreedNegotiation ? $agreedNegotiation->Payment_Mechanism : $property->pay_way;
+
         $electronicCertificate = new Electronic_Property_Certificate();
         $electronicCertificate->request_from_admin_id = $requestFromAdmin->id;
         $electronicCertificate->Seller_name = $user->name;
         $electronicCertificate->Property_location = $property->state . ', ' . $property->exact_position;
         $electronicCertificate->lawyer_name = auth()->user()->name;
         $electronicCertificate->Property_Price = $economicEvaluation->expected_price;
-        $electronicCertificate->Payment_method =  $agreedNegotiation->Payment_Mechanism;
+        $electronicCertificate->Payment_method = $paymentMethod;
         $electronicCertificate->save();
-
 
         return response()->json([
             'message' => __('messages.operation_success'),
