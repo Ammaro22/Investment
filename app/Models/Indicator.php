@@ -22,6 +22,7 @@ class Indicator extends Model
 
 
 
+
     public function values()
     {
         return $this->hasMany(IndicatorValue::class);

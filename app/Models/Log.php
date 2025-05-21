@@ -18,6 +18,7 @@ class Log extends Model
 
 
 
+
     protected $casts = [
         'context' => 'array',
         'record_datetime' => 'datetime',

@@ -23,6 +23,7 @@ class Transaction extends Model
     ];
 
 
+
     public function wallet() {
         return $this->belongsTo(Wallet::class);
     }

@@ -137,6 +137,7 @@ class RequestFromLawyerController extends Controller
         ];
 
 
+
         return response()->json([
             'message' => __('messages.operation_success'),
             'data' => array_merge(
