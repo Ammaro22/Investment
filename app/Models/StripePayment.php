@@ -21,4 +21,5 @@ class StripePayment extends Model
         'receipt_url'
     ];
 
+
 }

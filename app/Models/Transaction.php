@@ -22,6 +22,7 @@ class Transaction extends Model
         'related_transaction_id'
     ];
 
+
     public function wallet() {
         return $this->belongsTo(Wallet::class);
     }

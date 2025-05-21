@@ -19,6 +19,7 @@ class Wallet extends Model
         'is_active'
     ];
 
+
     public function user() {
         return $this->belongsTo(User::class);
     }
