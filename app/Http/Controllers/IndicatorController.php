@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Validator;
 class IndicatorController extends Controller
 {
 
-
     public function storeIndicator(Request $request)
     {
         $user=auth()->user();

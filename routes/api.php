@@ -210,5 +210,4 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::get('/getValuesOfIndicator',[IndicatorController::class,'getValuesOfIndicator']);
 
 
-
 });
