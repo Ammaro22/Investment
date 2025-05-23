@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EconomicEvaluation;
 use App\Models\Indicator;
 use App\Models\IndicatorValue;
+use App\Models\Property_for_sale;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
@@ -40,33 +42,51 @@ class IndicatorController extends Controller
     }
 
 
-    public function storeValueToIndicator(Request $request)
+
+    public function storeValueToIndicator(Request $request, $property_id)
     {
-        $user=auth()->user();
-        $userRole=$user->role_id;
-        if(!$user||$userRole!=3)
-        {
-            return response()->json(['message'=>trans('messages.unauthorized')]);
-        }
-        $validator=Validator::make($request->all(),[
-            'economic_evaluation_id'=>'required|exists:economic_evaluations,id',
-            'indicator_id'=>'required|exists:indicators,id',
-            'value'=>'required|numeric'
-        ]);
-
-        if($validator->fails())
-        {
-            return response()->json(['errors'=>$validator->errors()],400);
+        $user = auth()->user();
+        if (!$user || $user->role_id != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')], 403);
         }
 
-        $indicator_values=IndicatorValue::create([
-            'economic_evaluation_id'=>$request->economic_evaluation_id,
-            'indicator_id'=>$request->indicator_id,
-            'value'=>$request->value
+        $validator = Validator::make($request->all(), [
+            'economic_evaluation_id' => 'required|exists:economic_evaluations,id',
+            'indicators' => 'required|array|min:1',
+            'indicators.*.indicator_id' => 'required|exists:indicators,id',
+            'indicators.*.value' => 'required|numeric',
         ]);
 
-        return response()->json(['message'=>trans('messages.operation_success')]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+
+        if (!Property_for_sale::find($property_id)) {
+            return response()->json(['message' => 'Property not found.'], 404);
+        }
+
+        $economicEvaluation = EconomicEvaluation::find($request->economic_evaluation_id);
+        if (!$economicEvaluation) {
+            return response()->json(['message' => 'Economic evaluation not found.'], 404);
+        }
+
+        if ($economicEvaluation->property_for_sale_id != $property_id) {
+            return response()->json(['message' => 'This economic evaluation does not belong to the given property.'], 400);
+        }
+
+        foreach ($request->indicators as $indicatorData) {
+            IndicatorValue::create([
+                'economic_evaluation_id' => $request->economic_evaluation_id,
+                'property_id' => $property_id,
+                'indicator_id' => $indicatorData['indicator_id'],
+                'value' => $indicatorData['value'],
+            ]);
+        }
+
+        return response()->json(['message' => trans('messages.operation_success')]);
     }
+
+
 
 
     public function deleteIndicator($indicator_id)
@@ -123,37 +143,41 @@ class IndicatorController extends Controller
     }
 
 
-
-    public function updateValueOfIndicator(Request $request,$indicatorValue_id)
+    public function updateValuesOfIndicator(Request $request)
     {
-        $user=auth()->user();
-        $userRole=$user->role_id;
-        if(!$user||$userRole!=3)
-        {
-            return response()->json(['message'=>trans('messages.unauthorized')]);
+        $user = auth()->user();
+        if (!$user || $user->role_id != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')], 403);
         }
-        $validator=Validator::make($request->all(),[
-            'value'=>'required|numeric'
+
+        $validator = Validator::make($request->all(), [
+            'indicators' => 'required|array',
+            'indicators.*.id' => 'required|exists:indicator_values,id',
+            'indicators.*.value' => 'required|numeric',
         ]);
 
-        if($validator->fails())
-        {
-            return response()->json(['errors'=>$validator->errors()],400);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
         }
 
-        $indicatorValue=IndicatorValue::find($indicatorValue_id);
-        if(!$indicatorValue)
-        {
-            return response()->json([
-                'message' => __('messages.not_found'),
-            ], 404);
+        $updated = [];
+
+        foreach ($request->indicators as $item) {
+            $indicatorValue = IndicatorValue::find($item['id']);
+
+            if ($indicatorValue) {
+                $indicatorValue->update([
+                    'value' => $item['value'],
+                ]);
+                $updated[] = $indicatorValue;
+            }
         }
-        $indicatorValue->update($request->only([
-            'value'
-        ]));
-        return response()->json(['message'=>trans('messages.operation_success'),'data'=>$indicatorValue]);
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $updated,
+        ], 200);
     }
-
 
 
 
@@ -233,7 +257,7 @@ class IndicatorController extends Controller
     }
 
 
-    public function getValuesOfIndicator()
+  /*  public function getValuesOfIndicator()
     {
         $user=auth()->user();
         $userRole=$user->role_id;
@@ -247,5 +271,5 @@ class IndicatorController extends Controller
             'message' => trans('messages.operation_success'),
             'data' => $indicatorValue,
         ], 200);
-    }
+    }*/
 }

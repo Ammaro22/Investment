@@ -8,6 +8,7 @@ use App\Models\CompletedProperty;
 use App\Models\EconomicEvaluation;
 use App\Models\Investment;
 use App\Models\Profit;
+use App\Models\Property_for_sale;
 use App\Models\PropertyForInvestment;
 use App\Models\Reward;
 use App\Models\RewardTransactions;
@@ -925,6 +926,70 @@ class InvestmentController extends Controller
     }
 
     }
+    public function getEvaluationByProperty($property_id)
+    {
+        $user = auth()->user();
+        if (!$user || $user->role_id != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')], 403);
+        }
+
+        $property = Property_for_sale::find($property_id);
+        if (!$property) {
+            return response()->json(['message' => 'Property not found.'], 404);
+        }
+
+        $evaluation = EconomicEvaluation::with('indicatorValues.indicator')
+            ->where('property_for_sale_id', $property_id)
+            ->first();
+
+        if (!$evaluation) {
+            return response()->json(['message' => 'No evaluation found for this property.'], 404);
+        }
+
+        $filteredIndicatorValues = $evaluation->indicatorValues->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'property_id' => $item->property_id,
+                'economic_evaluation_id' => $item->economic_evaluation_id,
+                'indicator_id' => $item->indicator_id,
+                'value' => $item->value,
+                'indicator' => [
+                    'id' => $item->indicator->id,
+                    'name' => $item->indicator->name,
+                    'recommended_min' => $item->indicator->recommended_min,
+                    'recommended_max' => $item->indicator->recommended_max,
+                ],
+            ];
+        });
+
+        $data = [
+            'id' => $evaluation->id,
+            'property_for_sale_id' => $evaluation->property_for_sale_id,
+            'number_of_chances' => $evaluation->number_of_chances,
+            'profit_percent' => $evaluation->profit_percent,
+            'expected_price' => $evaluation->expected_price,
+            'buying_price' => $evaluation->buying_price,
+            'renting_price' => $evaluation->renting_price,
+            'total_expected_taxes' => $evaluation->total_expected_taxes,
+            'chance_price' => $evaluation->chance_price,
+            'investment_time' => $evaluation->investment_time,
+            'incoming_time' => $evaluation->incoming_time,
+            'investment_mode' => $evaluation->investment_mode,
+            'property_management' => $evaluation->property_management,
+            'agreed_negotiation_id' => $evaluation->agreed_negotiation_id,
+            'indicator_values' => $filteredIndicatorValues,
+        ];
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $data,
+        ]);
+
+    }
+
+
+
+
 
 
 

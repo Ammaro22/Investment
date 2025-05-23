@@ -14,6 +14,7 @@ return new class extends Migration
     {
         Schema::create('indicator_values', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('property_id')->constrained('property_for_sales')->onDelete('cascade');
             $table->foreignId('economic_evaluation_id')->constrained('economic_evaluations')->onDelete('cascade');
             $table->foreignId('indicator_id')->constrained('indicators')->onDelete('cascade');
             $table->float('value');

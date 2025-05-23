@@ -13,6 +13,7 @@ class IndicatorValue extends Model
     public $timestamps = true;
     protected $fillable=[
         'economic_evaluation_id',
+        'property_id',
         'indicator_id',
         'value'
     ];
