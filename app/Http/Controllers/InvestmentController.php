@@ -953,12 +953,6 @@ class InvestmentController extends Controller
                 'economic_evaluation_id' => $item->economic_evaluation_id,
                 'indicator_id' => $item->indicator_id,
                 'value' => $item->value,
-                'indicator' => [
-                    'id' => $item->indicator->id,
-                    'name' => $item->indicator->name,
-                    'recommended_min' => $item->indicator->recommended_min,
-                    'recommended_max' => $item->indicator->recommended_max,
-                ],
             ];
         });
 

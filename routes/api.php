@@ -124,6 +124,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::post('/reject_request_from_expert/{request_from_expert_id}', [RequestFromExpertController::class, 'rejectRequest']);
     Route::get('/get_all_requests', [RequestFromExpertController::class, 'getAllRequestsForAdmin']);
     Route::get('/get_requests_by_id/{request_from_expert_id}',[RequestFromExpertController::class,'getRequestFromExpertById']);
+    Route::get('/getPropertyByRequestId/{request_from_expert_id}',[RequestFromExpertController::class,'getPropertyByRequestId']);
 
 });
 
@@ -208,6 +209,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::get('/getIndicatorWithValues',[IndicatorController::class,'getIndicatorWithValues']);
     Route::get('/getIndicators',[IndicatorController::class,'getIndicators']);
     Route::get('/getValuesOfIndicator',[IndicatorController::class,'getValuesOfIndicator']);
+
 
 ///////////////////
     Route::get('/getEvaluationByProperty/{property_id}',[InvestmentController::class,'getEvaluationByProperty']);

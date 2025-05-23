@@ -249,6 +249,112 @@ class RequestFromExpertController extends Controller
         ], 200);
     }
 
+    public function getPropertyByRequestId($id)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 3) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+        // جلب الطلب مع العلاقات المطلوبة بما فيها المؤشرات
+        $request = request_from_lawyer::with([
+            'property_for_sale.Property_image',
+            'property_for_sale.Property_document',
+            'property_for_sale.id_image',
+            'Request_from_expert.economic_evaluation.property.Property_image',
+            'Request_from_expert.economic_evaluation.property.Property_document',
+            'Request_from_expert.economic_evaluation.property.id_image',
+            'Request_from_expert.economic_evaluation.agreed_negotiation',
+            'Request_from_expert.economic_evaluation.indicatorValues.indicator'
+        ])->find($id);
+
+        if (!$request) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        if (!$request->property_for_sale) {
+            return response()->json([
+                'message' => __('messages.property_not_found'),
+            ], 404);
+        }
+
+        $property = $request->property_for_sale;
+
+        $propertyData = $property->toArray();
+        $propertyData['images'] = $property->Property_image;
+        $propertyData['documents'] = $property->Property_document;
+        $propertyData['id_images'] = $property->id_image;
+
+        $expertRequest = $request->Request_from_expert;
+        $evaluation = $expertRequest?->economic_evaluation;
+        $agreedNegotiation = $evaluation?->agreed_negotiation;
+
+        // جلب المؤشرات إذا موجودة
+        $indicators = $evaluation?->indicatorValues->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'indicator_id' => $item->indicator_id,
+                'value' => $item->value,
+            ];
+        });
+
+        $economicData = [
+            'note_admin' => $expertRequest?->note_admin,
+            'economic_evaluation' => $evaluation ? [
+                'number_of_chances' => $evaluation->number_of_chances,
+                'expected_price' => $evaluation->expected_price,
+                'profit_percent' => $evaluation->profit_percent,
+                'total_expected_taxes' => $evaluation->total_expected_taxes,
+                'buying_price' => $evaluation->buying_price,
+                'renting_price' => $evaluation->renting_price,
+                'chance_price' => $evaluation->chance_price,
+                'investment_time' => $evaluation->investment_time,
+                'incoming_time' => $evaluation->incoming_time,
+                'investment_mode' => $evaluation->investment_mode,
+                'property_management' => $evaluation->property_management,
+                'agreed_negotiation' => $agreedNegotiation ?: (object)[
+                    'id' => null,
+                    'Text_of_the_agreement' => null,
+                    'created_at' => null,
+                ],
+                'indicator_values' => $indicators ?? [],
+            ] : [
+                'number_of_chances' => null,
+                'expected_price' => null,
+                'profit_percent' => null,
+                'total_expected_taxes' => null,
+                'buying_price' => null,
+                'renting_price' => null,
+                'chance_price' => null,
+                'investment_time' => null,
+                'incoming_time' => null,
+                'investment_mode' => null,
+                'property_management' => null,
+                'agreed_negotiation' => (object)[
+                    'id' => null,
+                    'Text_of_the_agreement' => null,
+                    'created_at' => null,
+                ],
+                'indicator_values' => [],
+            ]
+        ];
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => array_merge(
+                $propertyData,
+                $economicData
+            )
+        ], 200);
+    }
+
+
+
+
     public function getAllRequestsForAdmin()
     {
         $userRole = auth()->user()->role_id;
