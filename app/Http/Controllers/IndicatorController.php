@@ -177,4 +177,76 @@ class IndicatorController extends Controller
         return response()->json(['message'=>trans('messages.operation_success')]);
     }
 
+
+    public function getIndicators()
+    {
+        $user=auth()->user();
+        $userRole=$user->role_id;
+        if(!$user||$userRole!=3)
+        {
+            return response()->json(['message'=>trans('messages.unauthorized')]);
+        }
+        $indicator = Indicator::all();
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $indicator,
+        ], 200);
+    }
+
+
+    public function getIndicatorWithValues()
+    {
+        $user=auth()->user();
+        $userRole=$user->role_id;
+        if(!$user||$userRole!=3)
+        {
+            return response()->json(['message'=>trans('messages.unauthorized')]);
+        }
+        $indicatorValue = Indicator::with('values')->get();
+
+        if($indicatorValue->isEmpty())
+        {
+            return response()->json(['message' => trans('messages.not_found')]);
+
+        }
+
+        $Values=$indicatorValue->map(function ($value)
+        {
+            $info = $value->values->first();
+
+            return [
+                'indicator_id' => $value->id,
+                'economic_evaluation_id' => optional($info)->economic_evaluation_id,
+                'name' => $value->name,
+                'recommended_min' => $value->recommended_min,
+                'recommended_max' => $value->recommended_max,
+                'ValueAssigned' => optional($info)->value,
+            ];
+
+
+        });
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $Values,
+        ], 200);
+    }
+
+
+    public function getValuesOfIndicator()
+    {
+        $user=auth()->user();
+        $userRole=$user->role_id;
+        if(!$user||$userRole!=3)
+        {
+            return response()->json(['message'=>trans('messages.unauthorized')]);
+        }
+        $indicatorValue = IndicatorValue::all();
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $indicatorValue,
+        ], 200);
+    }
 }

@@ -205,6 +205,9 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::delete('/deleteValueOfIndicator/{indicatorValue_id}', [IndicatorController::class, 'deleteValueOfIndicator']);
     Route::post('/updateIndicator/{indicator_id}',[IndicatorController::class,'updateIndicator']);
     Route::post('/updateValueOfIndicator/{indicatorValue_id}',[IndicatorController::class,'updateValueOfIndicator']);
+    Route::get('/getIndicatorWithValues',[IndicatorController::class,'getIndicatorWithValues']);
+    Route::get('/getIndicators',[IndicatorController::class,'getIndicators']);
+    Route::get('/getValuesOfIndicator',[IndicatorController::class,'getValuesOfIndicator']);
 
 
 
