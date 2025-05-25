@@ -43,6 +43,8 @@ class IndicatorController extends Controller
 
 
 
+
+
     public function storeValueToIndicator(Request $request, $property_id)
     {
         $user = auth()->user();
@@ -51,7 +53,6 @@ class IndicatorController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'economic_evaluation_id' => 'required|exists:economic_evaluations,id',
             'indicators' => 'required|array|min:1',
             'indicators.*.indicator_id' => 'required|exists:indicators,id',
             'indicators.*.value' => 'required|numeric',
@@ -61,30 +62,40 @@ class IndicatorController extends Controller
             return response()->json(['errors' => $validator->errors()], 400);
         }
 
-        if (!Property_for_sale::find($property_id)) {
+        $property = Property_for_sale::find($property_id);
+        if (!$property) {
             return response()->json(['message' => 'Property not found.'], 404);
         }
 
-        $economicEvaluation = EconomicEvaluation::find($request->economic_evaluation_id);
+        $economicEvaluation = EconomicEvaluation::where('property_for_sale_id', $property_id)->first();
         if (!$economicEvaluation) {
             return response()->json(['message' => 'Economic evaluation not found.'], 404);
         }
 
-        if ($economicEvaluation->property_for_sale_id != $property_id) {
-            return response()->json(['message' => 'This economic evaluation does not belong to the given property.'], 400);
-        }
-
         foreach ($request->indicators as $indicatorData) {
-            IndicatorValue::create([
-                'economic_evaluation_id' => $request->economic_evaluation_id,
-                'property_id' => $property_id,
-                'indicator_id' => $indicatorData['indicator_id'],
-                'value' => $indicatorData['value'],
-            ]);
+            $exists = IndicatorValue::where('economic_evaluation_id', $economicEvaluation->id)
+                ->where('property_id', $property_id)
+                ->where('indicator_id', $indicatorData['indicator_id'])
+                ->exists();
+
+
+            if (!$exists) {
+                IndicatorValue::create([
+                    'economic_evaluation_id' => $economicEvaluation->id,
+                    'property_id' => $property_id,
+                    'indicator_id' => $indicatorData['indicator_id'],
+                    'value' => $indicatorData['value'],
+                ]);
+            }
+            else{
+                return response()->json(['message'=>'value of indicator already assigned']);
+            }
         }
 
         return response()->json(['message' => trans('messages.operation_success')]);
     }
+
+
 
 
 
@@ -234,20 +245,19 @@ class IndicatorController extends Controller
 
         }
 
-        $Values=$indicatorValue->map(function ($value)
-        {
-            $info = $value->values->first();
-
+        $Values = $indicatorValue->map(function ($indicator) {
             return [
-                'indicator_id' => $value->id,
-                'economic_evaluation_id' => optional($info)->economic_evaluation_id,
-                'name' => $value->name,
-                'recommended_min' => $value->recommended_min,
-                'recommended_max' => $value->recommended_max,
-                'ValueAssigned' => optional($info)->value,
+                'indicator_id' => $indicator->id,
+                'name' => $indicator->name,
+                'recommended_min' => $indicator->recommended_min,
+                'recommended_max' => $indicator->recommended_max,
+                'values' => $indicator->values->map(function ($val) {
+                    return [
+                        'economic_evaluation_id' => $val->economic_evaluation_id,
+                        'ValueAssigned' => $val->value,
+                    ];
+                }),
             ];
-
-
         });
 
         return response()->json([
@@ -257,7 +267,7 @@ class IndicatorController extends Controller
     }
 
 
-  /*  public function getValuesOfIndicator()
+    public function getValuesOfIndicator()
     {
         $user=auth()->user();
         $userRole=$user->role_id;
@@ -271,5 +281,51 @@ class IndicatorController extends Controller
             'message' => trans('messages.operation_success'),
             'data' => $indicatorValue,
         ], 200);
-    }*/
+    }
 }
+
+
+
+/* public function storeValueToIndicator(Request $request, $property_id)
+ {
+     $user = auth()->user();
+     if (!$user || $user->role_id != 3) {
+         return response()->json(['message' => trans('messages.unauthorized')], 403);
+     }
+
+     $validator = Validator::make($request->all(), [
+         'economic_evaluation_id' => 'required|exists:economic_evaluations,id',
+         'indicators' => 'required|array|min:1',
+         'indicators.*.indicator_id' => 'required|exists:indicators,id',
+         'indicators.*.value' => 'required|numeric',
+     ]);
+
+     if ($validator->fails()) {
+         return response()->json(['errors' => $validator->errors()], 400);
+     }
+
+     if (!Property_for_sale::find($property_id)) {
+         return response()->json(['message' => 'Property not found.'], 404);
+     }
+
+     $economicEvaluation = EconomicEvaluation::find($request->economic_evaluation_id);
+     if (!$economicEvaluation) {
+         return response()->json(['message' => 'Economic evaluation not found.'], 404);
+     }
+
+     if ($economicEvaluation->property_for_sale_id != $property_id) {
+         return response()->json(['message' => 'This economic evaluation does not belong to the given property.'], 400);
+     }
+
+     foreach ($request->indicators as $indicatorData) {
+         IndicatorValue::create([
+             'economic_evaluation_id' => $request->economic_evaluation_id,
+             'property_id' => $property_id,
+             'indicator_id' => $indicatorData['indicator_id'],
+             'value' => $indicatorData['value'],
+         ]);
+     }
+
+     return response()->json(['message' => trans('messages.operation_success')]);
+ }
+*/
