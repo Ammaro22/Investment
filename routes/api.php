@@ -180,6 +180,8 @@ Route::group(["middleware"=>["auth:api"]],function (){
 
 Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('/add_info_employee/{user_Id}', [EmployeeInformationController::class, 'addEmployeeInformation']);
+    Route::post('/updateEmployeeInformation/{user_Id}', [EmployeeInformationController::class, 'updateEmployeeInformation']);
+
     Route::post('/search_user_by_role_and_name', [EmployeeInformationController::class, 'searchUsers']);
     Route::get('/get_info_users_by_id/{userId}', [EmployeeInformationController::class, 'getUserWithEmployeeInfo']);
     Route::post('/get_employee_by_role_and_active', [EmployeeInformationController::class, 'getUsersByRoleAndActive']);

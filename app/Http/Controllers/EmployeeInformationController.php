@@ -85,6 +85,98 @@ class EmployeeInformationController extends Controller
     }
 
 
+    public function updateEmployeeInformation(Request $request, $userId)
+    {
+        $user = auth()->user();
+
+        if (!$user || $user->role_id != 1) {
+            return response()->json(['message' => trans('messages.unauthorized')], 403);
+        }
+
+        $employeeUser = User::where('id', $userId)
+            ->whereIn('role_id', [3, 4])
+            ->firstOrFail();
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'nullable|string|min:4|max:255',
+            'email' => 'nullable|string|email|unique:users,email,' . $employeeUser->id,
+            'phone' => 'nullable|string|max:255',
+            'password' => 'nullable|string|min:6',
+            'role_id' => 'nullable|in:3,4',
+            'active' => 'nullable|boolean',
+            'personal_photo' => 'nullable|image|mimes:jpg,jpeg,png',
+
+            'father_name' => 'nullable|string|max:255',
+            'mother_name' => 'nullable|string|max:255',
+            'current_address' => 'nullable|string|max:255',
+            'front_id_image' => 'nullable|image|mimes:jpg,jpeg,png',
+            'back_id_image' => 'nullable|image|mimes:jpg,jpeg,png',
+            'date_of_birth' => 'nullable|date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+
+        $userdata = $request->only(['name', 'email', 'phone', 'role_id', 'active']);
+
+        if ($request->filled('password')) {
+            $userdata['password'] = bcrypt($request->password);
+        }
+
+        if ($request->hasFile('personal_photo')) {
+            if ($employeeUser->personal_photo && file_exists(public_path($employeeUser->personal_photo))) {
+                unlink(public_path($employeeUser->personal_photo));
+            }
+
+            $personalPhoto = $request->file('personal_photo');
+            $personalPhotoName = time() . '_personal_' . $personalPhoto->getClientOriginalName();
+            $personalPhoto->move(public_path('images/personal'), $personalPhotoName);
+            $userdata['personal_photo'] = "images/personal/$personalPhotoName";
+        }
+
+        $employeeUser->update($userdata);
+
+        $employeeInfo = $request->only(['father_name', 'mother_name', 'current_address', 'date_of_birth']);
+
+        if ($request->hasFile('front_id_image')) {
+            if ($employeeUser->employeeInformation && $employeeUser->employeeInformation->front_id_image && file_exists(public_path($employeeUser->employeeInformation->front_id_image))) {
+                unlink(public_path($employeeUser->employeeInformation->front_id_image));
+            }
+
+            $front = $request->file('front_id_image');
+            $frontName = time() . '_front_' . $front->getClientOriginalName();
+            $front->move(public_path('images/front'), $frontName);
+            $employeeInfo['front_id_image'] = "images/front/$frontName";
+        }
+
+        if ($request->hasFile('back_id_image')) {
+            if ($employeeUser->employeeInformation && $employeeUser->employeeInformation->back_id_image && file_exists(public_path($employeeUser->employeeInformation->back_id_image))) {
+                unlink(public_path($employeeUser->employeeInformation->back_id_image));
+            }
+
+            $back = $request->file('back_id_image');
+            $backName = time() . '_back_' . $back->getClientOriginalName();
+            $back->move(public_path('images/back'), $backName);
+            $employeeInfo['back_id_image'] = "images/back/$backName";
+        }
+
+        if (!$employeeUser->employeeInformation) {
+            return response()->json(['error' => 'لا توجد بيانات وظيفية لهذا الموظف'], 404);
+
+        }else{
+            $employeeUser->employeeInformation->update($employeeInfo);
+        }
+
+        return response()->json([
+            'message' =>trans('messages.operation_success'),
+            'data' => $employeeUser,
+        ]);
+    }
+
+
+
+
     public function searchUsers(Request $request)
     {
         $userRole = auth()->user()->role_id;
