@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Property_document extends Model
 {
     use HasFactory,Imageable;
-    protected $table ='Property_documents';
+    protected $table ='property_documents';
     protected $primaryKey ='id';
     public $timestamps = true;
     protected $fillable =[
