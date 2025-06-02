@@ -74,7 +74,7 @@ class ReqeustFromAdminController extends Controller
     public function getCompletedRequests()
     {
         $userRole = auth()->user()->role_id;
-        if ($userRole !== 4 ) {
+        if ($userRole !== 4 && $userRole !== 1 ) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
