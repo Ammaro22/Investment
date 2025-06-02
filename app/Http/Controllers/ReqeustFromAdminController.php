@@ -80,6 +80,7 @@ class ReqeustFromAdminController extends Controller
             ], 403);
         }
 
+
         $completedRequests = Request_from_admin::with('proprtsseale:id,state,exact_position')
         ->where('status', 'completed')
             ->get();
