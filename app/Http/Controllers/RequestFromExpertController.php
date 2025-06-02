@@ -355,33 +355,6 @@ class RequestFromExpertController extends Controller
 
 
 
-//    public function getAllRequestsForAdmin()
-//    {
-//        $userRole = auth()->user()->role_id;
-//        if ($userRole !== 1 ) {
-//            return response()->json([
-//                'message' => trans('messages.unauthorized'),
-//            ], 403);
-//        }
-//        $requests = request_from_expert::all();
-//
-//        $responseData = $requests->map(function ($request) {
-//            return [
-//                'id' => $request->id,
-//                'economic_evaluation_id' => $request->economic_evaluation_id,
-//                'note_admin' => $request->note_admin,
-//                'status' => $request->status,
-//                'created_at' => $request->created_at->format('Y-m-d'),
-//
-//            ];
-//        });
-//
-//        return response()->json([
-//            'message' => __('messages.operation_success'),
-//            'data' => $responseData,
-//        ], 200);
-//    }
-
     public function getAllRequestsForAdmin()
     {
         $userRole = auth()->user()->role_id;
@@ -402,9 +375,9 @@ class RequestFromExpertController extends Controller
                 'economic_evaluation_id' => $request->economic_evaluation_id,
                 'note_admin' => $request->note_admin,
                 'status' => $request->status,
-                'created_at' => $request->created_at->format('Y-m-d'),
-                'lawyer_acceptance_date' => $request->Request_from_lower ? $request->Request_from_lower->created_at->format('Y-m-d') : null,
-                'expert_acceptance_date' => $request->economic_evaluation ? $request->economic_evaluation->created_at->format('Y-m-d') : null
+                'created_at' => $request->created_at->format('Y-m-d H:i:s'),
+                'lawyer_acceptance_date' => $request->Request_from_lower ? $request->Request_from_lower->created_at->format('Y-m-d H:i:s') : null,
+                'expert_acceptance_date' => $request->economic_evaluation ? $request->economic_evaluation->created_at->format('Y-m-d H:i:s') : null
             ];
         });
 
