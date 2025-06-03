@@ -9,7 +9,7 @@ class Agreed_negotiation extends Model
 {
     use HasFactory;
 
-    protected $table='Agreed_negotiations';
+    protected $table='agreed_negotiations';
     protected $primaryKey ='id';
     public $timestamps = true;
     protected $fillable=[
