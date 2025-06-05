@@ -27,6 +27,7 @@ class RequestFromExpertController extends Controller
             'request_from_lawyer_id'=>'required|exists:request_from_lawyers,id',
             'economic_evaluation' => 'required|array',
             'economic_evaluation.number_of_chances' => 'required|integer',
+            'economic_evaluation.negotiation_mode' => 'required',
             'economic_evaluation.expected_price' => 'required',
             'economic_evaluation.profit_percent' => 'required',
             'economic_evaluation.total_expected_taxes' => 'required',
@@ -53,6 +54,7 @@ class RequestFromExpertController extends Controller
         $requestForLawyer = request_from_lawyer::find($request->request_from_lawyer_id);
         if ($requestForLawyer) {
             $requestForLawyer->status = 'مقبول';
+            $requestForLawyer->accept_user = 'مقبول';
             $requestForLawyer->save();
         }
         $propertyForSale = Property_for_sale::find($request->economic_evaluation['property_for_sale_id']);
@@ -120,6 +122,7 @@ class RequestFromExpertController extends Controller
         $validator = Validator::make($request->all(), [
             'economic_evaluation' => 'required|array',
             'economic_evaluation.number_of_chances' => 'sometimes|integer',
+            'economic_evaluation.negotiation_mode' => 'required',
             'economic_evaluation.expected_price' => 'sometimes|numeric',
             'economic_evaluation.profit_percent' => 'sometimes|numeric',
             'economic_evaluation.total_expected_taxes' => 'sometimes',
@@ -204,6 +207,7 @@ class RequestFromExpertController extends Controller
             'economic_evaluation' => [
                 'number_of_chances' => $request->economic_evaluation->number_of_chances,
                 'expected_price' => $request->economic_evaluation->expected_price,
+                'negotiation_mode' => $request->economic_evaluation->negotiation_mode,
                 'profit_percent' => $request->economic_evaluation->profit_percent,
                 'total_expected_taxes' => $request->economic_evaluation->total_expected_taxes,
                 'buying_price' => $request->economic_evaluation->buying_price,

@@ -729,7 +729,7 @@ class InvestmentController extends Controller
 
         $profit_percent = $property->profit_percent;
 
-        $renting = $economic->renting_price;
+        $renting = $economic->renting_price ?? null;
 
         $selling=$economic->baying_price;
 

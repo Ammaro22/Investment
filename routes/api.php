@@ -13,6 +13,7 @@ use App\Http\Controllers\RequestController;
 use App\Http\Controllers\RequestFromExpertController;
 use App\Http\Controllers\RequestFromLawyerController;
 use App\Http\Controllers\RewardController;
+use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\StripeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WalletController;
@@ -216,6 +217,12 @@ Route::group(["middleware"=>["auth:api"]],function() {
 ///////////////////
     Route::get('/getEvaluationByProperty/{property_id}',[InvestmentController::class,'getEvaluationByProperty']);
 
-
-
+/*الاحصائيات */
+    Route::group(["middleware"=>["auth:api"]],function() {
+        Route::post('/rejected_Requests_Percentage_form_lawyer', [StatisticsController::class, 'rejectedRequestsPercentageformlawyer']);
+        Route::post('/accepted_Requests_Percentage_from_admin', [StatisticsController::class, 'acceptedRequestsPercentagefromadmin']);
+        Route::post('/rejected_Requests_Percentage_from_user', [StatisticsController::class, 'rejectedRequestsPercentagefromuser']);
+        Route::post('/successful_Requests_Percentage_ByMonth_in_year',[StatisticsController::class,'successfulRequestsPercentageByMonth']);
+        Route::post('/get_Investments_ByMonthAndYear',[StatisticsController::class,'getInvestmentsByMonthAndYear']);
+    });
 });

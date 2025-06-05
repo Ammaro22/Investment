@@ -14,6 +14,7 @@ class request_from_lawyer extends Model
     protected $fillable=[
         'property_for_sale_id',
         'status',
+        'accept_user',
         'accept_admin'
     ];
     public function property_for_sale()
@@ -24,4 +25,14 @@ class request_from_lawyer extends Model
     {
         return $this->hasOne(request_from_expert::class, 'request_from_lawyer_id');
     }
+    public function request_from_admin()
+    {
+        return $this->hasOne(Request_from_admin::class, 'request_from_expert_id', 'id');
+    }
+
+    public function request_from_admin1()
+    {
+        return $this->hasOne(Request_from_admin::class, 'property_for_sale_id', 'property_for_sale_id');
+    }
+
 }

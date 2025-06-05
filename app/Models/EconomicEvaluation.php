@@ -14,6 +14,7 @@ class EconomicEvaluation extends Model
     protected $fillable=[
         'property_for_sale_id',
         'number_of_chances',
+        'negotiation_mode',
         'expected_price',
         'profit_percent',
         'total_expected_taxes',

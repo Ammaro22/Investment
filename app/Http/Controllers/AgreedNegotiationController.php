@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Agreed_negotiation;
 use App\Models\Property_for_sale;
+use App\Models\request_from_lawyer;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
@@ -98,6 +99,9 @@ class AgreedNegotiationController extends Controller
         $negotiation->status = 'تم الرفض من قبل المستخدد';
         $negotiation->save();
 
+        request_from_lawyer::where('property_for_sale_id', $negotiation->property_for_sale_id)
+            ->update(['accept_user' => 'مرفوض']);
+
         return response()->json([
             'message' => __('messages.operation_success'),
             'data' => $negotiation,
@@ -123,6 +127,9 @@ class AgreedNegotiationController extends Controller
 
         $negotiation->status =  'تم قبول الطلب من قبل المستخدم';
         $negotiation->save();
+
+        request_from_lawyer::where('property_for_sale_id', $negotiation->property_for_sale_id)
+            ->update(['accept_user' => 'مقبول']);
 
         return response()->json([
             'message' => __('messages.operation_success'),

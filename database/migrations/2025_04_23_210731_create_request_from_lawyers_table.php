@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('property_for_sale_id')->constrained('property_for_sales')->cascadeOnDelete();
             $table->string('status');
+            $table->string('accept_user');
             $table->string('accept_admin');
             $table->timestamps();
         });
