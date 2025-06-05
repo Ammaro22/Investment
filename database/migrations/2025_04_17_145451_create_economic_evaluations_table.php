@@ -15,10 +15,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('property_for_sale_id')->constrained('property_for_sales')->onDelete('cascade');
             $table->integer('number_of_chances');
+            $table->string('negotiation_mode');
             $table->float('profit_percent');
             $table->float('expected_price');
             $table->float('buying_price');
-            $table->float('renting_price');
+            $table->float('renting_price')->nullable();
             $table->float('total_expected_taxes');
             $table->float('chance_price');
             $table->date('investment_time');

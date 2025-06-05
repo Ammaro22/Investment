@@ -125,7 +125,7 @@ class StatisticsController extends Controller
             'data' => $months
         ]);
     }
-    
+
     /*عدد الفرص وسعرهم للمستخدم خلال الشهر ضمن سنة*/
     public function getInvestmentsByMonthAndYear(Request $request)
     {
