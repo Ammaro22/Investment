@@ -8,4 +8,5 @@ return [
     'invalid_number' => 'رقم البطاقة غير صالح.',
     'amount_too_large' => 'المبلغ كبير جداً.',
     'generic_error' => 'حدث خطأ أثناء معالجة الدفع.',
+    'Insufficient_balance'=>'المبلغ الموجود غير كافي'
 ];

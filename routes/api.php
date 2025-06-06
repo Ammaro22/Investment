@@ -44,6 +44,8 @@ Route::group(["middleware"=>["auth:api"]],function (){
 
 });
 
+/*تحويل المال من محفظة الارباح الخاصة باليوزر الى محفظة الاستثمار*/
+Route::post('transfer_To_Investment', [InvestmentController::class, 'transferToInvestment'])->middleware('auth:api');
 
 /*تغير كلمة المرور*/
 Route::post('send_verification_code', [AuthController::class, 'sendVerificationCode']);
@@ -161,6 +163,7 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::get('/ShowListOfUserProfit',[InvestmentController::class,'ShowListOfUserProfit']);
     Route::post('/ShowListOfUserProfitByInvestMode',[InvestmentController::class,'ShowListOfUserProfitByInvestMode']);
 
+    Route::post('/get_Properties_By_InvestmentMode_for_user',[InvestmentController::class,'getPropertiesByInvestmentMode']);
 
 
 
@@ -198,6 +201,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::delete('/delete_reward_by_admin/{reward_id}', [RewardController::class, 'deleteReward']);
     /*عرض الجوائز لليوزر*/
     Route::get('/get_User_Investments_And_Rewards',[RewardController::class,'getUserInvestmentsAndRewards']);
+    Route::get('/show_Largest_Reward',[RewardController::class,'showLargestReward']);
 });
 
 
@@ -223,6 +227,10 @@ Route::group(["middleware"=>["auth:api"]],function() {
         Route::post('/accepted_Requests_Percentage_from_admin', [StatisticsController::class, 'acceptedRequestsPercentagefromadmin']);
         Route::post('/rejected_Requests_Percentage_from_user', [StatisticsController::class, 'rejectedRequestsPercentagefromuser']);
         Route::post('/successful_Requests_Percentage_ByMonth_in_year',[StatisticsController::class,'successfulRequestsPercentageByMonth']);
+
+        /*للمستخدم*/
         Route::post('/get_Investments_ByMonthAndYear',[StatisticsController::class,'getInvestmentsByMonthAndYear']);
+        Route::post('/get_User_Investment_Percentage_ByMonth',[StatisticsController::class,'getInvestmentPercentageByMonth']);
+        Route::post('/get_Profit_Percentage_ByMonth',[StatisticsController::class,'getProfitPercentageByMonth']);
     });
 });

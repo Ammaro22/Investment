@@ -37,4 +37,10 @@ class PropertyForInvestment extends Model
         return $this->hasMany(Investment::class,'property_for_investment_id');
 
     }
+
+    public function completedProperty()
+    {
+        return $this->hasMany(CompletedProperty::class,'property_for_investment_id');
+
+    }
 }

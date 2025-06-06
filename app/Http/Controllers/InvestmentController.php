@@ -29,7 +29,6 @@ class InvestmentController extends Controller
 {
 
 
-
     public function ShowProperty()
     {
         $user = Auth::guard('api')->user();
@@ -84,7 +83,6 @@ class InvestmentController extends Controller
     }
 
 
-
     public function ShowPropertyByType(Request $request)
     {
         $user = Auth::guard('api')->user();
@@ -104,7 +102,7 @@ class InvestmentController extends Controller
         $property_type = $request->property_type;
 
 
-        $property = PropertyForInvestment::with(['property','property.economicEvaluation'])
+        $property = PropertyForInvestment::with(['property', 'property.economicEvaluation'])
             ->whereHas('property', function ($query) use ($property_type) {
                 $query->where('property_type', $property_type);
             })
@@ -114,7 +112,7 @@ class InvestmentController extends Controller
             return response()->json(['message' => trans('messages.no_properties_found')]);
         }
 
-        $properties = $property->map(function ($item)use ($user, $inferenceEngine, $propertyAnalyzes) {
+        $properties = $property->map(function ($item) use ($user, $inferenceEngine, $propertyAnalyzes) {
             if (isset($item->property)) {
                 unset($item->property->economicEvaluation);
             }
@@ -132,15 +130,14 @@ class InvestmentController extends Controller
 
             $rearrangedItem = array_merge([
                 'property_for_investment_id' => $item->id],
-                 $rearrangedItem, [
-                'property_images'=>$item->property->Property_image ??[],
-                'economic_advice' => $analyze,
-                'user_advice' => $userPreference,
+                $rearrangedItem, [
+                    'property_images' => $item->property->Property_image ?? [],
+                    'economic_advice' => $analyze,
+                    'user_advice' => $userPreference,
                 ]);
 
             return $rearrangedItem;
         });
-
 
 
         $data = [
@@ -182,18 +179,18 @@ class InvestmentController extends Controller
         }
 
 
-        $property = PropertyForInvestment::with(['property','property.economicEvaluation'])->where('investment_mode', $request->investment_mode)->paginate(5);
+        $property = PropertyForInvestment::with(['property', 'property.economicEvaluation'])->where('investment_mode', $request->investment_mode)->paginate(5);
 
         if ($property->isEmpty()) {
             return response()->json(['message' => trans('messages.no_properties_found')]);
         }
 
 
-        $properties = $property->map(function ($item)use ($user, $inferenceEngine, $propertyAnalyzes) {
+        $properties = $property->map(function ($item) use ($user, $inferenceEngine, $propertyAnalyzes) {
             if (isset($item->property)) {
                 unset($item->property->economicEvaluation);
             }
-            $rearrangedItem= $this->re_arrange($item);
+            $rearrangedItem = $this->re_arrange($item);
             if ($rearrangedItem instanceof \Illuminate\Support\Collection) {
                 $rearrangedItem = $rearrangedItem->toArray();
             }
@@ -208,9 +205,9 @@ class InvestmentController extends Controller
             $rearrangedItem = array_merge([
                 'property_for_investment_id' => $item->id],
                 $rearrangedItem, [
-                 'property_images'=>$item->property->Property_image ??[],
-                 'economic_advice' => $analyze,
-                 'user_advice' => $userPreference,
+                    'property_images' => $item->property->Property_image ?? [],
+                    'economic_advice' => $analyze,
+                    'user_advice' => $userPreference,
                 ]);
 
             return $rearrangedItem;
@@ -219,16 +216,16 @@ class InvestmentController extends Controller
 
         return response()->json([
             'message' => trans('messages.properties_found'),
-            'data' =>[
-                 'properties'=>$properties,
-                  'pagination' => [
-                       'current_page' => $property->currentPage(),
-                       'last_page' => $property->lastPage(),
-                       'per_page' => $property->perPage(),
-                       'total' => $property->total(),
-                       'next_page_url' => $property->nextPageUrl(),
-                       'prev_page_url' => $property->previousPageUrl(),
-            ]
+            'data' => [
+                'properties' => $properties,
+                'pagination' => [
+                    'current_page' => $property->currentPage(),
+                    'last_page' => $property->lastPage(),
+                    'per_page' => $property->perPage(),
+                    'total' => $property->total(),
+                    'next_page_url' => $property->nextPageUrl(),
+                    'prev_page_url' => $property->previousPageUrl(),
+                ]
             ]
         ]);
 
@@ -240,7 +237,7 @@ class InvestmentController extends Controller
         $inferenceEngine = new UserPreferenceEngine();
         $propertyAnalyzes = new PropertyAnalysisService();
 
-        $property = PropertyForInvestment::with(['property','property.economicEvaluation'])->find($PropertyId);
+        $property = PropertyForInvestment::with(['property', 'property.economicEvaluation'])->find($PropertyId);
 
         if (!$property) {
             return response()->json(['message' => trans('messages.operation_failed')]);
@@ -268,8 +265,8 @@ class InvestmentController extends Controller
         return response()->json([
             'message' => trans('messages.operation_success'),
             'data' => $formattedData,
-             'economic_advice' => $analyze,
-             'user_advice' => $userPreference
+            'economic_advice' => $analyze,
+            'user_advice' => $userPreference
         ]);
     }
 
@@ -376,13 +373,13 @@ class InvestmentController extends Controller
             $main = collect($item->toArray())->except('property_invested');
 
             $related = collect($item->property_invested)->except('property_management', 'property_id');
-            $related2=collect($item->property_invested->property)->except('legal_check', 'expert_check', 'accept', 'user_id', 'price');
+            $related2 = collect($item->property_invested->property)->except('legal_check', 'expert_check', 'accept', 'user_id', 'price');
             $re_arrange = $main->merge($related)->merge($related2);
 
             $created_at = Carbon::parse($re_arrange->pull('created_at'))->format('Y-m-d');
             $updated_at = Carbon::parse($re_arrange->pull('updated_at'))->format('Y-m-d');
 
-            $rearrangedItem= $re_arrange->put('created_at', $created_at)->put('updated_at', $updated_at);
+            $rearrangedItem = $re_arrange->put('created_at', $created_at)->put('updated_at', $updated_at);
 
 
             if ($rearrangedItem instanceof \Illuminate\Support\Collection) {
@@ -390,7 +387,7 @@ class InvestmentController extends Controller
             }
             $rearrangedItem = array_merge(
                 $rearrangedItem, [
-                'property_images'=>$item->property_invested->property->Property_image]);
+                'property_images' => $item->property_invested->property->Property_image]);
 
             return $rearrangedItem;
 
@@ -399,15 +396,15 @@ class InvestmentController extends Controller
         return response()->json([
             'message' => trans('messages.operation_success'),
             'data' => [
-                 'properties'=>$investments,
-                 'pagination' => [
-                     'current_page' => $property_invested->currentPage(),
-                     'last_page' => $property_invested->lastPage(),
-                     'per_page' => $property_invested->perPage(),
-                     'total' => $property_invested->total(),
-                     'next_page_url' => $property_invested->nextPageUrl(),
-                     'prev_page_url' => $property_invested->previousPageUrl(),
-            ]
+                'properties' => $investments,
+                'pagination' => [
+                    'current_page' => $property_invested->currentPage(),
+                    'last_page' => $property_invested->lastPage(),
+                    'per_page' => $property_invested->perPage(),
+                    'total' => $property_invested->total(),
+                    'next_page_url' => $property_invested->nextPageUrl(),
+                    'prev_page_url' => $property_invested->previousPageUrl(),
+                ]
             ]
         ]);
 
@@ -435,14 +432,14 @@ class InvestmentController extends Controller
         }
 
         $listOfInvestment = $investments->map(function ($investment) {
-            $propertyForSaleInfo=$investment->property_invested->property ??null;
+            $propertyForSaleInfo = $investment->property_invested->property ?? null;
 
             return [
-                'id'=>$investment->id,
-                'user_id'=>$investment->user_id,
+                'id' => $investment->id,
+                'user_id' => $investment->user_id,
                 'property_for_investment_id' => $investment->property_for_investment_id,
                 'amount_payed' => $investment->amount_payed,
-                'chance_invested'=>$investment->chance_invested,
+                'chance_invested' => $investment->chance_invested,
                 'property_type' => $propertyForSaleInfo?->property_type,
                 'exact_position' => $propertyForSaleInfo?->exact_position,
                 'created_at' => $investment->created_at->format('Y-m-d'),
@@ -454,16 +451,16 @@ class InvestmentController extends Controller
         return response()->json([
             'message' => trans('messages.operation_success'),
             'data' => [
-                'properties'=> $listOfInvestment,
+                'properties' => $listOfInvestment,
                 'pagination' => [
-                         'current_page' => $investments->currentPage(),
-                         'last_page' => $investments->lastPage(),
-                         'per_page' => $investments->perPage(),
-                         'total' => $investments->total(),
-                         'next_page_url' => $investments->nextPageUrl(),
-                         'prev_page_url' => $investments->previousPageUrl(),
-    ]
-        ]
+                    'current_page' => $investments->currentPage(),
+                    'last_page' => $investments->lastPage(),
+                    'per_page' => $investments->perPage(),
+                    'total' => $investments->total(),
+                    'next_page_url' => $investments->nextPageUrl(),
+                    'prev_page_url' => $investments->previousPageUrl(),
+                ]
+            ]
         ]);
 
     }
@@ -481,20 +478,18 @@ class InvestmentController extends Controller
             return response()->json(['message' => trans('messages.unauthorized')]);
         }
 
-        $validator=Validator::make($request->all(),[
-            'investment_mode'=>'required|string'
+        $validator = Validator::make($request->all(), [
+            'investment_mode' => 'required|string'
         ]);
 
-        if($validator->fails())
-        {
+        if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $investment_mode=$request->input('investment_mode');
+        $investment_mode = $request->input('investment_mode');
 
-        $investments = Investment::with('property_invested.property')->where('user_id', $user->id)->whereHas('property_invested',function ($query)use ($investment_mode)
-        {
-            $query->where('investment_mode',$investment_mode);
+        $investments = Investment::with('property_invested.property')->where('user_id', $user->id)->whereHas('property_invested', function ($query) use ($investment_mode) {
+            $query->where('investment_mode', $investment_mode);
         })->paginate(5);
 
 
@@ -503,14 +498,14 @@ class InvestmentController extends Controller
         }
 
         $listOfInvestment = $investments->map(function ($investment) {
-            $propertyForSaleInfo=$investment->property_invested->property ??null;
+            $propertyForSaleInfo = $investment->property_invested->property ?? null;
 
             return [
-                'id'=>$investment->id,
-                'user_id'=>$investment->user_id,
+                'id' => $investment->id,
+                'user_id' => $investment->user_id,
                 'property_for_investment_id' => $investment->property_for_investment_id,
                 'amount_payed' => $investment->amount_payed,
-                'chance_invested'=>$investment->chance_invested,
+                'chance_invested' => $investment->chance_invested,
                 'property_type' => $propertyForSaleInfo?->property_type,
                 'exact_position' => $propertyForSaleInfo?->exact_position,
                 'created_at' => $investment->created_at->format('Y-m-d'),
@@ -522,7 +517,7 @@ class InvestmentController extends Controller
         return response()->json([
             'message' => trans('messages.operation_success'),
             'data' => [
-                'properties'=> $listOfInvestment,
+                'properties' => $listOfInvestment,
                 'pagination' => [
                     'current_page' => $investments->currentPage(),
                     'last_page' => $investments->lastPage(),
@@ -548,22 +543,20 @@ class InvestmentController extends Controller
             return response()->json(['message' => trans('messages.unauthorized')]);
         }
 
-        $validator=Validator::make($request->all(),[
-            'investment_mode'=>'required|string'
+        $validator = Validator::make($request->all(), [
+            'investment_mode' => 'required|string'
         ]);
 
-        if($validator->fails())
-        {
+        if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $investment_mode=$request->input('investment_mode');
+        $investment_mode = $request->input('investment_mode');
 
         $profits = Profit::with('completedProperty.property.property')->where('user_id', $user->id)
-            ->whereHas('completedProperty.property',function ($query)use ($investment_mode)
-        {
-            $query->where('investment_mode',$investment_mode);
-        })->paginate(5);
+            ->whereHas('completedProperty.property', function ($query) use ($investment_mode) {
+                $query->where('investment_mode', $investment_mode);
+            })->paginate(5);
 
 
         if ($profits->isEmpty()) {
@@ -571,16 +564,16 @@ class InvestmentController extends Controller
         }
 
         $listOfProfits = $profits->map(function ($profit) {
-            $propertyInfo=$profit->completedProperty->property->property ??null;
+            $propertyInfo = $profit->completedProperty->property->property ?? null;
             return [
-                'id'=>$profit->id,
-                'completed_property_id'=>$profit->completed_property_id,
-                'user_id'=>$profit->user_id,
-                'profit_amount'=>$profit->profit_amount,
-                'property_type'=>$propertyInfo?->property_type,
+                'id' => $profit->id,
+                'completed_property_id' => $profit->completed_property_id,
+                'user_id' => $profit->user_id,
+                'profit_amount' => $profit->profit_amount,
+                'property_type' => $propertyInfo?->property_type,
                 'exact_position' => $propertyInfo?->exact_position,
-                'scheduled_date'=>$profit->scheduled_date,
-                'transfer_status'=>$profit->transfer_status
+                'scheduled_date' => $profit->scheduled_date,
+                'transfer_status' => $profit->transfer_status
             ];
         });
 
@@ -588,7 +581,7 @@ class InvestmentController extends Controller
         return response()->json([
             'message' => trans('messages.operation_success'),
             'data' => [
-                'properties'=> $listOfProfits,
+                'properties' => $listOfProfits,
                 'pagination' => [
                     'current_page' => $profits->currentPage(),
                     'last_page' => $profits->lastPage(),
@@ -603,8 +596,120 @@ class InvestmentController extends Controller
     }
 
 
+//    public function ShowListOfUserProfit()
+//    {
+//
+//        $user = auth()->user();
+//
+//        $userRole = $user->role_id;
+//
+//        if (!$user || $userRole != 2) {
+//            return response()->json(['message' => trans('messages.unauthorized')]);
+//        }
+//
+//        $profits = Profit::with('completedProperty.property.property')->where('user_id', $user->id)->paginate(5);
+//
+//
+//        if ($profits->isEmpty()) {
+//            return response()->json(['message' => trans('messages.not_found')]);
+//        }
+//
+//        $listOfProfits = $profits->map(function ($profit) {
+//            $propertyInfo = $profit->completedProperty->property->property ?? null;
+//            return [
+//                'id' => $profit->id,
+//                'completed_property_id' => $profit->completed_property_id,
+//                'user_id' => $profit->user_id,
+//                'profit_amount' => $profit->profit_amount,
+//                'property_type' => $propertyInfo?->property_type,
+//                'exact_position' => $propertyInfo?->exact_position,
+//                'scheduled_date' => $profit->scheduled_date,
+//                'transfer_status' => $profit->transfer_status
+//            ];
+//        });
+//
+//
+//        return response()->json([
+//            'message' => trans('messages.operation_success'),
+//            'data' => [
+//                'properties' => $listOfProfits,
+//                'pagination' => [
+//                    'current_page' => $profits->currentPage(),
+//                    'last_page' => $profits->lastPage(),
+//                    'per_page' => $profits->perPage(),
+//                    'total' => $profits->total(),
+//                    'next_page_url' => $profits->nextPageUrl(),
+//                    'prev_page_url' => $profits->previousPageUrl(),
+//                ]
+//            ]
+//        ]);
+//
+//    }
 
     public function ShowListOfUserProfit()
+    {
+        $user = auth()->user();
+        $userRole = $user->role_id;
+
+        if (!$user || $userRole != 2) {
+            return response()->json(['message' => trans('messages.unauthorized')]);
+        }
+
+        $profits = Profit::with(['completedProperty.property.property'])
+            ->where('user_id', $user->id)
+            ->paginate(5);
+
+        if ($profits->isEmpty()) {
+            return response()->json(['message' => trans('messages.not_found')]);
+        }
+
+        $listOfProfits = $profits->map(function ($profit) {
+            $propertyInfo = $profit->completedProperty->property->property ?? null;
+
+            return [
+                'id' => $profit->id,
+                'completed_property_id' => $profit->completed_property_id,
+                'user_id' => $profit->user_id,
+                'profit_amount' => $profit->profit_amount,
+                'property_type' => $propertyInfo?->property_type,
+                'exact_position' => $propertyInfo?->exact_position,
+                'scheduled_date' => $profit->scheduled_date,
+                'transfer_status' => $profit->transfer_status,
+            ];
+        });
+        $rewards = RewardTransactions::with('reward') // استخدام العلاقة لجلب بيانات الجائزة
+        ->where('user_id', $user->id)
+            ->get();
+
+        $totalRewards = $rewards->sum('amount_profit'); // إجمالي الجوائز
+
+        $rewardsWithLevels = $rewards->map(function ($rewardTransaction) {
+            return [
+                'reward_id' => $rewardTransaction->reward_id,
+                'amount_profit' => $rewardTransaction->amount_profit,
+                'level' => $rewardTransaction->reward->level ?? null,
+            ];
+        });
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'profits' => $listOfProfits,
+                'rewards' => $rewards
+            ],
+            'pagination' => [
+                'current_page' => $profits->currentPage(),
+                'last_page' => $profits->lastPage(),
+                'per_page' => $profits->perPage(),
+                'total' => $profits->total(),
+                'next_page_url' => $profits->nextPageUrl(),
+                'prev_page_url' => $profits->previousPageUrl(),
+            ]
+        ]);
+    }
+
+    /*للنسبة في portfolio*/
+
+    public function ShowPercentageOfInvestments()
     {
 
         $user = auth()->user();
@@ -615,113 +720,51 @@ class InvestmentController extends Controller
             return response()->json(['message' => trans('messages.unauthorized')]);
         }
 
-        $profits = Profit::with('completedProperty.property.property')->where('user_id', $user->id)->paginate(5);
+        $Wallet = Wallet::where('user_id', $user->id)->where('wallet_type', 'investment')->first();
 
-
-        if ($profits->isEmpty()) {
+        if (!$Wallet) {
             return response()->json(['message' => trans('messages.not_found')]);
         }
 
-        $listOfProfits = $profits->map(function ($profit) {
-            $propertyInfo=$profit->completedProperty->property->property ??null;
-            return [
-                'id'=>$profit->id,
-                'completed_property_id'=>$profit->completed_property_id,
-                'user_id'=>$profit->user_id,
-                'profit_amount'=>$profit->profit_amount,
-                'property_type'=>$propertyInfo?->property_type,
-                'exact_position' => $propertyInfo?->exact_position,
-                'scheduled_date'=>$profit->scheduled_date,
-                'transfer_status'=>$profit->transfer_status
-            ];
-        });
-
-
-        return response()->json([
-            'message' => trans('messages.operation_success'),
-            'data' => [
-                'properties'=> $listOfProfits,
-                'pagination' => [
-                    'current_page' => $profits->currentPage(),
-                    'last_page' => $profits->lastPage(),
-                    'per_page' => $profits->perPage(),
-                    'total' => $profits->total(),
-                    'next_page_url' => $profits->nextPageUrl(),
-                    'prev_page_url' => $profits->previousPageUrl(),
-                ]
-            ]
-        ]);
-
-    }
-
-
-
-
-
-    /*للنسبة في portfolio*/
-
-    public function ShowPercentageOfInvestments()
-    {
-
-        $user=auth()->user();
-
-        $userRole=$user->role_id;
-
-        if(!$user||$userRole!=2)
-        {
-            return response()->json(['message'=>trans('messages.unauthorized')]);
-        }
-
-        $Wallet=Wallet::where('user_id',$user->id)->where('wallet_type','investment')->first();
-
-        if(!$Wallet)
-        {
-            return response()->json(['message'=>trans('messages.not_found')]);
-        }
-
-        $Investment=Investment::where('user_id',$user->id)->get();
+        $Investment = Investment::where('user_id', $user->id)->get();
 
         $totalIn = Transaction::where('wallet_id', $Wallet->id)
             ->where('type', 'deposit')
             ->sum('amount');
 
-        $amount_payed=$Investment->sum('amount_payed');
+        $amount_payed = $Investment->sum('amount_payed');
 
-        $percentage=$totalIn> 0 ?round(($amount_payed/$totalIn)*100):0;
+        $percentage = $totalIn > 0 ? round(($amount_payed / $totalIn) * 100) : 0;
 
 
         return response()->json([
-            'message'=>trans('messages.operation_success'),
-            'data'=>['percentage'=>$percentage]
+            'message' => trans('messages.operation_success'),
+            'data' => ['percentage' => $percentage]
         ]);
     }
 
 
-
-  /* call within invest function*/
+    /* call within invest function*/
 
     public function CalculateNetProfit($property_id)
     {
         $property = PropertyForInvestment::with('investment')->find($property_id);
 
-        if (!$property || !$property->is_completed)
-        {
+        if (!$property || !$property->is_completed) {
             return response()->json(['message' => trans('messages.operation_failed')]);
         }
 
         $economic = EconomicEvaluation::where('property_for_sale_id', $property_id)->first();
 
-        if (!$economic)
-        {
+        if (!$economic) {
             return response()->json(['message' => trans('messages.not_found')]);
         }
 
-        $existingProfits = Profit::whereHas('completedProperty', function($q) use ($property_id) {
+        $existingProfits = Profit::whereHas('completedProperty', function ($q) use ($property_id) {
             $q->where('property_for_investment_id', $property_id);
         })->count();
 
-        if ($existingProfits > 0)
-        {
+        if ($existingProfits > 0) {
             return response()->json(['message' => trans('messages.profits_already_calculated')]);
         }
 
@@ -731,7 +774,7 @@ class InvestmentController extends Controller
 
         $renting = $economic->renting_price ?? null;
 
-        $selling=$economic->baying_price;
+        $selling = $economic->baying_price;
 
         $total_chances = $property->number_of_chances + $property->investment->sum('chance_invested');
 
@@ -753,12 +796,9 @@ class InvestmentController extends Controller
 
             $profit_ratio = $person_profit / $total_profit;
 
-            if($economic->property_management=='rent')
-            {
+            if ($economic->property_management == 'rent') {
                 $profit_amount = $renting * $profit_ratio;
-            }
-            else
-            {
+            } else {
                 $profit_amount = $selling * $profit_ratio;
             }
 
@@ -771,8 +811,6 @@ class InvestmentController extends Controller
     }
 
 
-
-
     /* call within CalculateNetProfit function*/
 
     public function profit($net_profit, $property_id, $user_id)
@@ -780,68 +818,57 @@ class InvestmentController extends Controller
 
         $completedProperty = CompletedProperty::where('property_for_investment_id', $property_id)->first();
 
-        if (!$completedProperty)
-        {
+        if (!$completedProperty) {
             return response()->json(['message' => trans('messages.not_found')]);
         }
 
-        $existingProfit = Profit::where('completed_property_id' , $completedProperty->id)->where('user_id' , $user_id)->first();
+        $existingProfit = Profit::where('completed_property_id', $completedProperty->id)->where('user_id', $user_id)->first();
 
-        if ($existingProfit)
-        {
+        if ($existingProfit) {
             return response()->json(['message' => trans('messages.profit_already_exists')]);
         }
 
         $economic = EconomicEvaluation::where('property_for_sale_id', $property_id)->first();
 
-        if (!$economic->incoming_time)
-        {
+        if (!$economic->incoming_time) {
             return response()->json(['message' => trans('messages.not_found')]);
         }
         Profit::create([
             'completed_property_id' => $completedProperty->id,
             'user_id' => $user_id,
             'profit_amount' => $net_profit,
-            'scheduled_date'=>$economic->incoming_time,
-            'transfer_status'=>'pending',
-            'transfer_attempts'=>0,
-            'processed_at'=>now()->format('Y-m-d'),
+            'scheduled_date' => $economic->incoming_time,
+            'transfer_status' => 'pending',
+            'transfer_attempts' => 0,
+            'processed_at' => now()->format('Y-m-d'),
             'created_at' => now(),
             'updated_at' => now()
         ]);
-
 
 
         return response()->json(['message' => 'success']);
     }
 
 
-
-
-
-
     /* call within invest function*/
     public function isComplete($property_id)
     {
-        if(!$property_id) {
+        if (!$property_id) {
             return false;
         }
 
         $investment = PropertyForInvestment::where('property_id', $property_id)->first();
-        if(!$investment) {
+        if (!$investment) {
             return false;
         }
 
-        if($investment->number_of_chances == 0) {
+        if ($investment->number_of_chances == 0) {
             $investment->update(['is_completed' => true]);
             return true;
         }
 
         return false;
     }
-
-
-
 
 
     public function re_arrange($property)
@@ -861,7 +888,6 @@ class InvestmentController extends Controller
     }
 
 
-
     public function Format_timeStamp_Map($type)
     {
 
@@ -872,9 +898,6 @@ class InvestmentController extends Controller
 
 
     }
-
-
-
 
 
     protected function calculateRewards($user, $investmentAmount)
@@ -911,7 +934,7 @@ class InvestmentController extends Controller
                     'user_id' => $user->id,
                     'reward_id' => $reward->id,
                     'amount_profit' => $rewardAmount,
-                    'state'=>'completed'
+                    'state' => 'completed'
                 ]);
 
                 DB::transaction(function () use ($user, $rewardAmount) {
@@ -922,10 +945,11 @@ class InvestmentController extends Controller
                     $profitWallet->balance += $rewardAmount;
                     $profitWallet->save();
                 });
+            }
         }
-    }
 
     }
+
     public function getEvaluationByProperty($property_id)
     {
         $user = auth()->user();
@@ -982,17 +1006,165 @@ class InvestmentController extends Controller
     }
 
 
+    /*تحويل المال من محفظة الارباح الخاصة باليوزر الى محفظة الاستثمار*/
+
+    public function transferToInvestment(Request $request)
+    {
+        $user = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->all()], 422);
+        }
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        $profitWallet = $user->wallets()->where('wallet_type', 'profits')->first();
+        $investmentWallet = $user->wallets()->where('wallet_type', 'investment')->first();
+
+        if (!$profitWallet || !$investmentWallet) {
+            return response()->json(['message' => trans('messages.not_found')]);
+        }
+
+        if ($profitWallet->balance <= $request->amount) {
+            return response()->json(['message' => trans('stripe.Insufficient_balance')]);
+        }
 
 
+        $profitWallet->balance -= $request->amount;
 
 
+        $investmentWallet->balance += $request->amount;
+
+
+        $profitWallet->save();
+        $investmentWallet->save();
+
+
+        Transaction::create([
+            'user_id' => $user->id,
+            'wallet_id' => $profitWallet->id,
+            'amount' => $request->amount,
+            'type' => 'transfer_in',
+            'status' => 'completed',
+        ]);
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'new_profit_balance' => $profitWallet->balance,
+                'new_investment_balance' => $investmentWallet->balance
+            ],
+        ]);
+
+    }
+
+//    public function getPropertiesByInvestmentMode(Request $request)
+//    {
+//        $investmentMode = $request->input('investment_mode');
+//        $userId = auth()->id();
+//
+//        $properties = PropertyForInvestment::with([
+//            'property',
+//            'investment.user',
+//            'completedProperty.profit' => function($query) use ($userId) {
+//                $query->where('user_id', $userId);
+//            }
+//        ])
+//            ->where('investment_mode', $investmentMode)
+//            ->whereHas('investment', function($query) use ($userId) {
+//                $query->where('user_id', $userId);
+//            })
+//            ->get()
+//            ->map(function ($propertyInvestment) use ($userId) {
+//                $property = $propertyInvestment->property;
+//                $investorCount = $propertyInvestment->investment->count();
+//
+//
+//                $userProfit = $propertyInvestment->completedProperty->sum(function ($completed) use ($userId) {
+//                    if ($completed->profit && $completed->profit->user_id == $userId) {
+//                        return $completed->profit->profit_amount;
+//                    }
+//                    return 0;
+//                });
+//
+//                $location = trim(($property->state ?? 'Unknown') . ', ' . ($property->exact_position ?? 'Unknown'), ', ');
+//
+//                return [
+//                    'id' => $propertyInvestment->id,
+//                    'property_name' => $property->property_type ?? 'Unknown',
+//                    'property_location' => $location,
+//                    'profit_percent' => $propertyInvestment->profit_percent ?? 0,
+//                    'investment_start_time' => $propertyInvestment->created_at->format('Y-m-d H:i:s'),
+//                    'investment_end_time' => $propertyInvestment->incoming_time ?? null,
+//                    'investor_count' => $investorCount,
+//                    'user_profit' => $userProfit, // الأرباح الخاصة بالمستخدم فقط
+//                    'is_completed' => $propertyInvestment->is_completed
+//                ];
+//            });
+//
+//        return response()->json([
+//            'success' => true,
+//            'data' => $properties
+//        ]);
+//    }
+
+    public function getPropertiesByInvestmentMode(Request $request)
+    {
+        $investmentMode = $request->input('investment_mode');
+        $userId = auth()->id();
+
+        $properties = PropertyForInvestment::with([
+            'property',
+            'investment.user',
+            'completedProperty.profits' => function($query) use ($userId) {
+                $query->where('user_id', $userId);
+            }
+        ])
+            ->where('investment_mode', $investmentMode)
+            ->whereHas('investment', function($query) use ($userId) {
+                $query->where('user_id', $userId);
+            })
+            ->get()
+            ->map(function ($propertyInvestment) use ($userId) {
+                $property = $propertyInvestment->property;
+                $investorCount = $propertyInvestment->investment->count();
+
+                // جمع الأرباح بشكل صحيح
+                $userProfit = 0;
+                foreach ($propertyInvestment->completedProperty as $completed) {
+                    $userProfit += $completed->profits
+                        ->where('user_id', $userId)
+                        ->sum('profit_amount');
+                }
+
+                $location = trim(($property->state ?? 'Unknown') . ', ' . ($property->exact_position ?? 'Unknown'), ', ');
+
+                return [
+                    'id' => $propertyInvestment->id,
+                    'property_name' => $property->property_type ?? 'Unknown',
+                    'property_location' => $location,
+                    'profit_percent' => $propertyInvestment->profit_percent ?? 0,
+                    'investment_start_time' => $propertyInvestment->created_at->format('Y-m-d H:i:s'),
+                    'investment_end_time' => $propertyInvestment->incoming_time ?? null,
+                    'investor_count' => $investorCount,
+                    'user_profit' => $userProfit,
+                    'is_completed' => $propertyInvestment->is_completed
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $properties
+        ]);
+    }
 
 }
-
-
-
-
-
 
 //    public function ShowProperty()
 //    {

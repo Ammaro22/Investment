@@ -262,7 +262,6 @@ class RequestFromExpertController extends Controller
             ], 403);
         }
 
-        // جلب الطلب مع العلاقات المطلوبة بما فيها المؤشرات
         $request = request_from_lawyer::with([
             'property_for_sale.Property_image',
             'property_for_sale.Property_document',
@@ -271,18 +270,18 @@ class RequestFromExpertController extends Controller
             'Request_from_expert.economic_evaluation.property.Property_document',
             'Request_from_expert.economic_evaluation.property.id_image',
             'Request_from_expert.economic_evaluation.agreed_negotiation',
-            'Request_from_expert.economic_evaluation.indicatorValues.indicator'
+            'Request_from_expert.economic_evaluation.indicatorValues.indicator', // Include indicators
         ])->find($id);
 
         if (!$request) {
             return response()->json([
-                'message' => __('messages.not_found'),
+                'message' => ('messages.not_found'),
             ], 404);
         }
 
         if (!$request->property_for_sale) {
             return response()->json([
-                'message' => __('messages.property_not_found'),
+                'message' => ('messages.property_not_found'),
             ], 404);
         }
 
@@ -297,20 +296,25 @@ class RequestFromExpertController extends Controller
         $evaluation = $expertRequest?->economic_evaluation;
         $agreedNegotiation = $evaluation?->agreed_negotiation;
 
-        // جلب المؤشرات إذا موجودة
-        $indicators = $evaluation?->indicatorValues->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'indicator_id' => $item->indicator_id,
-                'value' => $item->value,
-            ];
-        });
+        // Handle indicator values if available
+        $indicatorValues = $evaluation?->indicatorValues?->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'property_id' => $item->property_id,
+                    'economic_evaluation_id' => $item->economic_evaluation_id,
+                    'indicator_id' => $item->indicator_id,
+                    'value' => $item->value,
+                    // Optionally include indicator name/label
+                    'indicator_name' => $item->indicator?->name,
+                ];
+            }) ?? [];
 
         $economicData = [
             'note_admin' => $expertRequest?->note_admin,
             'economic_evaluation' => $evaluation ? [
                 'number_of_chances' => $evaluation->number_of_chances,
                 'expected_price' => $evaluation->expected_price,
+                'negotiation_mode' => $evaluation->negotiation_mode,
                 'profit_percent' => $evaluation->profit_percent,
                 'total_expected_taxes' => $evaluation->total_expected_taxes,
                 'buying_price' => $evaluation->buying_price,
@@ -325,7 +329,7 @@ class RequestFromExpertController extends Controller
                     'Text_of_the_agreement' => null,
                     'created_at' => null,
                 ],
-                'indicator_values' => $indicators ?? [],
+                'indicator_values' => $indicatorValues,
             ] : [
                 'number_of_chances' => null,
                 'expected_price' => null,
@@ -355,9 +359,6 @@ class RequestFromExpertController extends Controller
             )
         ], 200);
     }
-
-
-
 
     public function getAllRequestsForAdmin()
     {

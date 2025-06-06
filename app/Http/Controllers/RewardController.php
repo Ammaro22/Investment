@@ -123,4 +123,31 @@ class RewardController extends Controller
         ], 200);
     }
 
+    public function showLargestReward()
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json(['message' => trans('messages.unauthorized')], 401);
+        }
+
+        $largestReward = RewardTransactions::with('reward')
+            ->where('user_id', $user->id)
+            ->orderBy('amount_profit', 'desc')
+            ->first();
+
+        if (!$largestReward) {
+            return response()->json(['message' => trans('messages.not_found')]);
+        }
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'reward_id' => $largestReward->reward_id,
+                'amount_profit' => $largestReward->amount_profit,
+                'level' => $largestReward->reward->level,
+            ]
+        ]);
+    }
+
 }

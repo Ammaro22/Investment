@@ -8,4 +8,5 @@ return [
     'invalid_number' => 'The card number is invalid.',
     'amount_too_large' => 'The amount is too large.',
     'generic_error' => 'An error occurred while processing the payment.',
+    'Insufficient_balance'=>'The available amount is not sufficient.'
 ];

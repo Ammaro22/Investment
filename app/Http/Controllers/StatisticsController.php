@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Investment;
 
+use App\Models\Profit;
 use App\Models\request_from_expert;
 use App\Models\request_from_lawyer;
 use App\Models\Requests;
@@ -148,6 +149,107 @@ class StatisticsController extends Controller
                 'total_opportunities' => $totalOpportunities,
                 'total_amount' => $totalAmount,
             ]
+        ]);
+    }
+
+    /*نسبة الاستثمار  */
+    public function getInvestmentPercentageByMonth(Request $request)
+    {
+
+        $user = $request->user();
+
+
+        $request->validate([
+            'year' => 'required|integer|min:2000|max:' . now()->year,
+        ]);
+
+        // الحصول على السنة المطلوبة
+        $requestedYear = $request->input('year');
+
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        // الحصول على الاستثمارات الخاصة بالمستخدم للسنة المطلوبة
+        $investments = Investment::where('user_id', $user->id)
+            ->whereYear('created_at', $requestedYear)
+            ->get();
+
+        // تهيئة مصفوفة للأشهر
+        $months = [];
+        for ($month = 1; $month <= 12; $month++) {
+            $months[$month] = [
+                'total_investment' => 0,
+            ];
+        }
+
+        // جمع الاستثمارات حسب الشهر
+        foreach ($investments as $investment) {
+            $month = $investment->created_at->month; // الشهر من 1 إلى 12
+            $months[$month]['total_investment'] += $investment->amount_payed;
+        }
+
+        // حساب إجمالي الاستثمارات للسنة
+        $totalYearlyInvestment = array_sum(array_column($months, 'total_investment'));
+
+        // حساب نسبة الاستثمار لكل شهر من إجمالي السنة وإزالة الأشهر التي ليس لديها استثمار
+        $investmentPercentages = [];
+        foreach ($months as $month => $data) {
+            if ($data['total_investment'] >= 0 && $totalYearlyInvestment >= 0) {
+                $investmentPercentages[$month] = ($data['total_investment'] / $totalYearlyInvestment) * 100;
+            }
+        }
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $investmentPercentages
+        ]);
+    }
+/*مسبة ارباح المستخدم في السنة*/
+    public function getProfitPercentageByMonth(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'year' => 'required|integer|min:2000|max:' . now()->year,
+        ]);
+
+        $requestedYear = $request->input('year');
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        $profits = Profit::where('user_id', $user->id)
+            ->whereYear('scheduled_date', $requestedYear)
+            ->get();
+
+        $months = [];
+        for ($month = 1; $month <= 12; $month++) {
+            $months[$month] = [
+                'total_profit' => 0,
+            ];
+        }
+
+        foreach ($profits as $profit) {
+            // تأكد من تحويل scheduled_date إلى كائن Carbon
+            $month = \Carbon\Carbon::parse($profit->scheduled_date)->month;
+            $months[$month]['total_profit'] += $profit->profit_amount;
+        }
+
+        $totalYearlyProfit = array_sum(array_column($months, 'total_profit'));
+
+        $profitPercentages = [];
+        foreach ($months as $month => $data) {
+            if ($data['total_profit'] >= 0 && $totalYearlyProfit >= 0) {
+                $profitPercentages[$month] = ($data['total_profit'] / $totalYearlyProfit) * 100;
+            }
+        }
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $profitPercentages
         ]);
     }
 }

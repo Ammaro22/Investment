@@ -24,9 +24,9 @@ class CompletedProperty extends Model
         return $this->belongsTo(PropertyForInvestment::class,'property_for_investment_id');
     }
 
-    public function profit()
+    public function profits()
     {
-        return $this->hasOne(Profit::class, 'completed_property_id');
+        return $this->hasMany(Profit::class, 'completed_property_id');
     }
 
 }
