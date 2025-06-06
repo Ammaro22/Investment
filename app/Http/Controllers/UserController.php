@@ -117,11 +117,73 @@ class UserController extends Controller
     }
 
 
+//    public function update(Request $request)
+//    {
+//        $user = auth()->user();
+//
+//        $userRole=$user->role_id;
+//
+//        $validator = Validator::make($request->all(), [
+//            'name' => 'nullable|string|min:4|max:255',
+//            'password' => 'nullable|string|min:6',
+//            'email' => 'nullable|string|email|unique:users,email,' . $user->id . '|max:255',
+//            'phone' => 'nullable|string|max:255',
+//            'role_id' => 'nullable|exists:roles,id',
+//            'personal_photo' => 'nullable|image|mimes:jpg,jpeg,png'
+//
+//        ]);
+//
+//
+//        if ($validator->fails()) {
+//            return response()->json(['errors' => $validator->errors()], 400);
+//        }
+//        if($userRole==2) {
+//            $allowed_fields=['name', 'password', 'email', 'phone', 'personal_photo'];
+//
+//        }if($userRole==3||$userRole==4){
+//            $allowed_fields=['name', 'password', 'phone', 'personal_photo'];
+//        }
+//
+//
+//        $sentFields = array_keys($request->all());
+//        $invalidFields = array_diff($sentFields, $allowed_fields);
+//
+//        if (!empty($invalidFields)) {
+//            return response()->json([
+//                'message' => 'غير مخول لتعديل الحقول التالية:',
+//                'fields' => array_values($invalidFields)
+//            ], 403);
+//        }
+//
+//        $data=$request->only($allowed_fields);
+//
+//        if (isset($data['password'])) {
+//            $data['password'] = bcrypt($data['password']);
+//        }
+//
+//        if ($request->hasFile('personal_photo')) {
+//            if ($user->personal_photo && file_exists(public_path($user->personal_photo))) {
+//                unlink(public_path($user->personal_photo));
+//            }
+//
+//            $personalPhoto = $request->file('personal_photo');
+//            $personalPhotoName = time() . '_personal_' . $personalPhoto->getClientOriginalName();
+//            $personalPhoto->move(public_path('images/personal'), $personalPhotoName);
+//            $data['personal_photo'] = "images/personal/$personalPhotoName";
+//        }
+//
+//        $user->update(array_filter($data));
+//
+//        return response()->json([
+//            'message' => trans('messages.update_success'),
+//            'user' => $user,
+//        ]);
+//    }
+
     public function update(Request $request)
     {
         $user = auth()->user();
-
-        $userRole=$user->role_id;
+        $userRole = $user->role_id;
 
         $validator = Validator::make($request->all(), [
             'name' => 'nullable|string|min:4|max:255',
@@ -130,20 +192,20 @@ class UserController extends Controller
             'phone' => 'nullable|string|max:255',
             'role_id' => 'nullable|exists:roles,id',
             'personal_photo' => 'nullable|image|mimes:jpg,jpeg,png'
-
         ]);
-
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 400);
         }
-        if($userRole==2) {
-            $allowed_fields=['name', 'password', 'email', 'phone', 'personal_photo'];
 
-        }elseif($userRole==3||$userRole==4){
-            $allowed_fields=['name', 'password', 'phone', 'personal_photo'];
+        // Initialize allowed_fields with an empty array
+        $allowed_fields = [];
+
+        if ($userRole == 2) {
+            $allowed_fields = ['name', 'password', 'email', 'phone', 'personal_photo'];
+        } elseif ($userRole == 3 || $userRole == 4) {
+            $allowed_fields = ['name', 'password', 'phone', 'personal_photo'];
         }
-
 
         $sentFields = array_keys($request->all());
         $invalidFields = array_diff($sentFields, $allowed_fields);
@@ -155,7 +217,7 @@ class UserController extends Controller
             ], 403);
         }
 
-        $data=$request->only($allowed_fields);
+        $data = $request->only($allowed_fields);
 
         if (isset($data['password'])) {
             $data['password'] = bcrypt($data['password']);
