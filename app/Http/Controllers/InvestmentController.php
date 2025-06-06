@@ -1063,57 +1063,7 @@ class InvestmentController extends Controller
         ]);
 
     }
-
-//    public function getPropertiesByInvestmentMode(Request $request)
-//    {
-//        $investmentMode = $request->input('investment_mode');
-//        $userId = auth()->id();
-//
-//        $properties = PropertyForInvestment::with([
-//            'property',
-//            'investment.user',
-//            'completedProperty.profit' => function($query) use ($userId) {
-//                $query->where('user_id', $userId);
-//            }
-//        ])
-//            ->where('investment_mode', $investmentMode)
-//            ->whereHas('investment', function($query) use ($userId) {
-//                $query->where('user_id', $userId);
-//            })
-//            ->get()
-//            ->map(function ($propertyInvestment) use ($userId) {
-//                $property = $propertyInvestment->property;
-//                $investorCount = $propertyInvestment->investment->count();
-//
-//
-//                $userProfit = $propertyInvestment->completedProperty->sum(function ($completed) use ($userId) {
-//                    if ($completed->profit && $completed->profit->user_id == $userId) {
-//                        return $completed->profit->profit_amount;
-//                    }
-//                    return 0;
-//                });
-//
-//                $location = trim(($property->state ?? 'Unknown') . ', ' . ($property->exact_position ?? 'Unknown'), ', ');
-//
-//                return [
-//                    'id' => $propertyInvestment->id,
-//                    'property_name' => $property->property_type ?? 'Unknown',
-//                    'property_location' => $location,
-//                    'profit_percent' => $propertyInvestment->profit_percent ?? 0,
-//                    'investment_start_time' => $propertyInvestment->created_at->format('Y-m-d H:i:s'),
-//                    'investment_end_time' => $propertyInvestment->incoming_time ?? null,
-//                    'investor_count' => $investorCount,
-//                    'user_profit' => $userProfit, // الأرباح الخاصة بالمستخدم فقط
-//                    'is_completed' => $propertyInvestment->is_completed
-//                ];
-//            });
-//
-//        return response()->json([
-//            'success' => true,
-//            'data' => $properties
-//        ]);
-//    }
-
+    
     public function getPropertiesByInvestmentMode(Request $request)
     {
         $investmentMode = $request->input('investment_mode');
