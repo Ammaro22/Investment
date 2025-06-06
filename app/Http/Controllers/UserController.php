@@ -143,9 +143,7 @@ class UserController extends Controller
         }elseif($userRole==3||$userRole==4){
             $allowed_fields=['name', 'password', 'phone', 'personal_photo'];
         }
-        else{
-            return response()->json(['message'=>trans('messages.unauthorized')]);
-        }
+
 
         $sentFields = array_keys($request->all());
         $invalidFields = array_diff($sentFields, $allowed_fields);
