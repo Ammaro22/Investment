@@ -185,12 +185,13 @@ Route::group(["middleware"=>["auth:api"]],function (){
 Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('/add_info_employee/{user_Id}', [EmployeeInformationController::class, 'addEmployeeInformation']);
     Route::post('/updateEmployeeInformation/{user_Id}', [EmployeeInformationController::class, 'updateEmployeeInformation']);
-
     Route::post('/search_user_by_role_and_name', [EmployeeInformationController::class, 'searchUsers']);
     Route::get('/get_info_users_by_id/{userId}', [EmployeeInformationController::class, 'getUserWithEmployeeInfo']);
     Route::post('/get_employee_by_role_and_active', [EmployeeInformationController::class, 'getUsersByRoleAndActive']);
     Route::post('/deactivate/{userId}', [EmployeeInformationController::class, 'deactivateUser']);
     Route::post('/activate/{userId}', [EmployeeInformationController::class, 'activateUser']);
+    Route::post('/markAsSold/{property_id}', [RewardController::class, 'markAsSold']);
+    Route::post('/createRequest/{property_id}', [RewardController::class, 'createLawyerRequest']);
 });
 
 /*الجوائز*/
@@ -199,6 +200,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::post('/add_reward_by_admin', [RewardController::class, 'addReward']);
     Route::post('/update_reward_by_admin/{reward_id}', [RewardController::class, 'updateReward']);
     Route::delete('/delete_reward_by_admin/{reward_id}', [RewardController::class, 'deleteReward']);
+
     /*عرض الجوائز لليوزر*/
     Route::get('/get_User_Investments_And_Rewards',[RewardController::class,'getUserInvestmentsAndRewards']);
     Route::get('/show_Largest_Reward',[RewardController::class,'showLargestReward']);

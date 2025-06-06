@@ -35,6 +35,7 @@ return new class extends Migration
             $table->boolean('legal_check');
             $table->boolean('expert_check');
             $table->boolean('accept');
+            $table->string('status');
             $table->timestamps();
         });
     }

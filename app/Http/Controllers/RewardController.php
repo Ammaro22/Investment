@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\AmountInvested;
+use App\Models\Property_for_sale;
+use App\Models\request_from_lawyer;
 use App\Models\Reward;
 use App\Models\RewardTransactions;
 use Illuminate\Http\Request;
@@ -148,6 +150,65 @@ class RewardController extends Controller
                 'level' => $largestReward->reward->level,
             ]
         ]);
+    }
+
+    public function markAsSold($propertyId)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+            $property = Property_for_sale::find($propertyId);
+
+            if (!$property) {
+              return response()->json(['message' => trans('messages.not_found')]);
+
+            }
+            $property->update([
+                'status' => 'تم البيع',
+            ]);
+
+            return response()->json([
+                'message' => trans('messages.operation_success'),
+                'data' => $property
+            ]);
+    }
+
+    public function createLawyerRequest(Request $request)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+        $validator = Validator::make($request->all(), [
+            'property_for_sale_id' => 'required|exists:property_for_sales,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+            $lawyerRequest = request_from_lawyer::create([
+                'property_for_sale_id' => $request->property_for_sale_id,
+                'status' => 'معلق',
+                'accept_user' => 'مقبول',
+                'accept_admin' => 'معلق'
+            ]);
+
+            return response()->json([
+                'message' => trans('messages.operation_success'),
+                'data' => $lawyerRequest
+            ], 201);
+
+
     }
 
 }

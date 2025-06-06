@@ -32,6 +32,7 @@ class Property_for_sale extends Model
         'legal_check',
         'expert_check',
         'accept',
+        'status'
     ];
 
     public function Property_image(){

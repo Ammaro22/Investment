@@ -1063,7 +1063,7 @@ class InvestmentController extends Controller
         ]);
 
     }
-    
+
     public function getPropertiesByInvestmentMode(Request $request)
     {
         $investmentMode = $request->input('investment_mode');
@@ -1109,7 +1109,7 @@ class InvestmentController extends Controller
             });
 
         return response()->json([
-            'success' => true,
+            'message' => trans('messages.operation_success'),
             'data' => $properties
         ]);
     }

@@ -41,17 +41,35 @@ class PropertyController extends Controller
             'id_images' => 'required|array',
             'id_images.*' => 'image',
 
+
         ]);
 
         if ($validator->fails()) {
             return response(['errors' => $validator->errors()->all()], 422);
         }
-        $property = Property_for_sale::create(array_merge($request->all(), [
+        $property = Property_for_sale::create([
             'user_id' => $userId,
-            'legal_check'=>false,
-            'expert_check'=>false,
-            'accept'=>false,
-        ]));
+            'property_type' => $request->property_type,
+            'area' => $request->area,
+            'number_of_rooms' => $request->number_of_rooms,
+            'number_of_bathrooms' => $request->number_of_bathrooms,
+            'property_age' => $request->property_age,
+            'decoration' => $request->decoration,
+            'kitchen_type' => $request->kitchen_type,
+            'flooring_type' => $request->flooring_type,
+            'overlook_from' => $request->overlook_from,
+            'balcony_size' => $request->balcony_size,
+            'painting_type' => $request->painting_type,
+            'price' => $request->price,
+            'pay_way' => $request->pay_way,
+            'state' => $request->state,
+            'contract' => $request->contract,
+            'exact_position' => $request->exact_position,
+            'legal_check' => false,
+            'expert_check' => false,
+            'accept' => false,
+            'status' => 'معلق'
+        ]);
 
 
                 $propertyid=$property->id;

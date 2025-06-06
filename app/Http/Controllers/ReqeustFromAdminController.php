@@ -48,8 +48,12 @@ class ReqeustFromAdminController extends Controller
         $requestFromAdmin->status = 'Completed';
         $requestFromAdmin->save();
 
+
+
         $economicEvaluation = EconomicEvaluation::where('property_for_sale_id', $requestFromAdmin->property_for_sale_id)->first();
         $property = Property_for_sale::find($requestFromAdmin->property_for_sale_id);
+        $property->status='تم تملك العقار';
+
         $user = User::find($property->user_id);
         $agreedNegotiationId = $economicEvaluation->agreed_negotiations_id;
 
@@ -64,7 +68,7 @@ class ReqeustFromAdminController extends Controller
         $electronicCertificate->Property_Price = $economicEvaluation->expected_price;
         $electronicCertificate->Payment_method = $paymentMethod;
         $electronicCertificate->save();
-
+        $property->save();
         return response()->json([
             'message' => __('messages.operation_success'),
             'data' => $requestFromAdmin,
