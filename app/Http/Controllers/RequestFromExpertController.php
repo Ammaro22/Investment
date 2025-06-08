@@ -391,6 +391,84 @@ class RequestFromExpertController extends Controller
             'data' => $responseData,
         ], 200);
     }
+
+//    public function acceptRequest($id)
+//    {
+//        $userRole = auth()->user()->role_id;
+//        if ($userRole !== 1) {
+//            return response()->json([
+//                'message' => trans('messages.unauthorized'),
+//            ], 403);
+//        }
+//
+//        $request = request_from_expert::find($id);
+//
+//        if (!$request) {
+//            return response()->json([
+//                'message' => __('messages.not_found'),
+//            ], 404);
+//        }
+//
+//        $request->status = 'مقبول';
+//        $request->save();
+//
+//        if (!$request->economic_evaluation) {
+//            return response()->json([
+//                'message' => __('messages.not_found'),
+//            ], 404);
+//        }
+//
+//        $property = request_from_lawyer::find($request->request_from_lawyer_id);
+//        if ($property) {
+//            $property->accept_admin = 'مقبول';
+//            $property->save();
+//        } else {
+//            return response()->json([
+//                'message' => __('messages.not_found'),
+//            ], 404);
+//        }
+//
+//        $property = Property_for_sale::find($request->economic_evaluation->property_for_sale_id);
+//        if ($property) {
+//            $property->accept = true;
+//            $property->save();
+//        } else {
+//            return response()->json([
+//                'message' => __('messages.property_not_found'),
+//            ], 404);
+//        }
+//
+//
+//        if($property->accept) {
+//            PropertyForInvestment::create([
+//                'property_id' => $request->economic_evaluation->property_for_sale_id,
+//                'number_of_chances' => $request->economic_evaluation->number_of_chances,
+//                'expected_price' => $request->economic_evaluation->expected_price,
+//                'profit_percent' => $request->economic_evaluation->profit_percent,
+//                'chance_price' => $request->economic_evaluation->chance_price,
+//                'investment_time' => $request->economic_evaluation->investment_time,
+//                'incoming_time' => $request->economic_evaluation->incoming_time,
+//                'investment_mode' => $request->economic_evaluation->investment_mode,
+//                'property_management' => $request->economic_evaluation->property_management,
+//                'progress_percent' => 0,
+//                'is_completed' => false,
+//            ]);
+//        }
+//
+//        $newRequest = new Request_from_admin();
+//        $newRequest->request_from_expert_id = $request->id;
+//        $newRequest->property_for_sale_id = $property->id;
+//        $newRequest->type_request = 'buy request';
+//        $newRequest->status = 'Stuck';
+//        $newRequest->save();
+//
+//        return response()->json([
+//            'message' => __('messages.operation_success'),
+//            'data' => $request,
+//        ], 200);
+//    }
+
+
     public function acceptRequest($id)
     {
         $userRole = auth()->user()->role_id;
@@ -427,32 +505,6 @@ class RequestFromExpertController extends Controller
             ], 404);
         }
 
-        $property = Property_for_sale::find($request->economic_evaluation->property_for_sale_id);
-        if ($property) {
-            $property->accept = true;
-            $property->save();
-        } else {
-            return response()->json([
-                'message' => __('messages.property_not_found'),
-            ], 404);
-        }
-
-
-        if($property->accept) {
-            PropertyForInvestment::create([
-                'property_id' => $request->economic_evaluation->property_for_sale_id,
-                'number_of_chances' => $request->economic_evaluation->number_of_chances,
-                'expected_price' => $request->economic_evaluation->expected_price,
-                'profit_percent' => $request->economic_evaluation->profit_percent,
-                'chance_price' => $request->economic_evaluation->chance_price,
-                'investment_time' => $request->economic_evaluation->investment_time,
-                'incoming_time' => $request->economic_evaluation->incoming_time,
-                'investment_mode' => $request->economic_evaluation->investment_mode,
-                'property_management' => $request->economic_evaluation->property_management,
-                'progress_percent' => 0,
-                'is_completed' => false,
-            ]);
-        }
 
         $newRequest = new Request_from_admin();
         $newRequest->request_from_expert_id = $request->id;
@@ -466,6 +518,57 @@ class RequestFromExpertController extends Controller
             'data' => $request,
         ], 200);
     }
+
+
+    public function processPropertyInvestment($propertyForSaleId)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 3) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+
+        $property = Property_for_sale::find($propertyForSaleId);
+        if (!$property) {
+            return response()->json([
+                'message' => __('messages.property_not_found'),
+            ], 404);
+        }
+
+        $property->accept = true;
+        $property->save();
+
+        if ($property->accept) {
+            $economicEvaluation = EconomicEvaluation::where('property_for_sale_id', $propertyForSaleId)->first();
+            if (!$economicEvaluation) {
+                return response()->json([
+                    'message' => __('messages.not_found'),
+                ], 404);
+            }
+
+            PropertyForInvestment::create([
+                'property_id' => $propertyForSaleId,
+                'number_of_chances' => $economicEvaluation->number_of_chances,
+                'expected_price' => $economicEvaluation->expected_price,
+                'profit_percent' => $economicEvaluation->profit_percent,
+                'chance_price' => $economicEvaluation->chance_price,
+                'investment_time' => $economicEvaluation->investment_time,
+                'incoming_time' => $economicEvaluation->incoming_time,
+                'investment_mode' => $economicEvaluation->investment_mode,
+                'property_management' => $economicEvaluation->property_management,
+                'progress_percent' => 0,
+                'is_completed' => false,
+            ]);
+        }
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $property,
+        ], 200);
+    }
+
 
     public function rejectRequest(Request $request, $id)
     {

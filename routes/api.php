@@ -123,6 +123,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
 
 /*تعامل مع ا لتقاري القادمة من الفرق الخبير من قبل الادمن*/
 Route::group(["middleware"=>["auth:api"]],function() {
+    Route::post('/create_property_for_investment/{property_for_sale_id}', [RequestFromExpertController::class, 'processPropertyInvestment']);
     Route::post('/accept_request_from_expert/{request_from_expert_id}', [RequestFromExpertController::class, 'acceptRequest']);
     Route::post('/reject_request_from_expert/{request_from_expert_id}', [RequestFromExpertController::class, 'rejectRequest']);
     Route::get('/get_all_requests', [RequestFromExpertController::class, 'getAllRequestsForAdmin']);

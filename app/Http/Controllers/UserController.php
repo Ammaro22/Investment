@@ -201,7 +201,7 @@ class UserController extends Controller
         // Initialize allowed_fields with an empty array
         $allowed_fields = [];
 
-        if ($userRole == 2) {
+        if ($userRole == 2 || $userRole == 1) {
             $allowed_fields = ['name', 'password', 'email', 'phone', 'personal_photo'];
         } elseif ($userRole == 3 || $userRole == 4) {
             $allowed_fields = ['name', 'password', 'phone', 'personal_photo'];
