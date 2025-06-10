@@ -45,6 +45,7 @@ class RequestController extends Controller
         $lawyerRequest->status = 'معلق';
         $lawyerRequest->accept_user = 'معلق';
         $lawyerRequest->accept_admin = 'معلق';
+        $lawyerRequest->by_whom = 'lawyer';
         $lawyerRequest->save();
 
         return response()->json([

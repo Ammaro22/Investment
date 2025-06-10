@@ -198,9 +198,10 @@ class RewardController extends Controller
 
             $lawyerRequest = request_from_lawyer::create([
                 'property_for_sale_id' => $request->property_for_sale_id,
-                'status' => 'معلق',
+                'status' => 'إعادة دراسة',
                 'accept_user' => 'مقبول',
-                'accept_admin' => 'معلق'
+                'accept_admin' => 'معلق',
+                'by_whom' => 'admin'
             ]);
 
             return response()->json([

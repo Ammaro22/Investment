@@ -230,7 +230,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
         Route::post('/accepted_Requests_Percentage_from_admin', [StatisticsController::class, 'acceptedRequestsPercentagefromadmin']);
         Route::post('/rejected_Requests_Percentage_from_user', [StatisticsController::class, 'rejectedRequestsPercentagefromuser']);
         Route::post('/successful_Requests_Percentage_ByMonth_in_year',[StatisticsController::class,'successfulRequestsPercentageByMonth']);
-
+        Route::post('/get_Request_Statistics', [StatisticsController::class, 'getRequestStatistics']);
         /*للمستخدم*/
         Route::post('/get_Investments_ByMonthAndYear',[StatisticsController::class,'getInvestmentsByMonthAndYear']);
         Route::post('/get_User_Investment_Percentage_ByMonth',[StatisticsController::class,'getInvestmentPercentageByMonth']);

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('status');
             $table->string('accept_user');
             $table->string('accept_admin');
+            $table-> string('by_whom');
             $table->timestamps();
         });
     }

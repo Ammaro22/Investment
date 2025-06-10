@@ -38,6 +38,7 @@ class RequestFromLawyerController extends Controller
                 'property_for_sale_id' => $request->property_for_sale_id,
                 'status_request' => $request->status,
                 'accept_admin' => $request->accept_admin,
+                'by_whom' => $request->by_whom,
                 'user_name' => $property->user->name,
                 'created_at' => $request->created_at->format('Y-m-d'),
                 'agreed_negotiation_status' => $agreedNegotiationStatus,

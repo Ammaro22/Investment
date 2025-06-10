@@ -15,7 +15,8 @@ class request_from_lawyer extends Model
         'property_for_sale_id',
         'status',
         'accept_user',
-        'accept_admin'
+        'accept_admin',
+        'by_whom'
     ];
     public function property_for_sale()
     {

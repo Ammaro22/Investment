@@ -88,6 +88,51 @@ class StatisticsController extends Controller
             'data' => $percentage]);
     }
 
+
+    public function getRequestStatistics(Request $request)
+    {
+        $year = $request->input('year');
+
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1 && $userRole !== 3) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+        // Calculate all statistics
+        $rejectedByLawyer = $this->calculatePercentage(
+            Requests::whereYear('created_at', $year)->count(),
+            Requests::whereYear('created_at', $year)->where('status', 'مرفوض')->count()
+        );
+
+        $acceptedByAdmin = $this->calculatePercentage(
+            request_from_lawyer::whereYear('created_at', $year)->count(),
+            request_from_lawyer::whereYear('created_at', $year)->where('accept_admin', 'مقبول')->count()
+        );
+
+        $rejectedByUser = $this->calculatePercentage(
+            request_from_lawyer::whereYear('created_at', $year)->count(),
+            request_from_lawyer::whereYear('created_at', $year)->where('accept_user', 'مرفوض')->count()
+        );
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'rejected_by_lawyer_percentage' => $rejectedByLawyer,
+            'accepted_by_admin_percentage' => $acceptedByAdmin,
+            'rejected_by_user_percentage' => $rejectedByUser,
+            'year' => $year
+        ]);
+    }
+
+    /**
+     * Helper method to calculate percentage
+     */
+    private function calculatePercentage($total, $filtered)
+    {
+        return $total > 0 ? round(($filtered / $total) * 100, 2) : 0;
+    }
+
     /*نسبة العقارات التي تم الموافقة عليها من العقارات المقدمة للمنصة*/
 
     public function successfulRequestsPercentageByMonth(Request $request)
