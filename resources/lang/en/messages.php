@@ -44,5 +44,6 @@ return [
 
     'can_not'=>'Cannot search by father/mother name for this user type',
 
+    'account_deactivated'=>'The user is banned.'
 ];
 

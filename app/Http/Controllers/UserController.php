@@ -77,6 +77,12 @@ class UserController extends Controller
         }
 
         $user = auth()->user();
+
+        if (!$user->active) {
+            auth()->logout();
+            return response(['errors' => trans('messages.account_deactivated')], 403);
+        }
+
         $token = $user->createToken('Personal Access Token')->accessToken;
 
         $uid='user_'.$user->id;

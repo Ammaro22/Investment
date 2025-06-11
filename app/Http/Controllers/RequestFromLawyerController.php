@@ -9,6 +9,7 @@ use Illuminate\Routing\Controller;
 
 class RequestFromLawyerController extends Controller
 {
+
     public function getRequestWithUser()
     {
         $userRole = auth()->user()->role_id;
@@ -149,8 +150,6 @@ class RequestFromLawyerController extends Controller
     }
 
 
-
-
     public function deleteRequest($id)
     {
         $userRole = auth()->user()->role_id;
@@ -173,6 +172,7 @@ class RequestFromLawyerController extends Controller
             'message' => trans('messages.delete_success'),
         ], 200);
     }
+
 
 }
 

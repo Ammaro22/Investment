@@ -350,6 +350,7 @@ class EmployeeInformationController extends Controller
 
         $user->active = false;
         $user->save();
+        $user->tokens()->delete();
 
         return response()->json([
             'message' => trans('messages.operation_success'),

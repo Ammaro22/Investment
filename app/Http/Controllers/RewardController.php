@@ -185,6 +185,8 @@ class RewardController extends Controller
                 'message' => trans('messages.unauthorized'),
             ], 403);
         }
+        $requestedYear = $request->input('property_for_sale_id');
+
         $validator = Validator::make($request->all(), [
             'property_for_sale_id' => 'required|exists:property_for_sales,id'
         ]);
@@ -197,7 +199,7 @@ class RewardController extends Controller
         }
 
             $lawyerRequest = request_from_lawyer::create([
-                'property_for_sale_id' => $request->property_for_sale_id,
+                'property_for_sale_id' => $requestedYear,
                 'status' => 'إعادة دراسة',
                 'accept_user' => 'مقبول',
                 'accept_admin' => 'معلق',

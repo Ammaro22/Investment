@@ -192,7 +192,7 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('/deactivate/{userId}', [EmployeeInformationController::class, 'deactivateUser']);
     Route::post('/activate/{userId}', [EmployeeInformationController::class, 'activateUser']);
     Route::post('/markAsSold/{property_id}', [RewardController::class, 'markAsSold']);
-    Route::post('/createRequest/{property_id}', [RewardController::class, 'createLawyerRequest']);
+    Route::post('/createRequest', [RewardController::class, 'createLawyerRequest']);
 });
 
 /*الجوائز*/
@@ -222,6 +222,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
 
 
 ///////////////////
+
     Route::get('/getEvaluationByProperty/{property_id}',[InvestmentController::class,'getEvaluationByProperty']);
 
 /*الاحصائيات */
@@ -236,4 +237,5 @@ Route::group(["middleware"=>["auth:api"]],function() {
         Route::post('/get_User_Investment_Percentage_ByMonth',[StatisticsController::class,'getInvestmentPercentageByMonth']);
         Route::post('/get_Profit_Percentage_ByMonth',[StatisticsController::class,'getProfitPercentageByMonth']);
     });
+
 });
