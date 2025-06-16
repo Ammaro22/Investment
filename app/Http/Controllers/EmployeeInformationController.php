@@ -176,7 +176,6 @@ class EmployeeInformationController extends Controller
 
 
 
-
 //    public function searchUsers(Request $request)
 //    {
 //        $userRole = auth()->user()->role_id;
