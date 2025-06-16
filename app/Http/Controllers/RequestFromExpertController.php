@@ -372,7 +372,9 @@ class RequestFromExpertController extends Controller
         $requests = request_from_expert::with([
             'economic_evaluation',
             'Request_from_lower'
-        ])->get();
+        ]) ->where('status', '!=', 'مقبول') 
+        ->get();
+
 
         $responseData = $requests->map(function ($request) {
             return [

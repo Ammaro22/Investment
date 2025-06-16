@@ -177,6 +177,89 @@ class EmployeeInformationController extends Controller
 
 
 
+//    public function searchUsers(Request $request)
+//    {
+//        $userRole = auth()->user()->role_id;
+//        if ($userRole !== 1) {
+//            return response()->json([
+//                'message' => trans('messages.unauthorized'),
+//            ], 403);
+//        }
+//
+//        $validator = Validator::make($request->all(), [
+//            'name' => 'nullable|string|max:255',
+//            'role_id' => 'nullable|exists:roles,id',
+//            'father_name' => 'nullable|string|max:255',
+//            'mother_name' => 'nullable|string|max:255',
+//        ]);
+//
+//        if ($validator->fails()) {
+//            return response()->json(['errors' => $validator->errors()], 400);
+//        }
+//
+//        $name = $request->input('name');
+//        $roleId = $request->input('role_id');
+//        $fatherName = $request->input('father_name');
+//        $motherName = $request->input('mother_name');
+//
+//
+//        if ($roleId == 2 && (!empty($fatherName) || !empty($motherName))) {
+//            return response()->json([
+//                'message' => __('messages.can_not'),
+//            ], 404);
+//        }
+//
+//        $query = User::query();
+//
+//        if($roleId == 2) {
+//            if (!empty($name)) {
+//                $query->where('name', 'like', '%' . $name . '%');
+//            }
+//            if (empty($name)) {
+//                return response()->json([
+//                    'message' => __('messages.name_required_for_role_2'),
+//                ], 400);
+//            }
+//        }
+//
+//        $query->where('role_id', $roleId);
+//
+//        if (in_array($roleId, [3, 4])) {
+//            if (!empty($name)) {
+//                $query->where('name', 'like', '%' . $name . '%');
+//            }
+//
+//            if (!empty($fatherName)) {
+//                $query->whereHas('EmployeeInformation', function($q) use ($fatherName) {
+//                    $q->where('father_name', 'like', '%' . $fatherName . '%');
+//                });
+//            }
+//
+//            if (!empty($motherName)) {
+//                $query->whereHas('EmployeeInformation', function($q) use ($motherName) {
+//                    $q->where('mother_name', 'like', '%' . $motherName . '%');
+//                });
+//            }
+//        }
+//
+//        if (in_array($roleId, [3, 4])) {
+//            $query->with('EmployeeInformation');
+//        }
+//
+//        $users = $query->get();
+//
+//        if ($users->isEmpty()) {
+//            return response()->json([
+//                'message' => __('messages.not_found'),
+//            ], 404);
+//        }
+//
+//        return response()->json([
+//            'message' => trans('messages.operation_success'),
+//            'data' => $users,
+//        ]);
+//    }
+
     public function searchUsers(Request $request)
     {
         $userRole = auth()->user()->role_id;
@@ -202,16 +285,21 @@ class EmployeeInformationController extends Controller
         $fatherName = $request->input('father_name');
         $motherName = $request->input('mother_name');
 
-
         if ($roleId == 2 && (!empty($fatherName) || !empty($motherName))) {
             return response()->json([
                 'message' => __('messages.can_not'),
             ], 404);
         }
 
+        if (empty($name) && empty($fatherName) && empty($motherName)) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 400);
+        }
+
         $query = User::query();
 
-        if($roleId == 2) {
+        if ($roleId == 2) {
             if (!empty($name)) {
                 $query->where('name', 'like', '%' . $name . '%');
             }
