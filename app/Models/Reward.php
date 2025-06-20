@@ -14,7 +14,9 @@ class Reward extends Model
     protected $fillable = [
         'amount_threshold',
         'percentage',
-        'level'
+        'level',
+        'number_of_times',
+        'discount_rate'
     ];
 
     public function RewardTransactions()

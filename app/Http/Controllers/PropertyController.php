@@ -396,4 +396,28 @@ class PropertyController extends Controller
         ], 200);
     }
 
+    public function show($id)
+    {
+        $user = auth()->user();
+        if (!$user || $user->role_id != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')], 403);
+        }
+
+        $properties = Property_for_sale::where('user_id', $id)->get('id');
+
+        if ($properties->isNotEmpty()) {
+            $formatted = $properties->map(function($item) {
+                return ['property_id' => $item->id];
+            });
+
+            return response()->json([
+                'message' => trans('messages.operation_success'),
+                'data' => $formatted
+            ]);
+        } else {
+            return response()->json(['message' => trans('messages.not_found')], 404);
+        }
+    }
+
+
 }

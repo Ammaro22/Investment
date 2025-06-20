@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Indicator;
 use App\Models\IndicatorValue;
+use App\Models\Property_for_sale;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Services\FirebaseNotificationService;
@@ -84,7 +85,7 @@ class UserController extends Controller
         }
 
         $token = $user->createToken('Personal Access Token')->accessToken;
-
+        $user_id=$user->id;
         $uid='user_'.$user->id;
         $firebaseToken=$this->fireStoreTokenService->createCustomToken($uid);
 
@@ -92,12 +93,14 @@ class UserController extends Controller
             'user_name'=>$user->name]);
 
         $this->firebaseNotification->sendToUser($user,'login_success');
+
+
         return response([
             'message' => trans('messages.login_success'),
             'data' => $user,
             'token' => $token,
             'firebase_token'=>$firebaseToken,
-            'uid'=>$uid
+            'uid'=>$uid,
         ]);
     }
 
@@ -358,7 +361,22 @@ class UserController extends Controller
     }
 
 
+    public function show($id)
+    {
+        $user = auth()->user();
+        if (!$user || $user->role_id != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')], 403);
+        }
 
+        $user = User::find($id);
+
+        if ($user) {
+            return response()->json(['message'=>trans('messages.operation_success'),
+                'data'=>$user]);
+        } else {
+            return response()->json(['message' => trans('messages.not_found')], 404);
+        }
+    }
 
 
 

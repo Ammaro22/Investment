@@ -15,7 +15,8 @@ class RewardTransactions extends Model
         'user_id',
         'reward_id',
         'amount_profit',
-        'state'
+        'state',
+        'number_of_times',
     ];
     public function user()
     {

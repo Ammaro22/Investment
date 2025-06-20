@@ -29,6 +29,8 @@ class RewardController extends Controller
             'amount_threshold' => 'required|numeric|min:1',
             'percentage' => 'required|numeric|min:1|max:100',
             'level' => 'required',
+            'number_of_times' => 'nullable|integer|min:1',
+            'discount_rate' => 'nullable|numeric|min:0|max:100',
         ]);
         if ($validator->fails()) {
             return response(['errors' => $validator->errors()->all()], 422);
@@ -38,10 +40,12 @@ class RewardController extends Controller
             'amount_threshold' => $request->input('amount_threshold'),
             'percentage' => $request->input('percentage'),
             'level' => $request->input('level'),
+            'number_of_times' => $request->input('number_of_times'),
+            'discount_rate' => $request->input('discount_rate'),
         ]);
 
         return response()->json([
-            'message' => 'Reward added successfully.',
+            'message' => __('messages.operation_success'),
             'data' => $reward,
         ], 201);
 

@@ -303,7 +303,12 @@ class InvestmentController extends Controller
             return response()->json(['message' => trans('messages.no_chance_available')]);
         }
 
+        $discount = $this->getHighestRewardAndUpdate($user->id);
+
         $amount = $property->chance_price * $request->chance_invested;
+        if ($discount > 0) {
+            $amount -= ($amount * ($discount / 100));
+        }
 
         $investmentWallet = $user->wallets()->where('wallet_type', 'investment')->first();
         if (!$investmentWallet || $investmentWallet->balance < $amount) {
@@ -899,56 +904,79 @@ class InvestmentController extends Controller
 
     }
 
-
     protected function calculateRewards($user, $investmentAmount)
     {
-        $amountInvested = AmountInvested::where('user_id', $user->id)->first();
+        // تحديث أو إنشاء سجل الاستثمار الكلي للمستخدم
+        $amountInvested = AmountInvested::firstOrNew(['user_id' => $user->id]);
+        $amountInvested->amount_invested += $investmentAmount;
+        $amountInvested->save();
 
-        if ($amountInvested) {
-            $amountInvested->amount_invested += $investmentAmount;
-            $amountInvested->save();
-        } else {
-            AmountInvested::create([
+        $totalInvested = $amountInvested->amount_invested;
+
+        // جلب الجوائز المؤهَّل لها المستخدم
+        $rewards = Reward::where('amount_threshold', '<=', $totalInvested)->get();
+
+        if ($rewards->isEmpty()) {
+            Log::info('No rewards available for current total invested.', [
                 'user_id' => $user->id,
-                'amount_invested' => $investmentAmount,
+                'total_invested' => $totalInvested
             ]);
         }
 
-        // حساب المجموع الكلي للمبالغ المستثمرة
-        $totalInvested = AmountInvested::where('user_id', $user->id)->sum('amount_invested');
-
-        // الحصول على الجوائز المتاحة
-        $rewards = Reward::where('amount_threshold', '<=', $totalInvested)->get();
-
         foreach ($rewards as $reward) {
-
             $existingReward = RewardTransactions::where('user_id', $user->id)
                 ->where('reward_id', $reward->id)
                 ->first();
 
             if (!$existingReward) {
-
                 $rewardAmount = ($totalInvested * $reward->percentage) / 100;
 
-                RewardTransactions::create([
-                    'user_id' => $user->id,
-                    'reward_id' => $reward->id,
-                    'amount_profit' => $rewardAmount,
-                    'state' => 'completed'
-                ]);
+                DB::transaction(function () use ($user, $reward, $rewardAmount) {
+                    $mainWallet = Wallet::where('wallet_type', 'platform')->lockForUpdate()->first();
+                    $profitWallet = $user->wallets()->where('wallet_type', 'profits')->lockForUpdate()->first();
 
-                DB::transaction(function () use ($user, $rewardAmount) {
-                    $profitWallet = $user->wallets()
-                        ->where('wallet_type', 'profits')
-                        ->lockForUpdate()
-                        ->firstOrFail();
-                    $profitWallet->balance += $rewardAmount;
-                    $profitWallet->save();
+                    if (!$mainWallet || !$profitWallet) {
+                        Log::error('Wallet(s) missing during reward distribution.', [
+                            'user_id' => $user->id,
+                            'mainWallet_found' => !!$mainWallet,
+                            'profitWallet_found' => !!$profitWallet,
+                        ]);
+                        return;
+                    }
+
+                    if ($mainWallet->balance >= $rewardAmount) {
+                        $mainWallet->balance -= $rewardAmount;
+                        $mainWallet->save();
+
+                        $profitWallet->balance += $rewardAmount;
+                        $profitWallet->save();
+
+                        RewardTransactions::create([
+                            'user_id' => $user->id,
+                            'reward_id' => $reward->id,
+                            'amount_profit' => $rewardAmount,
+                            'state' => 'completed',
+                            'number_of_times' => $reward->number_of_times,
+                        ]);
+
+                        Log::info('Reward transferred successfully.', [
+                            'user_id' => $user->id,
+                            'reward_id' => $reward->id,
+                            'reward_amount' => $rewardAmount
+                        ]);
+                    } else {
+                        Log::warning('Main wallet has insufficient balance for reward.', [
+                            'user_id' => $user->id,
+                            'required' => $rewardAmount,
+                            'available' => $mainWallet->balance,
+                            'reward_id' => $reward->id
+                        ]);
+                    }
                 });
             }
         }
-
     }
+
 
     public function getEvaluationByProperty($property_id)
     {
@@ -1113,6 +1141,46 @@ class InvestmentController extends Controller
             'data' => $properties
         ]);
     }
+
+
+    protected function getHighestRewardAndUpdate($userId)
+    {
+        $discount = 0;
+
+        $highestReward = RewardTransactions::with('reward')
+            ->where('user_id', $userId)
+            ->where('number_of_times', '>', 0)
+            ->whereHas('reward') // تأكّد من وجود المكافأة فعلاً
+            ->orderByDesc(Reward::select('amount_threshold')
+                ->whereColumn('rewards.id', 'reward_transactions.reward_id')
+                ->limit(1))
+            ->first();
+
+        if ($highestReward) {
+            Log::info('Found highest reward:', [
+                'reward_id' => $highestReward->reward_id,
+                'number_of_times' => $highestReward->number_of_times
+            ]);
+
+            $highestReward->number_of_times -= 1;
+
+            if ($highestReward->save()) {
+                Log::info('Updated number_of_times successfully.', [
+                    'number_of_times' => $highestReward->number_of_times
+                ]);
+                $discount = $highestReward->reward->discount_rate;
+            } else {
+                Log::error('Failed to update number_of_times.', [
+                    'reward_id' => $highestReward->reward_id
+                ]);
+            }
+        } else {
+            Log::info('No valid rewards found for the user.');
+        }
+
+        return $discount;
+    }
+
 
 }
 

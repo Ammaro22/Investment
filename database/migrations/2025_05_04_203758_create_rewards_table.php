@@ -16,6 +16,8 @@ return new class extends Migration
             $table->float('amount_threshold');
             $table->float('percentage');
             $table->string('level');
+            $table->float('discount_rate')->nullable();
+            $table->integer('number_of_times')->default(0);
             $table->timestamps();
         });
     }

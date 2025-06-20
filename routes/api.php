@@ -39,6 +39,7 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('logout',[UserController::class,'logout']);
     Route::get('profile',[UserController::class,'profile']);
     Route::post('update',[UserController::class,'update']);
+    Route::get('get_info_user/{user_id}',[UserController::class,'show']);
     Route::post('/storeFcmToken',[UserController::class,'storeFcmToken']);
     Route::post('/showNotificationByType',[UserController::class,'showNotificationByType']);
 
@@ -62,6 +63,7 @@ Route::get('/get_image_for_property_by_id/{property_for_sale_id}', [PropertyCont
 Route::group(["middleware"=>["auth:api"]],function() {
     Route::post('/create_properties', [PropertyController::class, 'store']);
     Route::post('/update_properties_by_admin/{property_for_sale_id}', [PropertyController::class, 'updatebyadmin']);
+    Route::get('get_property_id_by_user/{property_for_sale_id}',[PropertyController::class,'show']);
     Route::post('/update_properties_by_user/{property_for_sale_id}', [PropertyController::class, 'update']);
     Route::delete('/delete_properties/{property_for_sale_id}', [PropertyController::class, 'destroy']);
     Route::get('/get_my_properties', [PropertyController::class, 'getPropertiesByToken']);

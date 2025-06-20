@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('reward_id')->constrained('rewards')->cascadeOnDelete();
             $table->float('amount_profit');
             $table->string('state');
+            $table->integer('number_of_times')->default(0);
             $table->timestamps();
         });
     }
