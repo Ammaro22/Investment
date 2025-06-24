@@ -374,7 +374,7 @@ class RequestFromExpertController extends Controller
             'Request_from_lower'
         ]) ->where('status', '!=', 'مقبول')
         ->get();
-        
+
         $responseData = $requests->map(function ($request) {
             return [
                 'id' => $request->id,
@@ -524,7 +524,7 @@ class RequestFromExpertController extends Controller
     public function processPropertyInvestment($propertyForSaleId)
     {
         $userRole = auth()->user()->role_id;
-        if ($userRole !== 3) {
+        if ($userRole !== 1) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
