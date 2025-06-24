@@ -185,6 +185,7 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('/admin/approve_property/{evaluation_id}',[InvestmentController::class,'approve_property']);
 });
 
+
 Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('/add_info_employee/{user_Id}', [EmployeeInformationController::class, 'addEmployeeInformation']);
     Route::post('/updateEmployeeInformation/{user_Id}', [EmployeeInformationController::class, 'updateEmployeeInformation']);
@@ -195,6 +196,9 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('/activate/{userId}', [EmployeeInformationController::class, 'activateUser']);
     Route::post('/markAsSold/{property_id}', [RewardController::class, 'markAsSold']);
     Route::post('/createRequest', [RewardController::class, 'createLawyerRequest']);
+    Route::get('/owned_properties', [EmployeeInformationController::class, 'getOwnedProperties']);
+    Route::get('/sold_properties', [EmployeeInformationController::class, 'getSoldProperties']);
+    Route::get('/user_counts_by_role', [EmployeeInformationController::class, 'countUsersByRole']);
 });
 
 /*الجوائز*/

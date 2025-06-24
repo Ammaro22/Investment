@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 use App\Models\EmployeeInformation;
+use App\Models\Property_for_sale;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class EmployeeInformationController extends Controller
@@ -175,89 +177,6 @@ class EmployeeInformationController extends Controller
     }
 
 
-
-//    public function searchUsers(Request $request)
-//    {
-//        $userRole = auth()->user()->role_id;
-//        if ($userRole !== 1) {
-//            return response()->json([
-//                'message' => trans('messages.unauthorized'),
-//            ], 403);
-//        }
-//
-//        $validator = Validator::make($request->all(), [
-//            'name' => 'nullable|string|max:255',
-//            'role_id' => 'nullable|exists:roles,id',
-//            'father_name' => 'nullable|string|max:255',
-//            'mother_name' => 'nullable|string|max:255',
-//        ]);
-//
-//        if ($validator->fails()) {
-//            return response()->json(['errors' => $validator->errors()], 400);
-//        }
-//
-//        $name = $request->input('name');
-//        $roleId = $request->input('role_id');
-//        $fatherName = $request->input('father_name');
-//        $motherName = $request->input('mother_name');
-//
-//
-//        if ($roleId == 2 && (!empty($fatherName) || !empty($motherName))) {
-//            return response()->json([
-//                'message' => __('messages.can_not'),
-//            ], 404);
-//        }
-//
-//        $query = User::query();
-//
-//        if($roleId == 2) {
-//            if (!empty($name)) {
-//                $query->where('name', 'like', '%' . $name . '%');
-//            }
-//            if (empty($name)) {
-//                return response()->json([
-//                    'message' => __('messages.name_required_for_role_2'),
-//                ], 400);
-//            }
-//        }
-//
-//        $query->where('role_id', $roleId);
-//
-//        if (in_array($roleId, [3, 4])) {
-//            if (!empty($name)) {
-//                $query->where('name', 'like', '%' . $name . '%');
-//            }
-//
-//            if (!empty($fatherName)) {
-//                $query->whereHas('EmployeeInformation', function($q) use ($fatherName) {
-//                    $q->where('father_name', 'like', '%' . $fatherName . '%');
-//                });
-//            }
-//
-//            if (!empty($motherName)) {
-//                $query->whereHas('EmployeeInformation', function($q) use ($motherName) {
-//                    $q->where('mother_name', 'like', '%' . $motherName . '%');
-//                });
-//            }
-//        }
-//
-//        if (in_array($roleId, [3, 4])) {
-//            $query->with('EmployeeInformation');
-//        }
-//
-//        $users = $query->get();
-//
-//        if ($users->isEmpty()) {
-//            return response()->json([
-//                'message' => __('messages.not_found'),
-//            ], 404);
-//        }
-//
-//        return response()->json([
-//            'message' => trans('messages.operation_success'),
-//            'data' => $users,
-//        ]);
-//    }
 
     public function searchUsers(Request $request)
     {
@@ -468,6 +387,101 @@ class EmployeeInformationController extends Controller
         return response()->json([
             'message' => trans('messages.operation_success'),
             'data' => $user,
+        ]);
+    }
+
+    public function getOwnedProperties(Request $request)
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+        $properties = Property_for_sale::where('status', 'تم تملك العقار')
+            ->select([
+                'id',
+                DB::raw("CONCAT(state, ' - ', exact_position) as location"),
+                'property_type'
+            ])
+            ->paginate(5);
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'properties' => $properties->items(),
+                'pagination' => [
+                    'current_page' => $properties->currentPage(),
+                    'last_page' => $properties->lastPage(),
+                    'per_page' => $properties->perPage(),
+                    'total' => $properties->total(),
+                    'next_page_url' => $properties->nextPageUrl(),
+                    'prev_page_url' => $properties->previousPageUrl(),
+                ]
+            ]
+        ]);
+    }
+
+    public function getSoldProperties(Request $request)
+    {
+
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
+        $properties = Property_for_sale::where('status', 'تم البيع')
+            ->select([
+                'id',
+                DB::raw("CONCAT(state, ' - ', exact_position) as location"),
+                'property_type'
+            ])
+            ->paginate(5);
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'properties' => $properties->items(),
+                'pagination' => [
+                    'current_page' => $properties->currentPage(),
+                    'last_page' => $properties->lastPage(),
+                    'per_page' => $properties->perPage(),
+                    'total' => $properties->total(),
+                    'next_page_url' => $properties->nextPageUrl(),
+                    'prev_page_url' => $properties->previousPageUrl(),
+                ]
+            ]
+        ]);
+    }
+
+    public function countUsersByRole()
+    {
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+        $roles = [
+            1 => 'admin',
+            2 => 'investor',
+            3 => 'economic team',
+            4 => 'legal team',
+        ];
+
+        $userCounts = [];
+
+        foreach ($roles as $id => $type) {
+            $count = User::where('role_id', $id)->count();
+            $userCounts[$type] = $count;
+        }
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $userCounts,
         ]);
     }
 
