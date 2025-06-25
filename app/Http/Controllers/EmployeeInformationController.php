@@ -514,4 +514,5 @@ class EmployeeInformationController extends Controller
             ],
         ], 200);
     }
+
 }
