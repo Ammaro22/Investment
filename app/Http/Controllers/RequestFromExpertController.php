@@ -534,7 +534,7 @@ class RequestFromExpertController extends Controller
         $property = Property_for_sale::find($propertyForSaleId);
         if (!$property) {
             return response()->json([
-                'message' => __('messages.property_not_found'),
+                'message' => __('messages.not_found'),
             ], 404);
         }
 
@@ -542,7 +542,7 @@ class RequestFromExpertController extends Controller
         $property->save();
 
         if ($property->accept) {
-            $economicEvaluation = EconomicEvaluation::where('property_for_sale_id', $propertyForSaleId)->first();
+            $economicEvaluation = EconomicEvaluation::where('property_for_sale_id', $propertyForSaleId) ->orderBy('created_at', 'desc')->first();
             if (!$economicEvaluation) {
                 return response()->json([
                     'message' => __('messages.not_found'),

@@ -199,6 +199,7 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::get('/owned_properties', [EmployeeInformationController::class, 'getOwnedProperties']);
     Route::get('/sold_properties', [EmployeeInformationController::class, 'getSoldProperties']);
     Route::get('/user_counts_by_role', [EmployeeInformationController::class, 'countUsersByRole']);
+    Route::get('/economic_evaluation/{property_for_sale_id}', [EmployeeInformationController::class, 'getLatestEconomicEvaluation']);
 });
 
 /*الجوائز*/

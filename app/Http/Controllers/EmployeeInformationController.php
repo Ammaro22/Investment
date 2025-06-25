@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\EconomicEvaluation;
 use App\Models\EmployeeInformation;
 use App\Models\Property_for_sale;
 use App\Models\User;
@@ -485,4 +486,32 @@ class EmployeeInformationController extends Controller
         ]);
     }
 
+    public function getLatestEconomicEvaluation($propertyForSaleId)
+    {
+
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1 ) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+        $economicEvaluation = EconomicEvaluation::where('property_for_sale_id', $propertyForSaleId)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$economicEvaluation) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+        $agreement = $economicEvaluation->agreed_negotiation()->first();
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => [
+                'economic_evaluation' => $economicEvaluation,
+                'agreement' => $agreement,
+            ],
+        ], 200);
+    }
 }
