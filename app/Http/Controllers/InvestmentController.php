@@ -1111,6 +1111,11 @@ class InvestmentController extends Controller
             ->get()
             ->map(function ($propertyInvestment) use ($userId) {
                 $property = $propertyInvestment->property;
+                $chance = $propertyInvestment->investment;
+                $investments = $propertyInvestment->investment;
+                $totalAmountPaid = $investments->sum('amount_payed');
+                $totalChanceInvested = $investments->sum('chance_invested');
+
                 $investorCount = $propertyInvestment->investment->count();
 
                 // جمع الأرباح بشكل صحيح
@@ -1130,6 +1135,8 @@ class InvestmentController extends Controller
                     'profit_percent' => $propertyInvestment->profit_percent ?? 0,
                     'investment_start_time' => $propertyInvestment->created_at->format('Y-m-d H:i:s'),
                     'investment_end_time' => $propertyInvestment->incoming_time ?? null,
+                    'amount_payed' => $totalAmountPaid, 
+                    'chance_invested' => $totalChanceInvested,
                     'investor_count' => $investorCount,
                     'user_profit' => $userProfit,
                     'is_completed' => $propertyInvestment->is_completed
