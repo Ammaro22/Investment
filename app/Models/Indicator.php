@@ -14,6 +14,7 @@ class Indicator extends Model
     public $timestamps = true;
     protected $fillable=[
         'name',
+        'arabic_name',
         'recommended_min',
         'recommended_max'
     ];

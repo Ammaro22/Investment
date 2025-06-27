@@ -219,7 +219,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
 /*اضافة المؤشرات من قبل الفريق الخبير واضافة قيم لها*/
 Route::group(["middleware"=>["auth:api"]],function() {
     Route::post('/storeIndicator',[IndicatorController::class,'storeIndicator']);
-    Route::post('/storeValueToIndicator/{property_id}',[IndicatorController::class,'storeValueToIndicator']);
+    Route::post('/storeValueToIndicator',[IndicatorController::class,'storeValueToIndicator']);
     Route::delete('/deleteIndicator/{indicator_id}', [IndicatorController::class, 'deleteIndicator']);
     Route::delete('/deleteValueOfIndicator/{indicatorValue_id}', [IndicatorController::class, 'deleteValueOfIndicator']);
     Route::post('/updateIndicator/{indicator_id}',[IndicatorController::class,'updateIndicator']);

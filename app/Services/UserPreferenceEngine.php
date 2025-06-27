@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\User;
@@ -21,7 +22,7 @@ public function getRecommendationForInvestment(?User $user,Property_for_sale $pr
 
     if ($investmentsInSameArea->count() > 1) {
 
-        $recommendations[] = "ننصحك بتنويع استثمارك خارج منطقة {$property_for_sale->state} لتقليل المخاطر.";
+        $recommendations[] = "لتقليل المخاطر,{$property_for_sale->state} - {$property_for_sale->exact_position} ننصحك بتنويع استثمارك خارج منطقة ";
     }
 
 
@@ -38,7 +39,7 @@ public function getRecommendationForInvestment(?User $user,Property_for_sale $pr
 
      if($typeShare > 50) {
 
-        $recommendations[]="نسبة استثمارك في نوع {$property_for_sale->property_type}مرتفعة،ننصح بالتنويع. ";
+        $recommendations[]=" مرتفعة، لذلك ننصحك بالتنويع{$property_for_sale->property_type}نسبة استثمارك في نوع العقار ";
      }
 
 //3

@@ -6,6 +6,7 @@ use App\Models\EconomicEvaluation;
 use App\Models\Indicator;
 use App\Models\IndicatorValue;
 use App\Models\Property_for_sale;
+use App\Services\PropertyAnalysisService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
@@ -43,9 +44,7 @@ class IndicatorController extends Controller
 
 
 
-
-
-    public function storeValueToIndicator(Request $request, $property_id)
+    public function storeValueToIndicator(Request $request)
     {
         $user = auth()->user();
         if (!$user || $user->role_id != 3) {
@@ -53,50 +52,47 @@ class IndicatorController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'indicators' => 'required|array|min:1',
-            'indicators.*.indicator_id' => 'required|exists:indicators,id',
-            'indicators.*.value' => 'required|numeric',
+            'property_id' => 'required|exists:property_for_sales,id',
+            'indicator_id' => 'required|exists:indicators,id',
+            'data' => 'required|array',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 400);
         }
 
+        $property_id = $request->property_id;
+        $indicator_id = $request->indicator_id;
+        $data = $request->data; // البيانات لحساب القيمة
+
         $property = Property_for_sale::find($property_id);
         if (!$property) {
-            return response()->json(['message' => 'Property not found.'], 404);
+            return response()->json([ 'message' => __('messages.not_found'),], 404);
         }
 
-        $economicEvaluation = EconomicEvaluation::where('property_for_sale_id', $property_id)->first();
+        $economicEvaluation = EconomicEvaluation::where('property_for_sale_id', $property_id)->orderBy('created_at', 'desc')->first();
         if (!$economicEvaluation) {
-            return response()->json(['message' => 'Economic evaluation not found.'], 404);
+            return response()->json([ 'message' => __('messages.not_found'),], 404);
         }
 
-        foreach ($request->indicators as $indicatorData) {
-            $exists = IndicatorValue::where('economic_evaluation_id', $economicEvaluation->id)
-                ->where('property_id', $property_id)
-                ->where('indicator_id', $indicatorData['indicator_id'])
-                ->exists();
+        // حساب القيمة بناءً على القوانين
+        $indicator = Indicator::find($indicator_id);
+        $valueResult = PropertyAnalysisService::calculateValue($indicator, $data);
 
-
-            if (!$exists) {
-                IndicatorValue::create([
-                    'economic_evaluation_id' => $economicEvaluation->id,
-                    'property_id' => $property_id,
-                    'indicator_id' => $indicatorData['indicator_id'],
-                    'value' => $indicatorData['value'],
-                ]);
-            }
-            else{
-                return response()->json(['message'=>'value of indicator already assigned']);
-            }
+        if (isset($valueResult['error'])) {
+            return response()->json(['message' => $valueResult['error']], 400);
         }
 
+        $value = $valueResult;
+
+        IndicatorValue::create([
+            'economic_evaluation_id' => $economicEvaluation->id,
+            'property_id' => $property_id,
+            'indicator_id' => $indicator_id,
+            'value' => $value,
+        ]);
         return response()->json(['message' => trans('messages.operation_success')]);
     }
-
-
-
 
 
 
@@ -189,8 +185,6 @@ class IndicatorController extends Controller
             'data' => $updated,
         ], 200);
     }
-
-
 
     public function deleteValueOfIndicator($indicatorValue_id)
     {

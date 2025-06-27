@@ -991,7 +991,7 @@ class InvestmentController extends Controller
         }
 
         $evaluation = EconomicEvaluation::with('indicatorValues.indicator')
-            ->where('property_for_sale_id', $property_id)
+            ->where('property_for_sale_id', $property_id)->orderBy('created_at', 'desc')
             ->first();
 
         if (!$evaluation) {

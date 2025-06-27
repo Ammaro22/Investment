@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('indicators', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('arabic_name');
             $table->float('recommended_min');
             $table->float('recommended_max');
             $table->timestamps();
