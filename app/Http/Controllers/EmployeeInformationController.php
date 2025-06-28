@@ -509,8 +509,10 @@ class EmployeeInformationController extends Controller
                 'message' => __('messages.not_found'),
             ], 404);
         }
-        $agreement = $economicEvaluation->agreed_negotiation()->first();
-
+        $agreement = null;
+        if ($economicEvaluation->agreed_negotiation_id) {
+            $agreement = $economicEvaluation->agreed_negotiation()->first();
+        }
         return response()->json([
             'message' => __('messages.operation_success'),
             'data' => [
