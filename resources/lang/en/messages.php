@@ -46,6 +46,7 @@ return [
 
     'account_deactivated'=>'The user is banned.',
 
-     'indicator'=>'Invalid input data for the selected indicator.'
+     'indicator'=>'Invalid input data for the selected indicator.',
+    'max_investment_reached'=>'The maximum investment limit of 10% has been reached.'
 ];
 

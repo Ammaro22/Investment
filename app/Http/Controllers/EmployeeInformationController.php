@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\EconomicEvaluation;
 use App\Models\EmployeeInformation;
 use App\Models\Property_for_sale;
+use App\Models\Request_from_admin;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -499,6 +500,10 @@ class EmployeeInformationController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
+        $Royalimages = Request_from_admin::where('property_for_sale_id', $propertyForSaleId)
+            ->orderBy('created_at', 'desc')
+            ->first(['front_image', 'back_image']);
+
         if (!$economicEvaluation) {
             return response()->json([
                 'message' => __('messages.not_found'),
@@ -511,6 +516,7 @@ class EmployeeInformationController extends Controller
             'data' => [
                 'economic_evaluation' => $economicEvaluation,
                 'agreement' => $agreement,
+                'Royal images'=>$Royalimages
             ],
         ], 200);
     }

@@ -298,11 +298,24 @@ class InvestmentController extends Controller
         }
 
         $originalChances = $property->getOriginal('number_of_chances');
+        $totalPropertyPrice = $property->expected_price;
+        $chancePrice = $property->chance_price;
 
-        if ($originalChances < $request->chance_invested) {
+
+        $totalInvestedAmount = $property->investment()
+            ->where('user_id', $user->id)
+            ->sum('amount_payed');
+
+        $newInvestmentAmount = $chancePrice * $request->chance_invested;
+
+        $maxAllowedInvestment = $totalPropertyPrice * 0.10;
+
+        if ($totalInvestedAmount + $newInvestmentAmount > $maxAllowedInvestment) {
+            return response()->json(['message' => trans('messages.max_investment_reached')]);
+        }
+        if ($property->number_of_chances < $request->chance_invested) {
             return response()->json(['message' => trans('messages.no_chance_available')]);
         }
-
         $discount = $this->getHighestRewardAndUpdate($user->id);
 
         $amount = $property->chance_price * $request->chance_invested;
@@ -1135,7 +1148,7 @@ class InvestmentController extends Controller
                     'profit_percent' => $propertyInvestment->profit_percent ?? 0,
                     'investment_start_time' => $propertyInvestment->created_at->format('Y-m-d H:i:s'),
                     'investment_end_time' => $propertyInvestment->incoming_time ?? null,
-                    'amount_payed' => $totalAmountPaid, 
+                    'amount_payed' => $totalAmountPaid,
                     'chance_invested' => $totalChanceInvested,
                     'investor_count' => $investorCount,
                     'user_profit' => $userProfit,
