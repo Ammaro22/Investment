@@ -423,4 +423,82 @@ class StatisticsController extends Controller
     }
 
 
+    public function getInvestmentAndProfitPercentageByMonth(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'year' => 'required|integer|min:2000|max:' . now()->year,
+        ]);
+
+        $requestedYear = $request->input('year');
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        // استرجاع الاستثمارات
+        $investments = Investment::where('user_id', $user->id)
+            ->whereYear('created_at', $requestedYear)
+            ->get();
+
+        $profits = Profit::where('user_id', $user->id)
+            ->whereYear('scheduled_date', $requestedYear)
+            ->get();
+
+        // تهيئة مصفوفة للأشهر
+        $months = [];
+        for ($month = 1; $month <= 12; $month++) {
+            $months[$month] = [
+                'total_investment' => 0,
+                'total_profit' => 0,
+            ];
+        }
+
+        // جمع الاستثمارات حسب الشهر
+        foreach ($investments as $investment) {
+            $month = $investment->created_at->month;
+            $months[$month]['total_investment'] += $investment->amount_payed;
+        }
+
+        // جمع الأرباح حسب الشهر
+        foreach ($profits as $profit) {
+            $month = \Carbon\Carbon::parse($profit->scheduled_date)->month;
+            $months[$month]['total_profit'] += $profit->profit_amount;
+        }
+
+        // حساب إجمالي الاستثمارات والأرباح للسنة
+        $totalYearlyInvestment = array_sum(array_column($months, 'total_investment'));
+        $totalYearlyProfit = array_sum(array_column($months, 'total_profit'));
+
+        // التحقق من أن إجمالي الاستثمار والأرباح ليس صفرًا لتجنب القسمة على صفر
+        if ($totalYearlyInvestment == 0 && $totalYearlyProfit == 0) {
+            return response()->json([
+                'message' => __('messages.operation_success'),
+                'data' => [],
+                'warning' => 'No investments or profits found for the specified year',
+            ], 200);
+        }
+
+        // حساب نسبة الاستثمار لكل شهر
+        $investmentPercentages = [];
+        foreach ($months as $month => $data) {
+            $investmentPercentages[$month] = $totalYearlyInvestment > 0 ? ($data['total_investment'] / $totalYearlyInvestment) * 100 : 0;
+        }
+
+        // حساب نسبة الربح لكل شهر
+        $profitPercentages = [];
+        foreach ($months as $month => $data) {
+            $profitPercentages[$month] = $totalYearlyProfit > 0 ? ($data['total_profit'] / $totalYearlyProfit) * 100 : 0;
+        }
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => [
+                'investment_percentages' => $investmentPercentages,
+                'profit_percentages' => $profitPercentages,
+            ]
+        ], 200);
+    }
+
 }
