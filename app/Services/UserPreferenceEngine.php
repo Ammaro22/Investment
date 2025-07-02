@@ -15,7 +15,9 @@ public function getRecommendationForInvestment(?User $user,Property_for_sale $pr
         return [];
     }
 
-     $investmentsInSameArea = $user->investment()
+    $recommendations = [];
+
+    $investmentsInSameArea = $user->investment()
          ->with('property_invested.property')
          ->get()
          ->filter(fn($investment) => $investment->property_invested->property->state === $property_for_sale->state);
