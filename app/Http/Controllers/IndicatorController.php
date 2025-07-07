@@ -16,35 +16,82 @@ class IndicatorController extends Controller
 
     public function storeIndicator(Request $request)
     {
-        $user=auth()->user();
-        $userRole=$user->role_id;
-        if(!$user||$userRole!=3)
-        {
-            return response()->json(['message'=>trans('messages.unauthorized')]);
+        $user = auth()->user();
+        $userRole = $user->role_id;
+        if (!$user || $userRole != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')]);
         }
-        $validator=Validator::make($request->all(),[
-            'name'=>'required|string',
-            'recommended_min'=>'required|numeric',
-            'recommended_max'=>'required|numeric'
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'recommended_min' => 'required|numeric',
+            'recommended_max' => 'required|numeric'
         ]);
 
-        if($validator->fails())
-        {
-            return response()->json(['errors'=>$validator->errors()],400);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
         }
 
-        $indicator=Indicator::create([
-            'name'=>$request->name,
-            'recommended_min'=>$request->recommended_min,
-            'recommended_max'=>$request->recommended_max
+        $indicator = Indicator::create([
+            'name' => $request->name,
+            'recommended_min' => $request->recommended_min,
+            'recommended_max' => $request->recommended_max
         ]);
 
-        return response()->json(['message'=>trans('messages.operation_success')]);
+        return response()->json(['message' => trans('messages.operation_success')]);
     }
 
 
+//    public function storeValueToIndicator(Request $request)
+//    {
+//        $user = auth()->user();
+//        if (!$user || $user->role_id != 3) {
+//            return response()->json(['message' => trans('messages.unauthorized')], 403);
+//        }
+//
+//        $validator = Validator::make($request->all(), [
+//            'property_id' => 'required|exists:property_for_sales,id',
+//            'indicator_id' => 'required|exists:indicators,id',
+//            'data' => 'required|array',
+//        ]);
+//
+//        if ($validator->fails()) {
+//            return response()->json(['errors' => $validator->errors()], 400);
+//        }
+//
+//        $property_id = $request->property_id;
+//        $indicator_id = $request->indicator_id;
+//        $data = $request->data; // البيانات لحساب القيمة
+//
+//        $property = Property_for_sale::find($property_id);
+//        if (!$property) {
+//            return response()->json(['message' => __('messages.not_found'),], 404);
+//        }
+//
+//        $economicEvaluation = EconomicEvaluation::where('property_for_sale_id', $property_id)->orderBy('created_at', 'desc')->first();
+//        if (!$economicEvaluation) {
+//            return response()->json(['message' => __('messages.not_found'),], 404);
+//        }
+//
+//        // حساب القيمة بناءً على القوانين
+//        $indicator = Indicator::find($indicator_id);
+//        $valueResult = PropertyAnalysisService::calculateValue($indicator, $data);
+//
+//        if (isset($valueResult['error'])) {
+//            return response()->json(['message' => $valueResult['error']], 400);
+//        }
+//
+//        $value = $valueResult;
+//
+//        IndicatorValue::create([
+//            'economic_evaluation_id' => $economicEvaluation->id,
+//            'property_id' => $property_id,
+//            'indicator_id' => $indicator_id,
+//            'value' => $value,
+//        ]);
+//        return response()->json(['message' => trans('messages.operation_success')]);
+//    }
 
-    public function storeValueToIndicator(Request $request)
+    public function storeValuesToIndicators(Request $request)
     {
         $user = auth()->user();
         if (!$user || $user->role_id != 3) {
@@ -53,8 +100,9 @@ class IndicatorController extends Controller
 
         $validator = Validator::make($request->all(), [
             'property_id' => 'required|exists:property_for_sales,id',
-            'indicator_id' => 'required|exists:indicators,id',
-            'data' => 'required|array',
+            'indicators' => 'required|array|min:1',
+            'indicators.*.indicator_id' => 'required|exists:indicators,id',
+            'indicators.*.data' => 'required|array',
         ]);
 
         if ($validator->fails()) {
@@ -62,81 +110,95 @@ class IndicatorController extends Controller
         }
 
         $property_id = $request->property_id;
-        $indicator_id = $request->indicator_id;
-        $data = $request->data; // البيانات لحساب القيمة
 
         $property = Property_for_sale::find($property_id);
         if (!$property) {
-            return response()->json([ 'message' => __('messages.not_found'),], 404);
+            return response()->json(['message' => ('messages.not_found')], 404);
         }
 
-        $economicEvaluation = EconomicEvaluation::where('property_for_sale_id', $property_id)->orderBy('created_at', 'desc')->first();
+        $economicEvaluation = EconomicEvaluation::where('property_for_sale_id', $property_id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
         if (!$economicEvaluation) {
-            return response()->json([ 'message' => __('messages.not_found'),], 404);
+            return response()->json(['message' => ('messages.not_found')], 404);
         }
 
-        // حساب القيمة بناءً على القوانين
-        $indicator = Indicator::find($indicator_id);
-        $valueResult = PropertyAnalysisService::calculateValue($indicator, $data);
+        $results = [];
 
-        if (isset($valueResult['error'])) {
-            return response()->json(['message' => $valueResult['error']], 400);
+        foreach ($request->indicators as $indicatorInput) {
+            $indicator = Indicator::find($indicatorInput['indicator_id']);
+            $data = $indicatorInput['data'];
+
+            $valueResult = PropertyAnalysisService::calculateValue($indicator, $data);
+
+            if (isset($valueResult['error'])) {
+                $results[] = [
+                    'indicator_id' => $indicator->id,
+                    'error' => $valueResult['error'],
+                ];
+                continue;
+            }
+
+            IndicatorValue::updateOrCreate(
+                [
+                    'economic_evaluation_id' => $economicEvaluation->id,
+                    'property_id' => $property_id,
+                    'indicator_id' => $indicator->id,
+                ],
+                ['value' => $valueResult]
+            );
+
+            $results[] = [
+                'indicator_id' => $indicator->id,
+                'value' => $valueResult,
+                'status' => 'success',
+            ];
         }
 
-        $value = $valueResult;
-
-        IndicatorValue::create([
-            'economic_evaluation_id' => $economicEvaluation->id,
-            'property_id' => $property_id,
-            'indicator_id' => $indicator_id,
-            'value' => $value,
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $results,
         ]);
-        return response()->json(['message' => trans('messages.operation_success')]);
     }
-
 
 
     public function deleteIndicator($indicator_id)
     {
-        $user=auth()->user();
-        $userRole=$user->role_id;
-        if(!$user||$userRole!=3)
-        {
-            return response()->json(['message'=>trans('messages.unauthorized')]);
+        $user = auth()->user();
+        $userRole = $user->role_id;
+        if (!$user || $userRole != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')]);
         }
-        $indicator=Indicator::find($indicator_id);
-        if(!$indicator)
-        {
+        $indicator = Indicator::find($indicator_id);
+        if (!$indicator) {
             return response()->json([
                 'message' => __('messages.not_found'),
             ], 404);
         }
         $indicator->delete();
-        return response()->json(['message'=>trans('messages.operation_success')]);
+        return response()->json(['message' => trans('messages.operation_success')]);
     }
 
-    public function updateIndicator(Request $request,$indicator_id)
+    public function updateIndicator(Request $request, $indicator_id)
     {
-        $user=auth()->user();
-        $userRole=$user->role_id;
-        if(!$user||$userRole!=3)
-        {
-            return response()->json(['message'=>trans('messages.unauthorized')]);
+        $user = auth()->user();
+        $userRole = $user->role_id;
+        if (!$user || $userRole != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')]);
         }
-        $validator=Validator::make($request->all(),[
-            'name'=>'required|string',
-            'recommended_min'=>'required|numeric',
-            'recommended_max'=>'required|numeric'
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'recommended_min' => 'required|numeric',
+            'recommended_max' => 'required|numeric'
         ]);
 
-        if($validator->fails())
-        {
-            return response()->json(['errors'=>$validator->errors()],400);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
         }
 
-        $indicator=Indicator::find($indicator_id);
-        if(!$indicator)
-        {
+        $indicator = Indicator::find($indicator_id);
+        if (!$indicator) {
             return response()->json([
                 'message' => __('messages.not_found'),
             ], 404);
@@ -146,7 +208,7 @@ class IndicatorController extends Controller
             'recommended_min',
             'recommended_max'
         ]));
-        return response()->json(['message'=>trans('messages.operation_success'),'data'=>$indicator]);
+        return response()->json(['message' => trans('messages.operation_success'), 'data' => $indicator]);
     }
 
 
@@ -188,31 +250,28 @@ class IndicatorController extends Controller
 
     public function deleteValueOfIndicator($indicatorValue_id)
     {
-        $user=auth()->user();
-        $userRole=$user->role_id;
-        if(!$user||$userRole!=3)
-        {
-            return response()->json(['message'=>trans('messages.unauthorized')]);
+        $user = auth()->user();
+        $userRole = $user->role_id;
+        if (!$user || $userRole != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')]);
         }
-        $indicatorValue=IndicatorValue::find($indicatorValue_id);
-        if(!$indicatorValue)
-        {
+        $indicatorValue = IndicatorValue::find($indicatorValue_id);
+        if (!$indicatorValue) {
             return response()->json([
                 'message' => __('messages.not_found'),
             ], 404);
         }
         $indicatorValue->delete();
-        return response()->json(['message'=>trans('messages.operation_success')]);
+        return response()->json(['message' => trans('messages.operation_success')]);
     }
 
 
     public function getIndicators()
     {
-        $user=auth()->user();
-        $userRole=$user->role_id;
-        if(!$user||$userRole!=3)
-        {
-            return response()->json(['message'=>trans('messages.unauthorized')]);
+        $user = auth()->user();
+        $userRole = $user->role_id;
+        if (!$user || $userRole != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')]);
         }
         $indicator = Indicator::all();
 
@@ -225,16 +284,14 @@ class IndicatorController extends Controller
 
     public function getIndicatorWithValues()
     {
-        $user=auth()->user();
-        $userRole=$user->role_id;
-        if(!$user||$userRole!=3)
-        {
-            return response()->json(['message'=>trans('messages.unauthorized')]);
+        $user = auth()->user();
+        $userRole = $user->role_id;
+        if (!$user || $userRole != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')]);
         }
         $indicatorValue = Indicator::with('values')->get();
 
-        if($indicatorValue->isEmpty())
-        {
+        if ($indicatorValue->isEmpty()) {
             return response()->json(['message' => trans('messages.not_found')]);
 
         }
@@ -263,11 +320,10 @@ class IndicatorController extends Controller
 
     public function getValuesOfIndicator()
     {
-        $user=auth()->user();
-        $userRole=$user->role_id;
-        if(!$user||$userRole!=3)
-        {
-            return response()->json(['message'=>trans('messages.unauthorized')]);
+        $user = auth()->user();
+        $userRole = $user->role_id;
+        if (!$user || $userRole != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')]);
         }
         $indicatorValue = IndicatorValue::all();
 
@@ -276,50 +332,45 @@ class IndicatorController extends Controller
             'data' => $indicatorValue,
         ], 200);
     }
+
+
+    public function getIndicatorValuesForProperty($property_id)
+    {
+        $user = auth()->user();
+        if (!$user || $user->role_id != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')], 403);
+        }
+
+        // Get the most recent economic evaluation for the property
+        $economicEvaluation = EconomicEvaluation::where('property_for_sale_id', $property_id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$economicEvaluation) {
+            return response()->json(['message' => __('messages.not_found')], 404);
+        }
+
+        $indicatorValues = $economicEvaluation->indicatorValues()->with('indicator')->get();
+
+        $result = $indicatorValues->map(function ($item) {
+            return [
+                'indicator_id' => $item->indicator_id,
+                'indicator_name' => $item->indicator->name,
+                'arabic_name' => $item->indicator->arabic_name,
+                'value' => $item->value,
+                'recommended_min' => $item->indicator->recommended_min,
+                'recommended_max' => $item->indicator->recommended_max,
+            ];
+        });
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'property_id' => $property_id,
+            'economic_evaluation_id' => $economicEvaluation->id,
+            'indicators' => $result,
+        ], 200);
+    }
+
+
+
 }
-
-
-
-/* public function storeValueToIndicator(Request $request, $property_id)
- {
-     $user = auth()->user();
-     if (!$user || $user->role_id != 3) {
-         return response()->json(['message' => trans('messages.unauthorized')], 403);
-     }
-
-     $validator = Validator::make($request->all(), [
-         'economic_evaluation_id' => 'required|exists:economic_evaluations,id',
-         'indicators' => 'required|array|min:1',
-         'indicators.*.indicator_id' => 'required|exists:indicators,id',
-         'indicators.*.value' => 'required|numeric',
-     ]);
-
-     if ($validator->fails()) {
-         return response()->json(['errors' => $validator->errors()], 400);
-     }
-
-     if (!Property_for_sale::find($property_id)) {
-         return response()->json(['message' => 'Property not found.'], 404);
-     }
-
-     $economicEvaluation = EconomicEvaluation::find($request->economic_evaluation_id);
-     if (!$economicEvaluation) {
-         return response()->json(['message' => 'Economic evaluation not found.'], 404);
-     }
-
-     if ($economicEvaluation->property_for_sale_id != $property_id) {
-         return response()->json(['message' => 'This economic evaluation does not belong to the given property.'], 400);
-     }
-
-     foreach ($request->indicators as $indicatorData) {
-         IndicatorValue::create([
-             'economic_evaluation_id' => $request->economic_evaluation_id,
-             'property_id' => $property_id,
-             'indicator_id' => $indicatorData['indicator_id'],
-             'value' => $indicatorData['value'],
-         ]);
-     }
-
-     return response()->json(['message' => trans('messages.operation_success')]);
- }
-*/

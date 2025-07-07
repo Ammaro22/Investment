@@ -108,9 +108,9 @@ class InvestmentController extends Controller
             })
             ->paginate(5);
 
-        if ($property->isEmpty()) {
-            return response()->json(['message' => trans('messages.no_properties_found')]);
-        }
+//        if ($property->isEmpty()) {
+//            return response()->json(['message' => trans('messages.no_properties_found')]);
+//        }
 
         $properties = $property->map(function ($item) use ($user, $inferenceEngine, $propertyAnalyzes) {
             if (isset($item->property)) {
@@ -181,9 +181,9 @@ class InvestmentController extends Controller
 
         $property = PropertyForInvestment::with(['property', 'property.economicEvaluation'])->where('investment_mode', $request->investment_mode)->paginate(5);
 
-        if ($property->isEmpty()) {
-            return response()->json(['message' => trans('messages.no_properties_found')]);
-        }
+//        if ($property->isEmpty()) {
+//            return response()->json(['message' => trans('messages.no_properties_found')]);
+//        }
 
 
         $properties = $property->map(function ($item) use ($user, $inferenceEngine, $propertyAnalyzes) {
@@ -383,9 +383,9 @@ class InvestmentController extends Controller
         $property_invested = Investment::with('property_invested')->where('user_id', $user->id)->paginate(5);
 
 
-        if ($property_invested->isEmpty()) {
-            return response()->json(['message' => trans('messages.not_found')]);
-        }
+//        if ($property_invested->isEmpty()) {
+//            return response()->json(['message' => trans('messages.not_found')]);
+//        }
 
         $investments = $property_invested->map(function ($item) {
             $main = collect($item->toArray())->except('property_invested');
@@ -445,9 +445,9 @@ class InvestmentController extends Controller
         $investments = Investment::with('property_invested.property')->where('user_id', $user->id)->paginate(5);
 
 
-        if ($investments->isEmpty()) {
-            return response()->json(['message' => trans('messages.not_found')]);
-        }
+//        if ($investments->isEmpty()) {
+//            return response()->json(['message' => trans('messages.not_found')]);
+//        }
 
         $listOfInvestment = $investments->map(function ($investment) {
             $propertyForSaleInfo = $investment->property_invested->property ?? null;
@@ -511,9 +511,9 @@ class InvestmentController extends Controller
         })->paginate(5);
 
 
-        if ($investments->isEmpty()) {
-            return response()->json(['message' => trans('messages.not_found')]);
-        }
+//        if ($investments->isEmpty()) {
+//            return response()->json(['message' => trans('messages.not_found')]);
+//        }
 
         $listOfInvestment = $investments->map(function ($investment) {
             $propertyForSaleInfo = $investment->property_invested->property ?? null;
@@ -577,9 +577,9 @@ class InvestmentController extends Controller
             })->paginate(5);
 
 
-        if ($profits->isEmpty()) {
-            return response()->json(['message' => trans('messages.not_found')]);
-        }
+//        if ($profits->isEmpty()) {
+//            return response()->json(['message' => trans('messages.not_found')]);
+//        }
 
         $listOfProfits = $profits->map(function ($profit) {
             $propertyInfo = $profit->completedProperty->property->property ?? null;
@@ -677,9 +677,9 @@ class InvestmentController extends Controller
             ->where('user_id', $user->id)
             ->paginate(5);
 
-        if ($profits->isEmpty()) {
-            return response()->json(['message' => trans('messages.not_found')]);
-        }
+//        if ($profits->isEmpty()) {
+//            return response()->json(['message' => trans('messages.not_found')]);
+//        }
 
         $listOfProfits = $profits->map(function ($profit) {
             $propertyInfo = $profit->completedProperty->property->property ?? null;

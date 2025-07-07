@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AgreedNegotiationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AutomaticInvestmentController;
 use App\Http\Controllers\ElectronicPropertyCertificateController;
 use App\Http\Controllers\EmployeeInformationController;
 use App\Http\Controllers\FrequentlyQuestionsController;
@@ -227,7 +228,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::get('/getIndicatorWithValues',[IndicatorController::class,'getIndicatorWithValues']);
     Route::get('/getIndicators',[IndicatorController::class,'getIndicators']);
     Route::get('/getValuesOfIndicator',[IndicatorController::class,'getValuesOfIndicator']);
-
+    Route::get('/getIndicatorsForProperty/{property_id}', [IndicatorController::class, 'getIndicatorValuesForProperty']);
 
 ///////////////////
 
@@ -247,5 +248,10 @@ Route::group(["middleware"=>["auth:api"]],function() {
         Route::post('/get_Profit_Percentage_AND_User_Investment_Percentage_ByMonth',[StatisticsController::class,'getInvestmentAndProfitPercentageByMonth']);
 
     });
+
+    /*التلقائي*/
+    Route::post('/automatic_investment/activate', [AutomaticInvestmentController::class, 'activate'])->middleware('auth:api');
+
+    Route::post('/automatic_investment/deactivate', [AutomaticInvestmentController::class, 'deactivate']);
 
 });

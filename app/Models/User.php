@@ -65,6 +65,11 @@ class User extends Authenticatable
         return $this->hasOne(AmountInvested::class, 'user_id');
     }
 
+    public function AutomaticInvestment ()
+    {
+        return $this->hasOne(AutomaticInvestment::class, 'user_id');
+    }
+
 
     public function RewardTransactions()
     {

@@ -3,30 +3,80 @@
 namespace App\Services;
 
 use App\Models\EconomicEvaluation;
+use Illuminate\Support\Facades\Log;
 
 class PropertyAnalysisService{
 
+//    public function analyze(EconomicEvaluation $evaluation): array
+//    {
+//        $indicatorValues = $evaluation->indicatorValues()->with('indicator')->get();
+//        $recommendations = [];
+//
+//        foreach ($indicatorValues as $indicatorValue) {
+//            $value = $indicatorValue->value;
+//            $indicator = $indicatorValue->indicator;
+//
+//            if ($value >= $indicator->recommended_min && $value <= $indicator->recommended_max) {
+//                $recommendations[] = "نوصيك باستثمار هذا العقار بناءً على مؤشر {$indicator->arabic_name}.";
+////            } elseif ($value > $indicator->recommended_max) {
+////                $recommendations[] = "لا ينصح باستثمار هذا العقار بسبب ارتفاع قيمة {$indicator->name}.";
+////            } elseif ($value < $indicator->recommended_min) {
+////                $recommendations[] = "لا ينصح باستثمار هذا العقار بسبب انخفاض قيمة {$indicator->name}.";
+////            }
+//        }
+//        }
+//        return $recommendations;
+//    }
+
     public function analyze(EconomicEvaluation $evaluation): array
     {
+        Log::info('Starting analysis for economic evaluation', [
+            'economic_evaluation_id' => $evaluation->id,
+            'property_for_sale_id' => $evaluation->property_for_sale_id
+        ]);
+
         $indicatorValues = $evaluation->indicatorValues()->with('indicator')->get();
+
+        if ($indicatorValues->isEmpty()) {
+            Log::warning('No indicator values found for evaluation', [
+                'economic_evaluation_id' => $evaluation->id
+            ]);
+            return ['positive' => false]; // إرجاع توصية إيجابية افتراضية لتجنب الاستبعاد
+        }
+
         $recommendations = [];
 
         foreach ($indicatorValues as $indicatorValue) {
             $value = $indicatorValue->value;
             $indicator = $indicatorValue->indicator;
 
+            if (!$indicator) {
+                Log::warning('Indicator not found for indicator value', [
+                    'indicator_value_id' => $indicatorValue->id
+                ]);
+                continue;
+            }
+
+            Log::debug('Evaluating indicator', [
+                'indicator_name' => $indicator->arabic_name,
+                'value' => $value,
+                'recommended_min' => $indicator->recommended_min,
+                'recommended_max' => $indicator->recommended_max
+            ]);
+
             if ($value >= $indicator->recommended_min && $value <= $indicator->recommended_max) {
                 $recommendations[] = "نوصيك باستثمار هذا العقار بناءً على مؤشر {$indicator->arabic_name}.";
-//            } elseif ($value > $indicator->recommended_max) {
-//                $recommendations[] = "لا ينصح باستثمار هذا العقار بسبب ارتفاع قيمة {$indicator->name}.";
-//            } elseif ($value < $indicator->recommended_min) {
-//                $recommendations[] = "لا ينصح باستثمار هذا العقار بسبب انخفاض قيمة {$indicator->name}.";
-//            }
+            }
         }
-        }
-        return $recommendations;
-    }
 
+        Log::info('Analysis completed', [
+            'economic_evaluation_id' => $evaluation->id,
+            'recommendations_count' => count($recommendations)
+        ]);
+
+        // إذا لم يكن هناك توصيات إيجابية، إرجاع توصية افتراضية لتجنب استبعاد العقار
+        return !empty($recommendations) ? $recommendations : ['positive' => true];
+    }
     public static function calculateValue($indicator, $data)
     {
         // مثال على كيفية تطبيق القوانين لحساب القيمة

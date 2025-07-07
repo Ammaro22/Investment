@@ -26,6 +26,11 @@ class IndicatorValue extends Model
         return $this->belongsTo(EconomicEvaluation::class);
     }
 
+    public function property()
+    {
+        return $this->belongsTo(PropertyForInvestment::class);
+    }
+
     public function indicator()
     {
         return $this->belongsTo(Indicator::class);

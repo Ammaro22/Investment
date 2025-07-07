@@ -43,4 +43,21 @@ class PropertyForInvestment extends Model
         return $this->hasMany(CompletedProperty::class,'property_for_investment_id');
 
     }
+
+
+    public function indicatorValues()
+    {
+        return $this->hasManyThrough(
+            IndicatorValue::class,
+            EconomicEvaluation::class,
+            'property_for_sale_id',
+            'economic_evaluation_id',
+            'property_id'
+        );
+    }
+    public function economicEvaluation()
+    {
+        return $this->hasOne(EconomicEvaluation::class, 'property_for_sale_id', 'property_id');
+    }
+
 }
