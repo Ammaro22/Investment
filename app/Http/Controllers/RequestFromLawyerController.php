@@ -35,6 +35,7 @@ class RequestFromLawyerController extends Controller
             $agreedNegotiationStatus = $expertRequest && $expertRequest->economic_evaluation->agreed_negotiation ? $expertRequest->economic_evaluation->agreed_negotiation->status : null;
 
             return [
+                'user_id' => $property->user_id,
                 'request_from_lawyer_id' => $request->id,
                 'property_for_sale_id' => $request->property_for_sale_id,
                 'status_request' => $request->status,
@@ -53,6 +54,49 @@ class RequestFromLawyerController extends Controller
         ], 200);
     }
 
+    public function getRequestforUser()
+    {
+        $user = auth()->user();
+
+        $requests = request_from_lawyer::with(['property_for_sale.user', 'Request_from_expert.economic_evaluation.agreed_negotiation'])
+            ->whereHas('property_for_sale', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->get();
+
+        if ($requests->isEmpty()) {
+            return response()->json([
+                'message' => __('messages.not_found'),
+            ], 404);
+        }
+
+        $responseData = $requests->map(function ($request) {
+            $property = $request->property_for_sale;
+            $propertyInfo = $property ? $property->state . ' ' . $property->exact_position : null;
+
+            $expertRequest = $request->Request_from_expert;
+            $agreedNegotiationStatus = $expertRequest && $expertRequest->economic_evaluation->agreed_negotiation
+                ? $expertRequest->economic_evaluation->agreed_negotiation->status
+                : null;
+
+            return [
+                'user_id' => $property->user_id,
+                'user_name' => $property->user->name,
+                'request_from_lawyer_id' => $request->id,
+                'property_for_sale_id' => $request->property_for_sale_id,
+                'status_request' => $request->status,
+                'accept_admin' => $request->accept_admin,
+                'created_at' => $request->created_at->format('Y-m-d'),
+                'agreed_negotiation_status' => $agreedNegotiationStatus,
+
+            ];
+        });
+
+        return response()->json([
+            'message' => __('messages.operation_success'),
+            'data' => $responseData,
+        ], 200);
+    }
 
     public function getPropertyByRequestId($id)
     {
