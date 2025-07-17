@@ -54,13 +54,14 @@ class RequestFromLawyerController extends Controller
         ], 200);
     }
 
-    public function getRequestforUser()
+    public function getRequestforUser($userId)
     {
-        $user = auth()->user();
-
-        $requests = request_from_lawyer::with(['property_for_sale.user', 'Request_from_expert.economic_evaluation.agreed_negotiation'])
-            ->whereHas('property_for_sale', function($query) use ($user) {
-                $query->where('user_id', $user->id);
+        $requests = request_from_lawyer::with([
+            'property_for_sale.user',
+            'Request_from_expert.economic_evaluation.agreed_negotiation'
+        ])
+            ->whereHas('property_for_sale', function($query) use ($userId) {
+                $query->where('user_id', $userId);
             })
             ->get();
 
@@ -220,71 +221,3 @@ class RequestFromLawyerController extends Controller
 
 }
 
-
-
-
-
-
-
-
-/* public function getPropertyByRequestId($id)
- {
-     $userRole = auth()->user()->role_id;
-     if ($userRole !== 3) {
-         return response()->json([
-             'message' => trans('messages.unauthorized'),
-         ], 403);
-     }
-
-     // الحصول على طلب المحامي مع جميع العلاقات المطلوبة
-     $request = request_from_lawyer::with([
-         'property_for_sale.Property_image',
-         'property_for_sale.Property_document',
-         'property_for_sale.id_image',
-         'Request_from_expert',
-         'Request_from_expert.economic_evaluation',
-         'Request_from_expert.economic_evaluation.agreed_negotiation'
-     ])->find($id);
-
-     if (!$request) {
-         return response()->json([
-             'message' => __('messages.not_found'),
-         ], 404);
-     }
-
-     // التحقق من وجود العقار
-     if (!$request->property_for_sale) {
-         return response()->json([
-             'message' => __('messages.property_not_found'),
-         ], 404);
-     }
-
-     // تهيئة البيانات الإضافية
-     $additionalData = [
-         'note_admin' => null,
-         'text_of_the_agreement' => null
-     ];
-
-     // التحقق من وجود طلب الخبير والبيانات المرتبطة به
-     if ($request->Request_from_expert) {
-         $additionalData['note_admin'] = $request->Request_from_expert->note_admin;
-
-         if ($request->Request_from_expert->economic_evaluation &&
-             $request->Request_from_expert->economic_evaluation->agreed_negotiation) {
-             $additionalData['text_of_the_agreement'] = $request->Request_from_expert->economic_evaluation->agreed_negotiation->Text_of_the_agreement;
-             $additionalData['negotiation_id'] = $request->Request_from_expert->economic_evaluation->agreed_negotiation->id;
-         }
-     }
-
-     // إعداد البيانات للإرجاع
-     $propertyData = $request->property_for_sale->toArray();
-     $propertyData['images'] = $request->property_for_sale->Property_image;
-     $propertyData['documents'] = $request->property_for_sale->Property_document;
-     $propertyData['id_images'] = $request->property_for_sale->id_image;
-
-     return response()->json([
-         'message' => __('messages.operation_success'),
-         'data' => array_merge($additionalData,$propertyData)
-     ], 200);
- }
-*/

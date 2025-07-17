@@ -100,7 +100,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
 
 Route::group(["middleware"=>["auth:api"]],function() {
     Route::get('/get_all_request_from_lawyer', [RequestFromLawyerController::class, 'getRequestWithUser']);
-    Route::get('/get_all_request_from_lawyer_for_user', [RequestFromLawyerController::class, 'getRequestforUser']);
+    Route::get('/get_all_request_from_lawyer_for_user/{user_id}', [RequestFromLawyerController::class, 'getRequestforUser']);
     Route::get('/get_propertyBy_request_from_lawyer/{request_from_lawyer_id}', [RequestFromLawyerController::class, 'getPropertyByRequestId']);
     Route::delete('delete_request_from_lawyer/{request_from_lawyer_id}',[RequestFromLawyerController::class,'deleteRequest']);
 });
