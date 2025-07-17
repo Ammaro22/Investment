@@ -56,6 +56,14 @@ class RequestFromLawyerController extends Controller
 
     public function getRequestforUser($userId)
     {
+
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 3) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
+        }
+
         $requests = request_from_lawyer::with([
             'property_for_sale.user',
             'Request_from_expert.economic_evaluation.agreed_negotiation'
