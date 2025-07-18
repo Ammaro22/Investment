@@ -62,7 +62,7 @@ Route::post('reset_password', [AuthController::class, 'resetPassword']);
 Route::get('/get_properties_by_id/{property_for_sale_id}', [PropertyController::class, 'getPropertyById']);
 Route::get('/get_image_for_property_by_id/{property_for_sale_id}', [PropertyController::class, 'getImageForPropertyById']);
 Route::group(["middleware"=>["auth:api"]],function() {
-    Route::post('/create_properties', [PropertyController::class, 'sto+-re']);
+    Route::post('/create_properties', [PropertyController::class, 'store']);
     Route::post('/update_properties_by_admin/{property_for_sale_id}', [PropertyController::class, 'updatebyadmin']);
     Route::get('get_property_id_by_user/{property_for_sale_id}',[PropertyController::class,'show']);
     Route::post('/update_properties_by_user/{property_for_sale_id}', [PropertyController::class, 'update']);

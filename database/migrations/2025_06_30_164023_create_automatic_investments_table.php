@@ -22,7 +22,7 @@ return new class extends Migration
             $table->float('expected_profit_max')->nullable();
             $table->integer('min_chance_invested')->nullable();
             $table->integer('max_chance_invested')->nullable();
-            $table->boolean('active')->default(false);
+            $table->boolean('active')->nullable();
             $table->timestamps();
         });
     }

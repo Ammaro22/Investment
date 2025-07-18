@@ -20,15 +20,15 @@ class PropertyController extends Controller
         $validator = Validator::make($request->all(),[
             'property_type' => 'required|string|max:255',
             'area' => 'required|numeric|min:0',
-            'number_of_rooms' => 'required|integer|min:0',
-            'number_of_bathrooms' => 'required|integer|min:0',
-            'property_age' => 'required|numeric|min:0',
-            'decoration' => 'required|string|max:255',
-            'kitchen_type' => 'required|string|max:255',
-            'flooring_type' => 'required|string|max:255',
-            'overlook_from' => 'required|numeric|min:0',
-            'balcony_size' => 'required|numeric|min:0',
-            'painting_type' => 'required|string|max:255',
+            'number_of_rooms' => 'nullable|integer|min:0',
+            'number_of_bathrooms' => 'nullable|integer|min:0',
+            'property_age' => 'nullable|numeric|min:0',
+            'decoration' => 'nullable|string|max:255',
+            'kitchen_type' => 'nullable|string|max:255',
+            'flooring_type' => 'nullable|string|max:255',
+            'overlook_from' => 'nullable|numeric|min:0',
+            'balcony_size' => 'nullable|numeric|min:0',
+            'painting_type' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0',
             'pay_way' => 'required|string|max:255',
             'state' => 'required|string|max:255',
@@ -39,10 +39,7 @@ class PropertyController extends Controller
             'property_documents' => 'required|array',
             'property_documents.*' => 'image',
             'id_images' => 'required|array',
-            'id_images.*' => 'image',
-
-
-        ]);
+            'id_images.*' => 'image',]);
 
         if ($validator->fails()) {
             return response(['errors' => $validator->errors()->all()], 422);
