@@ -36,10 +36,310 @@ class AutomaticInvestmentService
 
 
 
+//    public function activateAutomaticInvestment(User $user, $investmentAmount, $investmentMode, $expectedProfitRange, $expectedChanceRange)
+//    {
+//
+//        if ($investmentAmount === null) {
+//            AutomaticInvestment::updateOrCreate(
+//                ['user_id' => $user->id],
+//                [
+//                    'start_date' => now(),
+//                    'next_investment_date' => now()->addDays(10),
+//                    'investment_mode' => $investmentMode,
+//                    'expected_profit_min' => $expectedProfitRange['min'],
+//                    'expected_profit_max' => $expectedProfitRange['max'],
+//                    'min_chance_invested' => $expectedChanceRange['min_chance'],
+//                    'max_chance_invested' => $expectedChanceRange['max_chance'],
+//                    'investment_amount' => null,
+//                    'active' => true
+//                ]
+//            );
+//
+//            return [
+//                'success' => 'تم تفعيل الاستثمار التلقائي بدون تحديد مبلغ محدد',
+//                'results' => []
+//            ];
+//        }
+//
+//        // التحقق من صحة المدخلات للحالات الأخرى
+//        if (!is_numeric($investmentAmount) || $investmentAmount < 0 || !$investmentMode || !$expectedProfitRange) {
+//            return ['error' => 'معلومات الاستثمار غير صحيحة.'];
+//        }
+//
+//        $discountRate = $this->getHighestRewardAndUpdate($user->id);
+//        if ($discountRate > 0) {
+//            $discountAmount = ($investmentAmount * $discountRate) / 100;
+//            $investmentAmount -= $discountAmount;
+//        }
+//
+//        $properties = $this->getBestProperties($investmentAmount, $investmentMode, $expectedProfitRange, $user);
+//        if ($properties->isEmpty()) {
+//            return ['error' => 'لا توجد عقارات مناسبة للاستثمار.'];
+//        }
+//
+//        $results = [];
+//        $walletController = new WalletController();
+//        $amountPerProperty = $investmentAmount / max(1, $properties->count());
+//        $totalInvestedAmount = 0;
+//
+//        foreach ($properties as $property) {
+//            DB::beginTransaction();
+//
+//            try {
+//                $chancePrice = $property->chance_price;
+//                $totalPropertyPrice = $property->expected_price;
+//                $maxAllowedInvestment = $totalPropertyPrice * 0.10;
+//
+//                $alreadyInvested = $property->investment()
+//                    ->where('user_id', $user->id)
+//                    ->sum('amount_payed');
+//
+//                $maxInvestableChances = floor(($maxAllowedInvestment - $alreadyInvested) / $chancePrice);
+//
+//                $chancesToInvest = max(
+//                    $expectedChanceRange['min_chance'],
+//                    min($expectedChanceRange['max_chance'], $maxInvestableChances, $property->number_of_chances)
+//                );
+//
+//                if ($chancesToInvest < $expectedChanceRange['min_chance']) {
+//                    DB::rollBack();
+//                    continue;
+//                }
+//
+//                $newInvestmentAmount = $chancePrice * $chancesToInvest;
+//
+//                if (($alreadyInvested + $newInvestmentAmount) > $maxAllowedInvestment) {
+//                    DB::rollBack();
+//                    $results[] = [
+//                        'property_id' => $property->id,
+//                        'error' => 'مجموع استثمارك في هذا العقار تجاوز الحد المسموح (10% من سعر العقار).'
+//                    ];
+//                    continue;
+//                }
+//
+//                $investmentWallet = $user->wallets()->where('wallet_type', 'investment')->first();
+//                if (!$investmentWallet || $investmentWallet->balance < $newInvestmentAmount) {
+//                    DB::rollBack();
+//                    continue;
+//                }
+//
+//                $walletController->transferToPlatform(new Request(['amount' => $newInvestmentAmount]));
+//
+//                Investment::create([
+//                    'user_id' => $user->id,
+//                    'property_for_investment_id' => $property->id,
+//                    'chance_invested' => $chancesToInvest,
+//                    'amount_payed' => $newInvestmentAmount,
+//                    'discount_applied' => 0,
+//                    'status' => 'completed',
+//                    'investment_date' => now()
+//                ]);
+//
+//                $property->number_of_chances -= $chancesToInvest;
+//                $property->save();
+//
+//                $this->updatePropertyProgress($property);
+//                if ($property->number_of_chances == 0) {
+//                    $this->handleCompletedProperty($property);
+//                }
+//
+//                $this->calculateRewards($user, $newInvestmentAmount);
+//                DB::commit();
+//
+//                $this->notificationService->sendToUser($user, 'investment_success');
+//
+//                $results[] = [
+//                    'property_id' => $property->id,
+//                    'chances_invested' => $chancesToInvest,
+//                    'amount' => $newInvestmentAmount,
+//                    'message' => 'تم الاستثمار بنجاح'
+//                ];
+//
+//                $totalInvestedAmount += $newInvestmentAmount;
+//
+//            } catch (\Exception $e) {
+//                DB::rollBack();
+//                $results[] = [
+//                    'property_id' => $property->id,
+//                    'error' => 'فشل في عملية الاستثمار: ' . $e->getMessage()
+//                ];
+//            }
+//        }
+//
+//        if (empty($results)) {
+//            return ['message' => 'لم يتم تنفيذ أي استثمار بسبب عدم توفر الشروط'];
+//        }
+//
+//        // الحصول على الاستثمار التلقائي السابق إن وجد
+//        $autoInvestment = AutomaticInvestment::where('user_id', $user->id)->first();
+//
+//        // حساب المبلغ المتبقي
+//        if ($autoInvestment && $autoInvestment->investment_amount !== null) {
+//            // إذا كان هناك مبلغ موجود مسبقاً، نخصم منه المبلغ المستثمر
+//            $remainingAmount = max(0, $autoInvestment->investment_amount - $totalInvestedAmount);
+//        } else {
+//            // إذا لم يكن هناك مبلغ مسبق أو كان null، نستخدم المبلغ الجديد
+//            $remainingAmount = max(0, $investmentAmount - $totalInvestedAmount);
+//        }
+//
+//        // تحديث أو إنشاء الاستثمار التلقائي
+//        AutomaticInvestment::updateOrCreate(
+//            ['user_id' => $user->id],
+//            [
+//                'start_date' => now(),
+//                'next_investment_date' => now()->addDays(10),
+//                'investment_mode' => $investmentMode,
+//                'expected_profit_min' => $expectedProfitRange['min'],
+//                'expected_profit_max' => $expectedProfitRange['max'],
+//                'min_chance_invested' => $expectedChanceRange['min_chance'],
+//                'max_chance_invested' => $expectedChanceRange['max_chance'],
+//                'investment_amount' => $remainingAmount,
+//                'active' => $remainingAmount > 0 || $investmentAmount === 0
+//            ]
+//        );
+//
+//        return [
+//            'success' => 'تمت معالجة الاستثمار التلقائي',
+//            'results' => $results,
+//
+//        ];
+//    }
+
     public function activateAutomaticInvestment(User $user, $investmentAmount, $investmentMode, $expectedProfitRange, $expectedChanceRange)
     {
+        try {
+            if ($investmentAmount === null) {
+                AutomaticInvestment::updateOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'start_date' => now(),
+                        'next_investment_date' => now()->addDays(10),
+                        'investment_mode' => $investmentMode,
+                        'expected_profit_min' => $expectedProfitRange['min'],
+                        'expected_profit_max' => $expectedProfitRange['max'],
+                        'min_chance_invested' => $expectedChanceRange['min_chance'],
+                        'max_chance_invested' => $expectedChanceRange['max_chance'],
+                        'investment_amount' => null,
+                        'active' => true
+                    ]
+                );
 
-        if ($investmentAmount === null) {
+                return [
+                    'success' => 'تم تفعيل الاستثمار التلقائي بدون تحديد مبلغ محدد',
+                    'results' => []
+                ];
+            }
+
+            if (!is_numeric($investmentAmount) || $investmentAmount < 0 || !$investmentMode || !$expectedProfitRange) {
+                throw new \Exception('معلومات الاستثمار غير صحيحة.');
+            }
+
+            $discountRate = $this->getHighestRewardAndUpdate($user->id);
+            if ($discountRate > 0) {
+                $discountAmount = ($investmentAmount * $discountRate) / 100;
+                $investmentAmount -= $discountAmount;
+            }
+
+            $properties = $this->getBestProperties($investmentAmount, $investmentMode, $expectedProfitRange, $user);
+            $results = [];
+            $totalInvestedAmount = 0;
+
+            if (!$properties->isEmpty()) {
+                $walletController = new WalletController();
+                $amountPerProperty = $investmentAmount / max(1, $properties->count());
+
+                foreach ($properties as $property) {
+                    DB::beginTransaction();
+
+                    try {
+                        $chancePrice = $property->chance_price;
+                        $totalPropertyPrice = $property->expected_price;
+                        $maxAllowedInvestment = $totalPropertyPrice * 0.10;
+
+                        $alreadyInvested = $property->investment()
+                            ->where('user_id', $user->id)
+                            ->sum('amount_payed');
+
+                        $maxInvestableChances = floor(($maxAllowedInvestment - $alreadyInvested) / $chancePrice);
+
+                        $chancesToInvest = max(
+                            $expectedChanceRange['min_chance'],
+                            min($expectedChanceRange['max_chance'], $maxInvestableChances, $property->number_of_chances)
+                        );
+
+                        if ($chancesToInvest < $expectedChanceRange['min_chance']) {
+                            DB::rollBack();
+                            continue;
+                        }
+
+                        $newInvestmentAmount = $chancePrice * $chancesToInvest;
+
+                        if (($alreadyInvested + $newInvestmentAmount) > $maxAllowedInvestment) {
+                            DB::rollBack();
+                            $results[] = [
+                                'property_id' => $property->id,
+                                'error' => 'مجموع استثمارك في هذا العقار تجاوز الحد المسموح (10% من سعر العقار).'
+                            ];
+                            continue;
+                        }
+
+                        $investmentWallet = $user->wallets()->where('wallet_type', 'investment')->first();
+                        if (!$investmentWallet || $investmentWallet->balance < $newInvestmentAmount) {
+                            DB::rollBack();
+                            continue;
+                        }
+
+                        $walletController->transferToPlatform(new Request(['amount' => $newInvestmentAmount]));
+
+                        Investment::create([
+                            'user_id' => $user->id,
+                            'property_for_investment_id' => $property->id,
+                            'chance_invested' => $chancesToInvest,
+                            'amount_payed' => $newInvestmentAmount,
+                            'discount_applied' => 0,
+                            'status' => 'completed',
+                            'investment_date' => now()
+                        ]);
+
+                        $property->number_of_chances -= $chancesToInvest;
+                        $property->save();
+
+                        $this->updatePropertyProgress($property);
+                        if ($property->number_of_chances == 0) {
+                            $this->handleCompletedProperty($property);
+                        }
+
+                        $this->calculateRewards($user, $newInvestmentAmount);
+                        DB::commit();
+
+                        $this->notificationService->sendToUser($user, 'investment_success');
+
+                        $results[] = [
+                            'property_id' => $property->id,
+                            'chances_invested' => $chancesToInvest,
+                            'amount' => $newInvestmentAmount,
+                            'message' => 'تم الاستثمار بنجاح'
+                        ];
+
+                        $totalInvestedAmount += $newInvestmentAmount;
+
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        $results[] = [
+                            'property_id' => $property->id,
+                            'error' => 'فشل في عملية الاستثمار: ' . $e->getMessage()
+                        ];
+                        Log::error('Investment failed for property: ' . $property->id, ['error' => $e->getMessage()]);
+                    }
+                }
+            }
+
+            // تحديث الاستثمار التلقائي في جميع الحالات
+            $autoInvestment = AutomaticInvestment::where('user_id', $user->id)->first();
+            $remainingAmount = $autoInvestment && $autoInvestment->investment_amount !== null
+                ? max(0, $autoInvestment->investment_amount - $totalInvestedAmount)
+                : max(0, $investmentAmount - $totalInvestedAmount);
+
             AutomaticInvestment::updateOrCreate(
                 ['user_id' => $user->id],
                 [
@@ -50,161 +350,38 @@ class AutomaticInvestmentService
                     'expected_profit_max' => $expectedProfitRange['max'],
                     'min_chance_invested' => $expectedChanceRange['min_chance'],
                     'max_chance_invested' => $expectedChanceRange['max_chance'],
-                    'investment_amount' => null,
+                    'investment_amount' => $remainingAmount,
+                    'active' => $remainingAmount > 0 || $investmentAmount === 0
+                ]
+            );
+
+            return [
+                'success' => 'تمت معالجة الاستثمار التلقائي',
+                'results' => $results,
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Automatic investment processing failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+
+            AutomaticInvestment::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'start_date' => now(),
+                    'next_investment_date' => now()->addDays(10),
                     'active' => true
                 ]
             );
 
             return [
-                'success' => 'تم تفعيل الاستثمار التلقائي بدون تحديد مبلغ محدد',
-                'results' => []
+                'error' => 'حدث خطأ أثناء معالجة الاستثمار التلقائي: ' . $e->getMessage()
             ];
         }
-
-        // التحقق من صحة المدخلات للحالات الأخرى
-        if (!is_numeric($investmentAmount) || $investmentAmount < 0 || !$investmentMode || !$expectedProfitRange) {
-            return ['error' => 'معلومات الاستثمار غير صحيحة.'];
-        }
-
-        $discountRate = $this->getHighestRewardAndUpdate($user->id);
-        if ($discountRate > 0) {
-            $discountAmount = ($investmentAmount * $discountRate) / 100;
-            $investmentAmount -= $discountAmount;
-        }
-
-        $properties = $this->getBestProperties($investmentAmount, $investmentMode, $expectedProfitRange, $user);
-        if ($properties->isEmpty()) {
-            return ['error' => 'لا توجد عقارات مناسبة للاستثمار.'];
-        }
-
-        $results = [];
-        $walletController = new WalletController();
-        $amountPerProperty = $investmentAmount / max(1, $properties->count());
-        $totalInvestedAmount = 0;
-
-        foreach ($properties as $property) {
-            DB::beginTransaction();
-
-            try {
-                $chancePrice = $property->chance_price;
-                $totalPropertyPrice = $property->expected_price;
-                $maxAllowedInvestment = $totalPropertyPrice * 0.10;
-
-                $alreadyInvested = $property->investment()
-                    ->where('user_id', $user->id)
-                    ->sum('amount_payed');
-
-                $maxInvestableChances = floor(($maxAllowedInvestment - $alreadyInvested) / $chancePrice);
-
-                $chancesToInvest = max(
-                    $expectedChanceRange['min_chance'],
-                    min($expectedChanceRange['max_chance'], $maxInvestableChances, $property->number_of_chances)
-                );
-
-                if ($chancesToInvest < $expectedChanceRange['min_chance']) {
-                    DB::rollBack();
-                    continue;
-                }
-
-                $newInvestmentAmount = $chancePrice * $chancesToInvest;
-
-                if (($alreadyInvested + $newInvestmentAmount) > $maxAllowedInvestment) {
-                    DB::rollBack();
-                    $results[] = [
-                        'property_id' => $property->id,
-                        'error' => 'مجموع استثمارك في هذا العقار تجاوز الحد المسموح (10% من سعر العقار).'
-                    ];
-                    continue;
-                }
-
-                $investmentWallet = $user->wallets()->where('wallet_type', 'investment')->first();
-                if (!$investmentWallet || $investmentWallet->balance < $newInvestmentAmount) {
-                    DB::rollBack();
-                    continue;
-                }
-
-                $walletController->transferToPlatform(new Request(['amount' => $newInvestmentAmount]));
-
-                Investment::create([
-                    'user_id' => $user->id,
-                    'property_for_investment_id' => $property->id,
-                    'chance_invested' => $chancesToInvest,
-                    'amount_payed' => $newInvestmentAmount,
-                    'discount_applied' => 0,
-                    'status' => 'completed',
-                    'investment_date' => now()
-                ]);
-
-                $property->number_of_chances -= $chancesToInvest;
-                $property->save();
-
-                $this->updatePropertyProgress($property);
-                if ($property->number_of_chances == 0) {
-                    $this->handleCompletedProperty($property);
-                }
-
-                $this->calculateRewards($user, $newInvestmentAmount);
-                DB::commit();
-
-                $this->notificationService->sendToUser($user, 'investment_success');
-
-                $results[] = [
-                    'property_id' => $property->id,
-                    'chances_invested' => $chancesToInvest,
-                    'amount' => $newInvestmentAmount,
-                    'message' => 'تم الاستثمار بنجاح'
-                ];
-
-                $totalInvestedAmount += $newInvestmentAmount;
-
-            } catch (\Exception $e) {
-                DB::rollBack();
-                $results[] = [
-                    'property_id' => $property->id,
-                    'error' => 'فشل في عملية الاستثمار: ' . $e->getMessage()
-                ];
-            }
-        }
-
-        if (empty($results)) {
-            return ['message' => 'لم يتم تنفيذ أي استثمار بسبب عدم توفر الشروط'];
-        }
-
-        // الحصول على الاستثمار التلقائي السابق إن وجد
-        $autoInvestment = AutomaticInvestment::where('user_id', $user->id)->first();
-
-        // حساب المبلغ المتبقي
-        if ($autoInvestment && $autoInvestment->investment_amount !== null) {
-            // إذا كان هناك مبلغ موجود مسبقاً، نخصم منه المبلغ المستثمر
-            $remainingAmount = max(0, $autoInvestment->investment_amount - $totalInvestedAmount);
-        } else {
-            // إذا لم يكن هناك مبلغ مسبق أو كان null، نستخدم المبلغ الجديد
-            $remainingAmount = max(0, $investmentAmount - $totalInvestedAmount);
-        }
-
-        // تحديث أو إنشاء الاستثمار التلقائي
-        AutomaticInvestment::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'start_date' => now(),
-                'next_investment_date' => now()->addDays(10),
-                'investment_mode' => $investmentMode,
-                'expected_profit_min' => $expectedProfitRange['min'],
-                'expected_profit_max' => $expectedProfitRange['max'],
-                'min_chance_invested' => $expectedChanceRange['min_chance'],
-                'max_chance_invested' => $expectedChanceRange['max_chance'],
-                'investment_amount' => $remainingAmount,
-                'active' => $remainingAmount > 0 || $investmentAmount === 0
-            ]
-        );
-
-        return [
-            'success' => 'تمت معالجة الاستثمار التلقائي',
-            'results' => $results,
-
-        ];
     }
-
 
 
     public function getBestProperties($investmentAmount, $investmentMode, $expectedProfitRange, User $user)
@@ -231,7 +408,7 @@ class AutomaticInvestmentService
         Log::info('تم جلب العقارات', ['count' => $properties->count()]);
 
         $scoredProperties = $properties->map(function ($property) use ($expectedProfitRange, $user) {
-            // استبعاد العقارات خارج نطاق الربح المطلوب
+
             if ($property->profit_percent < $expectedProfitRange['min'] ||
                 $property->profit_percent > $expectedProfitRange['max']) {
                 Log::info('تم استبعاد العقار بسبب عدم تطابق نطاق الربح', ['property_id' => $property->id]);
@@ -283,8 +460,8 @@ class AutomaticInvestmentService
         Log::info('العقارات المفلترة والمصنفة', ['count' => $scoredProperties->count()]);
 
         if ($scoredProperties->isEmpty()) {
-            Log::error('لم يتم العثور على عقارات مناسبة للاستثمار');
-            throw new \Exception('عذراً، لم نتمكن من العثور على عقارات استثمارية تناسب معاييرك.');
+            Log::info('لم يتم العثور على عقارات مناسبة للاستثمار في هذه الدورة');
+            return collect();
         }
 
         $topProperties = $scoredProperties->take(2);

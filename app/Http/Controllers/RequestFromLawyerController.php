@@ -56,7 +56,6 @@ class RequestFromLawyerController extends Controller
 
     public function getRequestforUser($userId)
     {
-
         $userRole = auth()->user()->role_id;
         if ($userRole !== 3) {
             return response()->json([
@@ -75,7 +74,7 @@ class RequestFromLawyerController extends Controller
 
         if ($requests->isEmpty()) {
             return response()->json([
-                'message' => __('messages.not_found'),
+                'message' => ('messages.not_found'),
             ], 404);
         }
 
@@ -84,25 +83,28 @@ class RequestFromLawyerController extends Controller
             $propertyInfo = $property ? $property->state . ' ' . $property->exact_position : null;
 
             $expertRequest = $request->Request_from_expert;
-            $agreedNegotiationStatus = $expertRequest && $expertRequest->economic_evaluation->agreed_negotiation
-                ? $expertRequest->economic_evaluation->agreed_negotiation->status
-                : null;
+            $agreedNegotiation = $expertRequest?->economic_evaluation?->agreed_negotiation;
 
             return [
                 'user_id' => $property->user_id,
                 'user_name' => $property->user->name,
-                'request_from_lawyer_id' => $request->id,
+                'property_info' => $propertyInfo,
+                'requestId' => $request->id,
                 'property_for_sale_id' => $request->property_for_sale_id,
                 'status_request' => $request->status,
                 'accept_admin' => $request->accept_admin,
                 'created_at' => $request->created_at->format('Y-m-d'),
-                'agreed_negotiation_status' => $agreedNegotiationStatus,
-
+                'agreed_negotiation' => $agreedNegotiation ? [
+                    'id' => $agreedNegotiation->id,
+                    'status' => $agreedNegotiation->status,
+                    'text_of_the_agreement' => $agreedNegotiation->Text_of_the_agreement,
+                    'created_at' => $agreedNegotiation->created_at->format('Y-m-d H:i:s'),
+                ] : null,
             ];
         });
 
         return response()->json([
-            'message' => __('messages.operation_success'),
+            'message' => ('messages.operation_success'),
             'data' => $responseData,
         ], 200);
     }
