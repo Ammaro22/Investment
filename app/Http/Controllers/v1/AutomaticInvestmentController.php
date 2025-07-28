@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\v1;
 
 use App\Models\AutomaticInvestment;
 use App\Services\AutomaticInvestmentService;

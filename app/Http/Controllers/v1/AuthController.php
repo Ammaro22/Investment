@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\v1;
 
 use App\Mail\VerificationCodeMail;
 use Illuminate\Http\Request;
