@@ -41,7 +41,7 @@ class PropertyAnalysisService{
             Log::warning('No indicator values found for evaluation', [
                 'economic_evaluation_id' => $evaluation->id
             ]);
-            return ['positive' => false]; // إرجاع توصية إيجابية افتراضية لتجنب الاستبعاد
+            return ['positive' => false];
         }
 
         $recommendations = [];
@@ -65,7 +65,7 @@ class PropertyAnalysisService{
             ]);
 
             if ($value >= $indicator->recommended_min && $value <= $indicator->recommended_max) {
-                $recommendations[] = "نوصيك باستثمار هذا العقار بناءً على مؤشر {$indicator->arabic_name}.";
+                $recommendations[] = "We recommend that you invest in this property based on the {$indicator->name} index.";
             }
         }
 
@@ -74,7 +74,7 @@ class PropertyAnalysisService{
             'recommendations_count' => count($recommendations)
         ]);
 
-        // إذا لم يكن هناك توصيات إيجابية، إرجاع توصية افتراضية لتجنب استبعاد العقار
+
         return !empty($recommendations) ? $recommendations : ['positive' => true];
     }
     public static function calculateValue($indicator, $data)

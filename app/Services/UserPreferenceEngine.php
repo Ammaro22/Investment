@@ -24,7 +24,7 @@ public function getRecommendationForInvestment(?User $user,Property_for_sale $pr
 
     if ($investmentsInSameArea->count() > 1) {
 
-        $recommendations[] = "لتقليل المخاطر,{$property_for_sale->state} - {$property_for_sale->exact_position} ننصحك بتنويع استثمارك خارج منطقة ";
+        $recommendations[] = "To mitigate risks, we recommend diversifying your investments beyond the {$property_for_sale->state} - {$property_for_sale->exact_position} area.";
     }
 
 
@@ -41,7 +41,7 @@ public function getRecommendationForInvestment(?User $user,Property_for_sale $pr
 
      if($typeShare > 50) {
 
-        $recommendations[]=" مرتفعة، لذلك ننصحك بالتنويع{$property_for_sale->property_type}نسبة استثمارك في نوع العقار ";
+        $recommendations[]="Your investment concentration in {$property_for_sale->property_type} properties is high. We therefore recommend diversifying your portfolio.";
      }
 
 //3
@@ -53,7 +53,7 @@ public function getRecommendationForInvestment(?User $user,Property_for_sale $pr
 
      if($property_for_sale->profit_percent <$avg_return) {
 
-         $recommendations[]="العائد المتوقع أقل من متوسط استثماراتك السابقة.";
+         $recommendations[]="This projected return falls below your historical investment average.";
      }
 
 //4
@@ -68,7 +68,7 @@ public function getRecommendationForInvestment(?User $user,Property_for_sale $pr
 
         if ($differentByDay <= 30) {
 
-            $recommendations[] = "هذا العقار يتيح لك أرباحاً سريعة خلال مدة قصيرة";
+            $recommendations[] = "This property enables quick profits in a short period.";
         }
     }
 
@@ -83,7 +83,7 @@ public function getRecommendationForInvestment(?User $user,Property_for_sale $pr
 
      if($preferredInvestmentMode->contains($property_for_sale->property_investment->investment_mode)){
 
-         $recommendations[]="هذا العقار يتوافق مع نمط استثمارك المفضل.";
+         $recommendations[]="This property matches your preferred investment style.";
      }
 
 
@@ -96,7 +96,7 @@ public function getRecommendationForInvestment(?User $user,Property_for_sale $pr
 
        if($property_for_sale->property_age && abs($property_for_sale->property_age - $avg_age) <=2){
 
-           $recommendations[]="عمر هذا العقار مشابه لعقاراتك السابقة.";
+           $recommendations[]="The age of this property is similar to your previous investments.";
        }
 
         return $recommendations;
