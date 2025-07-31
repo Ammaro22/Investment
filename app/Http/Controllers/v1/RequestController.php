@@ -13,12 +13,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 
-class RequestController extends Controller
+class RequestController extends BaseController
 {
     public function acceptRequest($id)
     {
-
-        $userRole = auth()->user()->role_id;
+        $user=auth()->user();
+        $userRole = $user->role_id;
         if ($userRole !== 4 ) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
@@ -47,6 +47,7 @@ class RequestController extends Controller
         $lawyerRequest->accept_admin = 'معلق';
         $lawyerRequest->by_whom = 'lawyer';
         $lawyerRequest->save();
+
 
         return response()->json([
             'message' => trans('messages.operation_success'),

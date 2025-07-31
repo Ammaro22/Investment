@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
-class AuthController extends Controller
+class AuthController extends BaseController
 {
     public function sendVerificationCode(Request $request)
     {
@@ -25,6 +25,8 @@ class AuthController extends Controller
         $user->save();
 
         Mail::to($user->email)->send(new VerificationCodeMail($verificationCode));
+
+        $this->firebaseNotification->sendToUser($user,'send_code');
 
         return response()->json([   'message' => trans('messages.operation_success')]);
     }
@@ -42,8 +44,12 @@ class AuthController extends Controller
         if ($user->verification_code == $validatedData['verification_code']) {
             $user->verification_code = null;
             $user->save();
+            $this->firebaseNotification->sendToUser($user,'verify_code_success');
+
             return response()->json([   'message' => trans('messages.operation_success')]);
         }
+
+        $this->firebaseNotification->sendToUser($user,'verify_code_failed');
 
         return response()->json([   'message' => trans('messages.operation_failed')], 400);
     }
@@ -63,6 +69,8 @@ class AuthController extends Controller
         $user->password = bcrypt($request->password);
         $user->verification_code = null;
         $user->save();
+
+        $this->firebaseNotification->sendToUser($user,'reset_password');
 
         return response([   'message' => trans('messages.operation_success'),]);
     }

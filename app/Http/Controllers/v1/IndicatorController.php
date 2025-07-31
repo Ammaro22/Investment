@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
 
-class IndicatorController extends Controller
+class IndicatorController extends BaseController
 {
 
     public function storeIndicator(Request $request)
@@ -36,6 +36,8 @@ class IndicatorController extends Controller
             'recommended_min' => $request->recommended_min,
             'recommended_max' => $request->recommended_max
         ]);
+
+        $this->firebaseNotification->sendToUser($user,'store_indicator');
 
         return response()->json(['message' => trans('messages.operation_success')]);
     }
@@ -177,6 +179,8 @@ class IndicatorController extends Controller
             ], 404);
         }
         $indicator->delete();
+        $this->firebaseNotification->sendToUser($user,'delete_indicator');
+
         return response()->json(['message' => trans('messages.operation_success')]);
     }
 
@@ -208,6 +212,8 @@ class IndicatorController extends Controller
             'recommended_min',
             'recommended_max'
         ]));
+        $this->firebaseNotification->sendToUser($user,'update_indicator');
+
         return response()->json(['message' => trans('messages.operation_success'), 'data' => $indicator]);
     }
 
@@ -241,6 +247,7 @@ class IndicatorController extends Controller
                 $updated[] = $indicatorValue;
             }
         }
+        $this->firebaseNotification->sendToUser($user,'update_indicator');
 
         return response()->json([
             'message' => trans('messages.operation_success'),
@@ -262,6 +269,8 @@ class IndicatorController extends Controller
             ], 404);
         }
         $indicatorValue->delete();
+        $this->firebaseNotification->sendToUser($user,'delete_indicator');
+
         return response()->json(['message' => trans('messages.operation_success')]);
     }
 

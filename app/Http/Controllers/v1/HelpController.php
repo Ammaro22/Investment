@@ -9,7 +9,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
-class HelpController extends Controller
+class HelpController extends BaseController
 {
     public function addHelp(Request $request)
     {

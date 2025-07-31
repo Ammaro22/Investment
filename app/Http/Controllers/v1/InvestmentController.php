@@ -17,6 +17,7 @@ use App\Models\Wallet;
 use App\Services\PropertyAnalysisService;
 use App\Services\UserPreferenceEngine;
 use Carbon\Carbon;
+use DatabaseLogger;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 
-class InvestmentController extends Controller
+class InvestmentController extends BaseController
 {
 
 
@@ -136,6 +137,12 @@ class InvestmentController extends Controller
                     'user_advice' => $userPreference,
                 ]);
 
+            DatabaseLogger::log('info','search by PropertyType',[
+                'user_id'=>$user->id,
+                'user_name'=>$user->name,
+                'property_id'=>$item->id,
+
+            ]);
             return $rearrangedItem;
         });
 
@@ -210,9 +217,16 @@ class InvestmentController extends Controller
                     'user_advice' => $userPreference,
                 ]);
 
+            DatabaseLogger::log('info','search by investmentMode',[
+                'user_id'=>$user->id,
+                'user_name'=>$user->name,
+                'property_id'=>$item->id,
+
+            ]);
             return $rearrangedItem;
 
         });
+
 
         return response()->json([
             'message' => trans('messages.properties_found'),
@@ -365,6 +379,13 @@ class InvestmentController extends Controller
             $this->CalculateNetProfit($property->id);
         }
         $this->calculateRewards($user, $amount);
+        $this->firebaseNotification->sendToUser($user,'investment');
+        DatabaseLogger::log('info','invested',[
+            'user_id'=>$user->id,
+            'user_name'=>$user->name,
+            'property_id'=>$property->id
+        ]);
+
         return response()->json(['message' => trans('messages.operation_success')]);
     }
 
@@ -518,6 +539,7 @@ class InvestmentController extends Controller
         $listOfInvestment = $investments->map(function ($investment) {
             $propertyForSaleInfo = $investment->property_invested->property ?? null;
 
+
             return [
                 'id' => $investment->id,
                 'user_id' => $investment->user_id,
@@ -529,7 +551,10 @@ class InvestmentController extends Controller
                 'created_at' => $investment->created_at->format('Y-m-d'),
                 'updated_at' => $investment->updated_at->format('Y-m-d'),
             ];
+
         });
+
+
 
 
         return response()->json([
@@ -614,55 +639,7 @@ class InvestmentController extends Controller
     }
 
 
-//    public function ShowListOfUserProfit()
-//    {
-//
-//        $user = auth()->user();
-//
-//        $userRole = $user->role_id;
-//
-//        if (!$user || $userRole != 2) {
-//            return response()->json(['message' => trans('messages.unauthorized')]);
-//        }
-//
-//        $profits = Profit::with('completedProperty.property.property')->where('user_id', $user->id)->paginate(5);
-//
-//
-//        if ($profits->isEmpty()) {
-//            return response()->json(['message' => trans('messages.not_found')]);
-//        }
-//
-//        $listOfProfits = $profits->map(function ($profit) {
-//            $propertyInfo = $profit->completedProperty->property->property ?? null;
-//            return [
-//                'id' => $profit->id,
-//                'completed_property_id' => $profit->completed_property_id,
-//                'user_id' => $profit->user_id,
-//                'profit_amount' => $profit->profit_amount,
-//                'property_type' => $propertyInfo?->property_type,
-//                'exact_position' => $propertyInfo?->exact_position,
-//                'scheduled_date' => $profit->scheduled_date,
-//                'transfer_status' => $profit->transfer_status
-//            ];
-//        });
-//
-//
-//        return response()->json([
-//            'message' => trans('messages.operation_success'),
-//            'data' => [
-//                'properties' => $listOfProfits,
-//                'pagination' => [
-//                    'current_page' => $profits->currentPage(),
-//                    'last_page' => $profits->lastPage(),
-//                    'per_page' => $profits->perPage(),
-//                    'total' => $profits->total(),
-//                    'next_page_url' => $profits->nextPageUrl(),
-//                    'prev_page_url' => $profits->previousPageUrl(),
-//                ]
-//            ]
-//        ]);
-//
-//    }
+
 
     public function ShowListOfUserProfit()
     {
@@ -1095,6 +1072,8 @@ class InvestmentController extends Controller
             'status' => 'completed',
         ]);
 
+        $this->firebaseNotification->sendToUser($user,'transferToInvestment');
+
         return response()->json([
             'message' => trans('messages.operation_success'),
             'data' => [
@@ -1204,6 +1183,33 @@ class InvestmentController extends Controller
 
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //    public function ShowProperty()
 //    {
 //
@@ -1240,5 +1246,57 @@ class InvestmentController extends Controller
 //        ]
 //        ]);
 //
+//
+//    }
+
+
+
+//    public function ShowListOfUserProfit()
+//    {
+//
+//        $user = auth()->user();
+//
+//        $userRole = $user->role_id;
+//
+//        if (!$user || $userRole != 2) {
+//            return response()->json(['message' => trans('messages.unauthorized')]);
+//        }
+//
+//        $profits = Profit::with('completedProperty.property.property')->where('user_id', $user->id)->paginate(5);
+//
+//
+//        if ($profits->isEmpty()) {
+//            return response()->json(['message' => trans('messages.not_found')]);
+//        }
+//
+//        $listOfProfits = $profits->map(function ($profit) {
+//            $propertyInfo = $profit->completedProperty->property->property ?? null;
+//            return [
+//                'id' => $profit->id,
+//                'completed_property_id' => $profit->completed_property_id,
+//                'user_id' => $profit->user_id,
+//                'profit_amount' => $profit->profit_amount,
+//                'property_type' => $propertyInfo?->property_type,
+//                'exact_position' => $propertyInfo?->exact_position,
+//                'scheduled_date' => $profit->scheduled_date,
+//                'transfer_status' => $profit->transfer_status
+//            ];
+//        });
+//
+//
+//        return response()->json([
+//            'message' => trans('messages.operation_success'),
+//            'data' => [
+//                'properties' => $listOfProfits,
+//                'pagination' => [
+//                    'current_page' => $profits->currentPage(),
+//                    'last_page' => $profits->lastPage(),
+//                    'per_page' => $profits->perPage(),
+//                    'total' => $profits->total(),
+//                    'next_page_url' => $profits->nextPageUrl(),
+//                    'prev_page_url' => $profits->previousPageUrl(),
+//                ]
+//            ]
+//        ]);
 //
 //    }

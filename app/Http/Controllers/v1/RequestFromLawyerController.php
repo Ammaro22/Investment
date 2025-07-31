@@ -7,7 +7,7 @@ use App\Models\request_from_lawyer;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
-class RequestFromLawyerController extends Controller
+class RequestFromLawyerController extends BaseController
 {
 
     public function getRequestWithUser()

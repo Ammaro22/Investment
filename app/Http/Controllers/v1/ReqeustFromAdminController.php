@@ -11,7 +11,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
-class ReqeustFromAdminController extends Controller
+class ReqeustFromAdminController extends BaseController
 {
     public function addImagesAndCompleteRequest(Request $request, $id)
     {

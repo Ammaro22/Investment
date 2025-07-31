@@ -9,7 +9,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
-class FrequentlyQuestionsController extends Controller
+class FrequentlyQuestionsController extends BaseController
 {
 
     public function create(Request $request)

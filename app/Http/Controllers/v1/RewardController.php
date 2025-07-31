@@ -12,13 +12,13 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
 
 
-class RewardController extends Controller
+class RewardController extends BaseController
 {
 
     public function addReward(Request $request)
     {
-
-        $userRole = auth()->user()->role_id;
+        $user= auth()->user();
+        $userRole =$user->role_id;
         if ($userRole !== 1 ) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
@@ -44,6 +44,8 @@ class RewardController extends Controller
             'discount_rate' => $request->input('discount_rate'),
         ]);
 
+        $this->firebaseNotification->sendToUser($user,'add_reward');
+
         return response()->json([
             'message' => __('messages.operation_success'),
             'data' => $reward,
@@ -53,7 +55,8 @@ class RewardController extends Controller
 
     public function updateReward(Request $request, $id)
     {
-        $userRole = auth()->user()->role_id;
+        $user=auth()->user();
+        $userRole =$user->role_id;
         if ($userRole !== 1) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
@@ -72,6 +75,8 @@ class RewardController extends Controller
         ]);
 
         $reward->update($request->only(['amount_threshold', 'percentage', 'level']));
+
+        $this->firebaseNotification->sendToUser($user,'update_reward');
 
         return response()->json([
             'message' => trans('messages.operation_success'),
@@ -111,7 +116,8 @@ class RewardController extends Controller
 
     public function deleteReward($id)
     {
-        $userRole = auth()->user()->role_id;
+        $user=auth()->user();
+        $userRole =$user->role_id;
         if ($userRole !== 1) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
@@ -123,6 +129,8 @@ class RewardController extends Controller
         }
 
         $reward->delete();
+
+        $this->firebaseNotification->sendToUser($user,'delete_reward');
 
         return response()->json([
             'message' => trans('messages.delete_success'),

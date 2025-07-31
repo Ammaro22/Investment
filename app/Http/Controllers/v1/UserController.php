@@ -14,16 +14,9 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
 
-class UserController extends Controller
+class UserController extends BaseController
 {
 
-    protected $firebaseNotification;
-    protected $fireStoreTokenService;
-    public function __construct(FirebaseNotificationService $firebaseNotification,FireStoreTokenService $fireStoreTokenService)
-    {
-        $this->firebaseNotification=$firebaseNotification;
-        $this->fireStoreTokenService=$fireStoreTokenService;
-    }
 
     public function signup(Request $request)
     {
@@ -186,6 +179,8 @@ class UserController extends Controller
             'message' => trans('messages.update_success'),
             'user' => $user,
         ]);
+
+
     }
 
     public function destroy($id)
@@ -225,6 +220,7 @@ class UserController extends Controller
                 'is_active' => true,
             ]);
         }
+        $this->firebaseNotification->sendToUser($user,'create_wallets');
     }
 
     private function createAutomaticInvestment(User $user, $roleId)

@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
 
-class AgreedNegotiationController extends Controller
+class AgreedNegotiationController extends BaseController
 {
 
     public function createAgreedNegotiation(Request $request)
@@ -39,16 +39,22 @@ class AgreedNegotiationController extends Controller
         $negotiation->property_for_sale_id = $request->property_for_sale_id;
         $negotiation->save();
 
+        $this->firebaseNotification->sendToUser($user,'create_negotiation');
+
         return response()->json([
             'message' => __('messages.operation_success'),
             'data' => $negotiation,
         ], 201);
+
+
     }
 
     public function updateAgreedNegotiation(Request $request, $id)
     {
-        $userRole = auth()->user()->role_id;
-        if ($userRole !== 3 && $userRole !== 1 ) {
+        $user = auth()->user();
+        $userRole = $user->role_id;
+
+        if ($userRole !== 3 && $userRole !== 1) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
@@ -75,6 +81,8 @@ class AgreedNegotiationController extends Controller
         $negotiation->status = 'تم قبول من قبل المستخدم';
         $negotiation->save();
 
+        $this->firebaseNotification->sendToUser($user,'update_negotiation');
+
         return response()->json([
             'message' => __('messages.operation_success'),
             'data' => $negotiation,
@@ -83,12 +91,15 @@ class AgreedNegotiationController extends Controller
 
     public function rejectAgreedNegotiation($id)
     {
-        $userRole = auth()->user()->role_id;
-        if ($userRole !== 2 ) {
+        $user = auth()->user();
+        $userRole = $user->role_id;
+
+        if ($userRole !== 3 && $userRole !== 1) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
         }
+
         $negotiation = Agreed_negotiation::find($id);
         if (!$negotiation) {
             return response()->json([
@@ -96,11 +107,13 @@ class AgreedNegotiationController extends Controller
             ], 404);
         }
 
-        $negotiation->status = 'تم الرفض من قبل المستخدد';
+        $negotiation->status = 'تم الرفض من قبل المستخدم';
         $negotiation->save();
 
         request_from_lawyer::where('property_for_sale_id', $negotiation->property_for_sale_id)
             ->update(['accept_user' => 'مرفوض']);
+
+        $this->firebaseNotification->sendToUser($user,'reject_negotiation');
 
         return response()->json([
             'message' => __('messages.operation_success'),
@@ -111,12 +124,15 @@ class AgreedNegotiationController extends Controller
     public function acceptAgreedNegotiation($id)
     {
 
-        $userRole = auth()->user()->role_id;
-        if ($userRole !== 2 ) {
+        $user = auth()->user();
+        $userRole = $user->role_id;
+
+        if ($userRole !== 3 && $userRole !== 1) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
         }
+
 
         $negotiation = Agreed_negotiation::find($id);
         if (!$negotiation) {
@@ -130,6 +146,8 @@ class AgreedNegotiationController extends Controller
 
         request_from_lawyer::where('property_for_sale_id', $negotiation->property_for_sale_id)
             ->update(['accept_user' => 'مقبول']);
+
+        $this->firebaseNotification->sendToUser($user,'accept_negotiation');
 
         return response()->json([
             'message' => __('messages.operation_success'),

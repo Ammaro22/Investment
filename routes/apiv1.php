@@ -9,6 +9,7 @@ use App\Http\Controllers\v1\FrequentlyQuestionsController;
 use App\Http\Controllers\v1\HelpController;
 use App\Http\Controllers\v1\IndicatorController;
 use App\Http\Controllers\v1\InvestmentController;
+use App\Http\Controllers\v1\NotificationController;
 use App\Http\Controllers\v1\ReqeustFromAdminController;
 use App\Http\Controllers\v1\RequestController;
 use App\Http\Controllers\v1\RequestFromExpertController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\v1\StatisticsController;
 use App\Http\Controllers\v1\StripeController;
 use App\Http\Controllers\v1\UserController;
 use App\Http\Controllers\v1\WalletController;
+use App\Http\Controllers\v1\WithdrawalRequestController;
 use App\Models\Request_from_admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -221,21 +223,21 @@ Route::group(["middleware"=>["auth:api"]],function() {
 
 /*اضافة المؤشرات من قبل الفريق الخبير واضافة قيم لها*/
 Route::group(["middleware"=>["auth:api"]],function() {
-    Route::post('/storeIndicator',[IndicatorController::class,'storeIndicator']);
-    Route::post('/storeValueToIndicator',[IndicatorController::class,'storeValueToIndicator']);
+    Route::post('/storeIndicator', [IndicatorController::class, 'storeIndicator']);
+    Route::post('/storeValueToIndicator', [IndicatorController::class, 'storeValueToIndicator']);
     Route::delete('/deleteIndicator/{indicator_id}', [IndicatorController::class, 'deleteIndicator']);
     Route::delete('/deleteValueOfIndicator/{indicatorValue_id}', [IndicatorController::class, 'deleteValueOfIndicator']);
-    Route::post('/updateIndicator/{indicator_id}',[IndicatorController::class,'updateIndicator']);
-    Route::post('/updateValuesOfIndicator',[IndicatorController::class,'updateValuesOfIndicator']);
-    Route::get('/getIndicatorWithValues',[IndicatorController::class,'getIndicatorWithValues']);
-    Route::get('/getIndicators',[IndicatorController::class,'getIndicators']);
-    Route::get('/getValuesOfIndicator',[IndicatorController::class,'getValuesOfIndicator']);
+    Route::post('/updateIndicator/{indicator_id}', [IndicatorController::class, 'updateIndicator']);
+    Route::post('/updateValuesOfIndicator', [IndicatorController::class, 'updateValuesOfIndicator']);
+    Route::get('/getIndicatorWithValues', [IndicatorController::class, 'getIndicatorWithValues']);
+    Route::get('/getIndicators', [IndicatorController::class, 'getIndicators']);
+    Route::get('/getValuesOfIndicator', [IndicatorController::class, 'getValuesOfIndicator']);
     Route::get('/getIndicatorsForProperty/{property_id}', [IndicatorController::class, 'getIndicatorValuesForProperty']);
 
 ///////////////////
 
-    Route::get('/getEvaluationByProperty/{property_id}',[InvestmentController::class,'getEvaluationByProperty']);
-
+    Route::get('/getEvaluationByProperty/{property_id}', [InvestmentController::class, 'getEvaluationByProperty']);
+});
     /*الاحصائيات */
     Route::group(["middleware"=>["auth:api"]],function() {
         Route::post('/rejected_Requests_Percentage_form_lawyer', [StatisticsController::class, 'rejectedRequestsPercentageformlawyer']);
@@ -256,4 +258,31 @@ Route::group(["middleware"=>["auth:api"]],function() {
 
     Route::post('/automatic_investment/deactivate', [AutomaticInvestmentController::class, 'deactivate']);
 
-});
+/*اشعارات*/
+    Route::get('/notifications/by-type', [NotificationController::class, 'getNotificationByType']);
+
+
+
+/*سحب الأموال*/
+    Route::group(["middleware"=>["auth:api"]],function() {
+        /*ادمن*/
+        Route::get('/withdrawals', [WithdrawalRequestController::class, 'index']);
+        //Route::post('/withdrawals/{id}/approve', [WithdrawalRequestController::class, 'approve']);
+        Route::post('/withdrawals/{id}/reject', [WithdrawalRequestController::class, 'reject']);
+        Route::post('/withdrawals/{id}/approve_process', [WithdrawalRequestController::class, 'approveAndProcess']);
+
+        // Route::post('/withdrawals/{id}/process', [WithdrawalRequestController::class, 'process']);
+        /*للمستخدم*/
+        Route::post('/withdrawals/make_request', [WithdrawalRequestController::class, 'make_request']); //عمل طلب سحب اموال
+        Route::get('/withdrawals/{id}/getReceipt', [WithdrawalRequestController::class, 'getReceipt']); //هون الوصل الخاص بطلب معين  بعد ما تتم المعالجة
+        Route::get('/getAllWithdrawalRequestForUser', [WithdrawalRequestController::class, 'getAllWithdrawalRequestForUser']); //كلشي طلبات سحب عملها المستخدم
+        Route::get('/getWithdrawalRequestByStatusForUser', [WithdrawalRequestController::class, 'getWithdrawalRequestByStatusForUser']);//كلشي طلبات حسب فلتر معين
+        Route::get('/showRequestById/{id}', [WithdrawalRequestController::class, 'showRequestById']); //اذا بدي شوف طلب معين
+        Route::get('/getAllMyReceipts', [WithdrawalRequestController::class, 'getAllMyReceipts']);// كلشي ايصالات
+
+
+    });
+
+
+
+

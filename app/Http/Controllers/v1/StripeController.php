@@ -5,13 +5,14 @@ namespace App\Http\Controllers\v1;
 use App\Models\StripePayment;
 use App\Models\Transaction;
 use App\Models\Wallet;
+use DatabaseLogger;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Stripe\StripeClient;
 
 
-class StripeController extends Controller
+class StripeController extends BaseController
 {
 
     public function ChargeInvestmentWallet(Request $request)
@@ -72,10 +73,17 @@ class StripeController extends Controller
                 $wallet->increment('balance', $amountInDollars);
             });
 
+            $this->firebaseNotification->sendToUser($user,'charge_wallet_success');
+            DatabaseLogger::log('info','charge investment wallet',['user_id'=>$user->id,
+                'user_name'=>$user->name]);
             return response()->json(['message' => __('messages.operation_success')]);
+
         } catch (\Stripe\Exception\ApiErrorException $e) {
             $stripeCode = $e->getError()->code ?? 'generic_error';
             $translatedMessage = trans('stripe.' . $stripeCode);
+
+            $this->firebaseNotification->sendToUser($user,'charge_wallet_failed');
+
 
             return response()->json([
                 'message' => trans('messages.operation_failed') . $translatedMessage

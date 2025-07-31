@@ -8,7 +8,7 @@ use App\Models\Property_for_sale;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
-class ElectronicPropertyCertificateController extends Controller
+class ElectronicPropertyCertificateController extends BaseController
 {
     public function showCertificates(Request $request)
     {

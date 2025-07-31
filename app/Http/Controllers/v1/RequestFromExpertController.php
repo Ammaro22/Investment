@@ -13,11 +13,12 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
 
-class RequestFromExpertController extends Controller
+class RequestFromExpertController extends BaseController
 {
     public function createRequestFromExpert(Request $request)
     {
-        $userRole = auth()->user()->role_id;
+        $user=auth()->user();
+        $userRole =$user->role_id;
         if ($userRole !== 3 ) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
@@ -70,6 +71,9 @@ class RequestFromExpertController extends Controller
         $requestFromExpert->status ='معلق' ;
         $requestFromExpert->save();
 
+
+        $this->firebaseNotification->sendToUser($user,'create_economic_evaluation');
+
         return response()->json([
             'message' => __('messages.operation_success'),
             'data' => $requestFromExpert,
@@ -103,6 +107,7 @@ class RequestFromExpertController extends Controller
 
     public function updateEconomicEvaluation(Request $request, $id)
     {
+
         $requestFromlawyer = request_from_lawyer::find($id);
 
         if (!$requestFromlawyer) {
@@ -150,6 +155,7 @@ class RequestFromExpertController extends Controller
 
         $requestFromlawyer->accept_admin='معلق';
         $requestFromlawyer->save();
+
 
         return response()->json([
             'message' => __('messages.operation_success'),
@@ -564,6 +570,8 @@ class RequestFromExpertController extends Controller
                 'is_completed' => false,
             ]);
         }
+
+
 
         return response()->json([
             'message' => __('messages.operation_success'),

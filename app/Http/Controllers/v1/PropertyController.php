@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 use App\Models\Requests;
 
-class PropertyController extends Controller
+class PropertyController extends BaseController
 {
     public function store(Request $request)
     {
@@ -85,6 +85,8 @@ class PropertyController extends Controller
             'description' => $request->input('description', 'طلب جديد لعقار'),
         ];
         Requests::create($requestData);
+
+        $this->firebaseNotification->sendToUser($userId,'create_property');
 
         return response()->json([
             'message' => trans('messages.operation_success'),
@@ -169,6 +171,7 @@ class PropertyController extends Controller
         }
         $property->load('Property_image', 'Property_document', 'id_image');
 
+        $this->firebaseNotification->sendToUser($userId,'update_property');
 
         return response()->json([
             'message' => trans('messages.operation_success'),
@@ -183,13 +186,14 @@ class PropertyController extends Controller
 
     public function updatebyadmin(Request $request, $id)
     {
-        $userRole = auth()->user()->role_id;
-        if ($userRole !== 1 ) {
+        $user = auth()->user();
+        $userRole = $user->role_id;
+
+        if ($userRole !== 1) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
         }
-
         $property = Property_for_sale::find($id);
 
         if (!$property) {
@@ -258,6 +262,7 @@ class PropertyController extends Controller
         }
         $property->load('Property_image', 'Property_document', 'id_image');
 
+        $this->firebaseNotification->sendToUser($user,'update_property');
 
         return response()->json([
             'message' => trans('messages.operation_success'),

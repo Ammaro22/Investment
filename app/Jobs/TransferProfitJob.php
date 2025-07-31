@@ -2,10 +2,11 @@
 
 namespace App\Jobs;
 
-use App\Http\Controllers\WalletController;
+use App\Http\Controllers\v1\WalletController;
 use App\Models\Profit;
 use App\Models\Wallet;
 use Carbon\Carbon;
+use DatabaseLogger;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -73,6 +74,9 @@ class TransferProfitJob implements ShouldQueue
                     'transfer_status' => 'completed',
                     'processed_at'=>now()
                 ]);
+
+                DatabaseLogger::log('info','transfer to profit wallet',['user_id'=>$pending->user_id,
+                    'user_name'=>$pending->user_name]);
                }catch (\Exception $exception) {
 
                 $pending->update([
@@ -81,7 +85,7 @@ class TransferProfitJob implements ShouldQueue
                     'failure_reason' => $exception->getMessage()
                 ]);
 
-                Log::error('فشل التحويل',[
+                DatabaseLogger::log('error','transfer_failed',[
                     'profit_id'=>$pending->id,
                     'user_id'=>$pending->user_id,
                     'error'=>$exception->getMessage()

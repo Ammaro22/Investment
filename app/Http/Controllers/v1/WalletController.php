@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
 use Carbon\Carbon;
+use DatabaseLogger;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use App\Mail\SendEmailOtp;
@@ -14,7 +15,7 @@ use App\Models\EmailOtp;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\AuthController;
-class WalletController extends Controller
+class WalletController extends BaseController
 {
 
 
@@ -162,6 +163,10 @@ class WalletController extends Controller
                 $platformWallet->increment('balance', $amount);
             });
 
+            $this->firebaseNotification->sendToUser($user,'transferToPlatform');
+
+            DatabaseLogger::log('info','transfer to platform',['user_id'=>$user->id,
+                'user_name'=>$user->name]);
             return response()->json(['message' => trans('messages.operation_success')]);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 422);

@@ -5,12 +5,13 @@ namespace App\Http\Controllers\v1;
 use App\Models\AutomaticInvestment;
 use App\Services\AutomaticInvestmentService;
 use App\Services\FirebaseNotificationService;
+use DatabaseLogger;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
-class AutomaticInvestmentController extends Controller
+class AutomaticInvestmentController extends BaseController
 {
     protected $investmentService;
 
@@ -54,6 +55,12 @@ class AutomaticInvestmentController extends Controller
             return response()->json(['error' => $result['error']], 400);
         }
 
+        $this->firebaseNotification->sendToUser($user,'activate_investment');
+
+        DatabaseLogger::log('info','activate autoInvestment',[
+            'user_id'=>$user->id,
+            'user_name'=>$user->name,
+        ]);
         return response()->json([
             'message' => 'تم تفعيل الاستثمار التلقائي بنجاح',
             'data' => $result,
@@ -76,6 +83,12 @@ class AutomaticInvestmentController extends Controller
 
         $autoInvestment->update(['active' => false]);
 
+        $this->firebaseNotification->sendToUser($user,'deactivate_investment');
+
+        DatabaseLogger::log('info','deactivate autoInvestment',[
+            'user_id'=>$user->id,
+            'user_name'=>$user->name,
+        ]);
         return response()->json(['message' => 'تم إلغاء تنشيط الاستثمار التلقائي بنجاح'], 200);
     }
 

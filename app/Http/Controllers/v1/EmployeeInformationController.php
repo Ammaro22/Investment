@@ -11,7 +11,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class EmployeeInformationController extends Controller
+class EmployeeInformationController extends BaseController
 {
 
     public function addEmployeeInformation(Request $request, $userId)
@@ -78,6 +78,8 @@ class EmployeeInformationController extends Controller
             $user->personal_photo = "images/personal/$personalPhotoName";
             $user->save();
         }
+
+        $this->firebaseNotification->sendToUser($user,'add_employee');
 
         return response()->json([
                 'message' => trans('messages.operation_success'),
@@ -171,6 +173,8 @@ class EmployeeInformationController extends Controller
         }else{
             $employeeUser->employeeInformation->update($employeeInfo);
         }
+
+        $this->firebaseNotification->sendToUser($user,'update_employee');
 
         return response()->json([
             'message' =>trans('messages.operation_success'),
@@ -360,6 +364,8 @@ class EmployeeInformationController extends Controller
         $user->save();
         $user->tokens()->delete();
 
+        $this->firebaseNotification->sendToUser($user,'activate_employee');
+
         return response()->json([
             'message' => trans('messages.operation_success'),
             'data' => $user,
@@ -385,6 +391,8 @@ class EmployeeInformationController extends Controller
 
         $user->active = true;
         $user->save();
+
+        $this->firebaseNotification->sendToUser($user,'deactivate_employee');
 
         return response()->json([
             'message' => trans('messages.operation_success'),

@@ -321,6 +321,7 @@ class AutomaticInvestmentService
                             'message' => 'تم الاستثمار بنجاح'
                         ];
 
+
                         $totalInvestedAmount += $newInvestmentAmount;
 
                     } catch (\Exception $e) {

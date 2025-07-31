@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class StatisticsController extends Controller
+class StatisticsController extends BaseController
 {
 
     /*نسبة الطلبات التي تم رفضها من المحامي*/

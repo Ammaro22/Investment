@@ -10,7 +10,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 
-class ImageController extends Controller
+class ImageController extends BaseController
 {
     public function deletePropertyImage(Request $request, $id)
     {
