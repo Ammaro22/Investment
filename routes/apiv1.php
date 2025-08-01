@@ -256,7 +256,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
     /*التلقائي*/
     Route::post('/automatic_investment/activate', [AutomaticInvestmentController::class, 'activate'])->middleware('auth:api');
 
-    Route::post('/automatic_investment/deactivate', [AutomaticInvestmentController::class, 'deactivate']);
+    Route::post('/automatic_investment/deactivate', [AutomaticInvestmentController::class, 'deactivate'])->middleware('auth:api');
 
 /*اشعارات*/
     Route::get('/notifications/by-type', [NotificationController::class, 'getNotificationByType']);

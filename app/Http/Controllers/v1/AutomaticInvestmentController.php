@@ -14,10 +14,12 @@ use Illuminate\Support\Facades\Log;
 class AutomaticInvestmentController extends BaseController
 {
     protected $investmentService;
+    protected $firebaseNotification;
 
-    public function __construct(AutomaticInvestmentService $investmentService, FirebaseNotificationService $notificationService)
+    public function __construct(AutomaticInvestmentService $investmentService, FirebaseNotificationService $firebaseNotification)
     {
         $this->investmentService = $investmentService;
+        $this->firebaseNotification=$firebaseNotification;
     }
 
     public function activate(Request $request)
@@ -32,7 +34,6 @@ class AutomaticInvestmentController extends BaseController
         ]);
 
         $user = Auth::user();
-
         if (!$user) {
             return response()->json(['error' => 'يجب تسجيل الدخول لتفعيل الاستثمار التلقائي'], 401);
         }
@@ -55,7 +56,7 @@ class AutomaticInvestmentController extends BaseController
             return response()->json(['error' => $result['error']], 400);
         }
 
-        $this->firebaseNotification->sendToUser($user,'activate_investment');
+        $this->firebaseNotification->sendToUser($user,'activate_auto_investment');
 
         DatabaseLogger::log('info','activate autoInvestment',[
             'user_id'=>$user->id,
@@ -83,7 +84,7 @@ class AutomaticInvestmentController extends BaseController
 
         $autoInvestment->update(['active' => false]);
 
-        $this->firebaseNotification->sendToUser($user,'deactivate_investment');
+        $this->firebaseNotification->sendToUser($user,'deactivate_auto_investment');
 
         DatabaseLogger::log('info','deactivate autoInvestment',[
             'user_id'=>$user->id,

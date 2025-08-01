@@ -379,7 +379,7 @@ class InvestmentController extends BaseController
             $this->CalculateNetProfit($property->id);
         }
         $this->calculateRewards($user, $amount);
-        $this->firebaseNotification->sendToUser($user,'investment');
+        $this->firebaseNotification->sendToUser($user,'investment_process');
         DatabaseLogger::log('info','invested',[
             'user_id'=>$user->id,
             'user_name'=>$user->name,
@@ -1072,7 +1072,7 @@ class InvestmentController extends BaseController
             'status' => 'completed',
         ]);
 
-        $this->firebaseNotification->sendToUser($user,'transferToInvestment');
+        $this->firebaseNotification->sendToUser($user,'transferFromProfitToInvestment');
 
         return response()->json([
             'message' => trans('messages.operation_success'),

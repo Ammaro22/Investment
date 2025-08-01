@@ -62,11 +62,6 @@ return [
         "body" => "تم إيقاف ميزة الاستثمار التلقائي.",
     ],
 
-    "create_question" => [
-        "title" => "إضافة سؤال",
-        "body" => "تمت إضافة السؤال بنجاح.",
-    ],
-
     "charge_wallet_success" => [
         "title" => "شحن المحفظة",
         "body" => "تم شحن المحفظة بنجاح.",
@@ -100,6 +95,11 @@ return [
     "store_economic_indicator" => [
         "title" => "إضافة مؤشر اقتصادي",
         "body" => "تمت إضافة المؤشر الاقتصادي بنجاح.",
+    ],
+
+    "update_economic_indicator"=>[
+        "title" => "تعديل مؤشر اقتصادي",
+        "body" => "تم تعديل المؤشر الاقتصادي بنجاح.",
     ],
 
     "delete_economic_indicator" => [

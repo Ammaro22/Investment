@@ -62,10 +62,6 @@ return [
         "body" => "Auto investment has been deactivated.",
     ],
 
-    "create_question" => [
-        "title" => "Add Question",
-        "body" => "Question added successfully.",
-    ],
 
     "charge_wallet_success" => [
         "title" => "Wallet Recharge",
@@ -100,6 +96,11 @@ return [
     "store_economic_indicator" => [
         "title" => "Add Economic Indicator",
         "body" => "Economic indicator added successfully.",
+    ],
+
+    "update_economic_indicator"=>[
+        "title" => "Update Economic Indicator",
+        "body" => "Economic indicator Updated successfully.",
     ],
 
     "delete_economic_indicator" => [

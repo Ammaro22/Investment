@@ -174,7 +174,7 @@ class EmployeeInformationController extends BaseController
             $employeeUser->employeeInformation->update($employeeInfo);
         }
 
-        $this->firebaseNotification->sendToUser($user,'update_employee');
+        $this->firebaseNotification->sendToUser($user,'update_employee_information');
 
         return response()->json([
             'message' =>trans('messages.operation_success'),
@@ -364,7 +364,7 @@ class EmployeeInformationController extends BaseController
         $user->save();
         $user->tokens()->delete();
 
-        $this->firebaseNotification->sendToUser($user,'activate_employee');
+        $this->firebaseNotification->sendToUser($user,'deactivate_employee');
 
         return response()->json([
             'message' => trans('messages.operation_success'),
@@ -392,7 +392,7 @@ class EmployeeInformationController extends BaseController
         $user->active = true;
         $user->save();
 
-        $this->firebaseNotification->sendToUser($user,'deactivate_employee');
+        $this->firebaseNotification->sendToUser($user,'activate_employee');
 
         return response()->json([
             'message' => trans('messages.operation_success'),

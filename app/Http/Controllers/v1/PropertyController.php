@@ -86,7 +86,7 @@ class PropertyController extends BaseController
         ];
         Requests::create($requestData);
 
-        $this->firebaseNotification->sendToUser($userId,'create_property');
+        $this->firebaseNotification->sendToUser($userId,'create_property_for_sale');
 
         return response()->json([
             'message' => trans('messages.operation_success'),

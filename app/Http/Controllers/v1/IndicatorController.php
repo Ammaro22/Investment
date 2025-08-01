@@ -37,7 +37,7 @@ class IndicatorController extends BaseController
             'recommended_max' => $request->recommended_max
         ]);
 
-        $this->firebaseNotification->sendToUser($user,'store_indicator');
+        $this->firebaseNotification->sendToUser($user,'store_economic_indicator');
 
         return response()->json(['message' => trans('messages.operation_success')]);
     }
@@ -179,7 +179,7 @@ class IndicatorController extends BaseController
             ], 404);
         }
         $indicator->delete();
-        $this->firebaseNotification->sendToUser($user,'delete_indicator');
+        $this->firebaseNotification->sendToUser($user,'delete_economic_indicator');
 
         return response()->json(['message' => trans('messages.operation_success')]);
     }
@@ -212,7 +212,7 @@ class IndicatorController extends BaseController
             'recommended_min',
             'recommended_max'
         ]));
-        $this->firebaseNotification->sendToUser($user,'update_indicator');
+        $this->firebaseNotification->sendToUser($user,'update_economic_indicator');
 
         return response()->json(['message' => trans('messages.operation_success'), 'data' => $indicator]);
     }
@@ -247,7 +247,7 @@ class IndicatorController extends BaseController
                 $updated[] = $indicatorValue;
             }
         }
-        $this->firebaseNotification->sendToUser($user,'update_indicator');
+        $this->firebaseNotification->sendToUser($user,'update_economic_indicator');
 
         return response()->json([
             'message' => trans('messages.operation_success'),
@@ -269,7 +269,7 @@ class IndicatorController extends BaseController
             ], 404);
         }
         $indicatorValue->delete();
-        $this->firebaseNotification->sendToUser($user,'delete_indicator');
+        $this->firebaseNotification->sendToUser($user,'delete_economic_indicator');
 
         return response()->json(['message' => trans('messages.operation_success')]);
     }
