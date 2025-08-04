@@ -260,7 +260,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
 
 /*اشعارات*/
     Route::get('/notifications/by-type', [NotificationController::class, 'getNotificationByType']);
-    Route::middleware('auth:api')->get('/notifications', [NotificationController::class, 'getUserNotifications']);
+    Route::get('/notifications', [NotificationController::class, 'getUserNotifications'])->middleware('auth:api');
 
 
 /*سحب الأموال*/

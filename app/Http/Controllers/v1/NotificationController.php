@@ -6,6 +6,7 @@ namespace App\Http\Controllers\v1;
 use Illuminate\Http\Request;
 use App\Models\Notification;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends BaseController
 {
