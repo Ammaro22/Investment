@@ -21,7 +21,7 @@ class WithdrawalRequestController extends BaseController
     {
         $request->validate([
             'amount' => 'required|numeric|min:10',
-            'method' => 'required|in:bank,harem,western_union,crypto,manual',
+            'method' => 'required|in:bank,pyramid,western_union,crypto,manual',
             'method_details' => 'nullable|array'
         ]);
 
