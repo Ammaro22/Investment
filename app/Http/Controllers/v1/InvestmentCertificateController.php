@@ -5,9 +5,11 @@ namespace App\Http\Controllers\v1;
 
 use App\Models\Investment;
 use App\Models\InvestmentCertificate;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class InvestmentCertificateController extends Controller
 {
@@ -55,7 +57,7 @@ class InvestmentCertificateController extends Controller
         $certificate = InvestmentCertificate::find($certificate_id);
 
         if (!$certificate) {
-            return response()->json(['message' => trans('messages.certificate_not_found')], 404);
+            return response()->json(['message' => trans('messages.not_found')], 404);
         }
 
         $certificate->user_id = $request->new_user_id;
@@ -77,4 +79,38 @@ class InvestmentCertificateController extends Controller
             ],
         ]);
     }
+
+    public function searchUser(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|max:300',
+        ]);
+
+        if ($validator->fails()) {
+            return response(['errors' => $validator->errors()->all()], 422);
+        }
+
+
+        $email = $request->input('email');
+        $users = User::where('email', 'LIKE', "%{$email}%")->get();
+        if ($users->isEmpty()) {
+            return response()->json(['message' => trans('messages.not_found')], 404);
+        }
+        $filteredUsers = $users->map(function ($user) {
+            return [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'email' => $user->email,
+            ];
+        });
+
+        return response()->json([
+            'message' => trans('messages.users_found'),
+            'data' => $filteredUsers,
+        ]);
+    }
+
+
 }

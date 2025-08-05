@@ -179,10 +179,10 @@ Route::group(["middleware"=>["auth:api"]],function (){
 });
 
 /*شهادات اسثتمارية*/
+Route::post('/search_about_user', [InvestmentCertificateController::class, 'searchUser']);
 Route::group(["middleware"=>["auth:api"]],function() {
     Route::get('/get_all_investment_certificates_for_user', [InvestmentCertificateController::class, 'getInvestmentCertificates']);
     Route::post('/transfer_Investment_Ownership', [InvestmentCertificateController::class, 'transferInvestmentOwnership']);
-
 });
 
 /*عرض العقارات للاستثمار*/
