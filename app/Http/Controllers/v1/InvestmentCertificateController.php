@@ -31,6 +31,7 @@ class InvestmentCertificateController extends Controller
                 'investment_id' => $certificate->investment_id,
                 'property_location' => $certificate->property_Location,
                 'number_chance' => $certificate->number_chance,
+                'price' => $certificate->Investment->amount_payed,
             ];
         });
 
