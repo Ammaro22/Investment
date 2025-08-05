@@ -8,6 +8,7 @@ use App\Http\Controllers\v1\EmployeeInformationController;
 use App\Http\Controllers\v1\FrequentlyQuestionsController;
 use App\Http\Controllers\v1\HelpController;
 use App\Http\Controllers\v1\IndicatorController;
+use App\Http\Controllers\v1\InvestmentCertificateController;
 use App\Http\Controllers\v1\InvestmentController;
 use App\Http\Controllers\v1\NotificationController;
 use App\Http\Controllers\v1\ReqeustFromAdminController;
@@ -177,6 +178,13 @@ Route::group(["middleware"=>["auth:api"]],function (){
 
 });
 
+/*شهادات اسثتمارية*/
+Route::group(["middleware"=>["auth:api"]],function() {
+    Route::get('/get_all_investment_certificates_for_user', [InvestmentCertificateController::class, 'getInvestmentCertificates']);
+    Route::post('/transfer_Investment_Ownership', [InvestmentCertificateController::class, 'transferInvestmentOwnership']);
+
+});
+
 /*عرض العقارات للاستثمار*/
 Route::get('/ShowProperty',[InvestmentController::class,'ShowProperty']);
 Route::post('/ShowPropertyByType',[InvestmentController::class,'ShowPropertyByType']);
@@ -282,6 +290,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
 
 
     });
+
 
 
 

@@ -400,6 +400,39 @@ class EmployeeInformationController extends BaseController
         ]);
     }
 
+//    public function getOwnedProperties(Request $request)
+//    {
+//        $userRole = auth()->user()->role_id;
+//        if ($userRole !== 1 ) {
+//            return response()->json([
+//                'message' => trans('messages.unauthorized'),
+//            ], 403);
+//        }
+//
+//        $properties = Property_for_sale::where('status', 'تم تملك العقار')
+//            ->select([
+//                'id',
+//                DB::raw("CONCAT(state, ' - ', exact_position) as location"),
+//                'property_type'
+//            ])
+//            ->paginate(5);
+//
+//        return response()->json([
+//            'message' => trans('messages.operation_success'),
+//            'data' => [
+//                'properties' => $properties->items(),
+//                'pagination' => [
+//                    'current_page' => $properties->currentPage(),
+//                    'last_page' => $properties->lastPage(),
+//                    'per_page' => $properties->perPage(),
+//                    'total' => $properties->total(),
+//                    'next_page_url' => $properties->nextPageUrl(),
+//                    'prev_page_url' => $properties->previousPageUrl(),
+//                ]
+//            ]
+//        ]);
+//    }
+
     public function getOwnedProperties(Request $request)
     {
         $userRole = auth()->user()->role_id;
@@ -413,7 +446,8 @@ class EmployeeInformationController extends BaseController
             ->select([
                 'id',
                 DB::raw("CONCAT(state, ' - ', exact_position) as location"),
-                'property_type'
+                'property_type',
+                DB::raw("(CASE WHEN EXISTS (SELECT 1 FROM property_for_investment WHERE property_id = property_for_sales.id) THEN 'تم الإضافة' ELSE NULL END) as addition_status")
             ])
             ->paginate(5);
 

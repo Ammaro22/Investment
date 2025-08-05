@@ -14,5 +14,7 @@ class BaseController extends Controller
     {
         $this->firebaseNotification=$firebaseNotification;
         $this->fireStoreTokenService=$fireStoreTokenService;
+
     }
+
 }

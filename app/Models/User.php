@@ -46,6 +46,11 @@ class User extends Authenticatable
         return $this->hasMany(Help::class,'user_id');
     }
 
+    public function investmentcertificates()
+    {
+        return $this->hasMany(InvestmentCertificate::class,'user_id');
+    }
+
     public function propertySale(){
         return $this->hasmany(Property_for_sale::class,'user_id');
     }

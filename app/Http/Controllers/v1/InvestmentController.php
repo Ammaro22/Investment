@@ -7,6 +7,7 @@ use App\Models\AmountInvested;
 use App\Models\CompletedProperty;
 use App\Models\EconomicEvaluation;
 use App\Models\Investment;
+use App\Models\InvestmentCertificate;
 use App\Models\Profit;
 use App\Models\Property_for_sale;
 use App\Models\PropertyForInvestment;
@@ -14,6 +15,8 @@ use App\Models\Reward;
 use App\Models\RewardTransactions;
 use App\Models\Transaction;
 use App\Models\Wallet;
+use App\Services\FirebaseNotificationService;
+use App\Services\FireStoreTokenService;
 use App\Services\PropertyAnalysisService;
 use App\Services\UserPreferenceEngine;
 use Carbon\Carbon;
@@ -28,7 +31,16 @@ use Illuminate\Support\Facades\Log;
 
 class InvestmentController extends BaseController
 {
+    protected $walletController;
 
+    public function __construct(
+        FirebaseNotificationService $firebaseNotification,
+        FireStoreTokenService $fireStoreTokenService,
+        WalletController $walletController
+    ) {
+        parent::__construct($firebaseNotification, $fireStoreTokenService);
+        $this->walletController = $walletController;
+    }
 
     public function ShowProperty()
     {
@@ -342,15 +354,17 @@ class InvestmentController extends BaseController
             return response()->json(['message' => trans('messages.insufficient_balance')], 422);
         }
 
-        $walletController = new WalletController();
-        $walletController->transferToPlatform(new Request(['amount' => $amount]));
+        $this->walletController->transferToPlatform(new Request(['amount' => $amount]));
 
-        Investment::create([
+      $d=Investment::create([
             'user_id' => $user->id,
             'property_for_investment_id' => $property->id,
             'chance_invested' => $request->chance_invested,
             'amount_payed' => $amount,
         ]);
+        $investmentId = $d->id;
+
+        $this->createInvestmentCertificate($investmentId);
 
         $property->number_of_chances -= $request->chance_invested;
         $property->save();
@@ -1180,6 +1194,29 @@ class InvestmentController extends BaseController
         return $discount;
     }
 
+    public function createInvestmentCertificate($investment_id)
+    {
+
+        $investment = Investment::with('user', 'property_invested.property')->find($investment_id);
+
+        if (!$investment) {
+            return response()->json(['message' => trans('messages.investment_not_found')], 404);
+        }
+
+        $property = $investment->property_invested->property;
+
+        $certificate = InvestmentCertificate::create([
+            'investment_id' => $investment_id,
+            'user_id' => $investment->user->id,
+            'property_Location' => $property->state . ', ' . $property->exact_position,
+            'number_chance' => $investment->chance_invested,
+        ]);
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $certificate,
+        ], 201);
+    }
 
 }
 

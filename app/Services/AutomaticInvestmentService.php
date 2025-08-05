@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AmountInvested;
+use App\Models\InvestmentCertificate;
 use App\Models\Wallet;
 use App\Models\Reward;
 use Illuminate\Http\Request;
@@ -291,7 +292,7 @@ class AutomaticInvestmentService
 
                         $walletController->transferToPlatform(new Request(['amount' => $newInvestmentAmount]));
 
-                        Investment::create([
+                        $d=Investment::create([
                             'user_id' => $user->id,
                             'property_for_investment_id' => $property->id,
                             'chance_invested' => $chancesToInvest,
@@ -300,6 +301,10 @@ class AutomaticInvestmentService
                             'status' => 'completed',
                             'investment_date' => now()
                         ]);
+                        $investmentId = $d->id;
+
+                        $this->createInvestmentCertificate($investmentId);
+
 
                         $property->number_of_chances -= $chancesToInvest;
                         $property->save();
@@ -707,4 +712,27 @@ class AutomaticInvestmentService
         return response()->json(['message' => 'success']);
     }
 
+    public function createInvestmentCertificate($investment_id)
+    {
+
+        $investment = Investment::with('user', 'property_invested.property')->find($investment_id);
+
+        if (!$investment) {
+            return response()->json(['message' => trans('messages.investment_not_found')], 404);
+        }
+
+        $property = $investment->property_invested->property;
+
+        $certificate = InvestmentCertificate::create([
+            'investment_id' => $investment_id,
+            'user_id' => $investment->user->id,
+            'property_Location' => $property->state . ', ' . $property->exact_position,
+            'number_chance' => $investment->chance_invested,
+        ]);
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $certificate,
+        ], 201);
+    }
 }
