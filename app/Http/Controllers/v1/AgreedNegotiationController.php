@@ -13,16 +13,54 @@ use Illuminate\Support\Facades\Validator;
 class AgreedNegotiationController extends BaseController
 {
 
+//    public function createAgreedNegotiation(Request $request)
+//    {   $user=auth()->user();
+//        $userRole = $user->role_id;
+//        if (!$user|$userRole !== 3 ) {
+//            return response()->json([
+//                'message' => trans('messages.unauthorized'),
+//            ], 403);
+//        }
+//
+//        $validator = Validator::make($request->all(),[
+//            'Text_of_the_agreement' => 'required|string',
+//            'property_for_sale_id' => 'required|exists:property_for_sales,id',
+//            'Payment_Mechanism' => 'required|string',
+//        ]);
+//
+//        if ($validator->fails()) {
+//            return response()->json(['errors' => $validator->errors()->all()], 422);
+//        }
+//        $negotiation = new Agreed_negotiation();
+//        $negotiation->expert_id=$user->id;
+//        $negotiation->Text_of_the_agreement = $request->Text_of_the_agreement;
+//        $negotiation->Payment_Mechanism = $request->Payment_Mechanism;
+//        $negotiation->status = 'معلق';
+//        $negotiation->property_for_sale_id = $request->property_for_sale_id;
+//        $negotiation->save();
+//
+//        $this->firebaseNotification->sendToUser($user,'create_negotiation');
+//
+//        return response()->json([
+//            'message' => __('messages.operation_success'),
+//            'data' => $negotiation,
+//        ], 201);
+//
+//
+//    }
+
     public function createAgreedNegotiation(Request $request)
-    {   $user=auth()->user();
+    {
+        $user = auth()->user();
         $userRole = $user->role_id;
-        if (!$user|$userRole !== 3 ) {
+
+        if (!$user || $userRole !== 3) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
         }
 
-        $validator = Validator::make($request->all(),[
+        $validator = Validator::make($request->all(), [
             'Text_of_the_agreement' => 'required|string',
             'property_for_sale_id' => 'required|exists:property_for_sales,id',
             'Payment_Mechanism' => 'required|string',
@@ -31,22 +69,26 @@ class AgreedNegotiationController extends BaseController
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()->all()], 422);
         }
+
         $negotiation = new Agreed_negotiation();
-        $negotiation->expert_id=$user->id;
+        $negotiation->expert_id = $user->id;
         $negotiation->Text_of_the_agreement = $request->Text_of_the_agreement;
         $negotiation->Payment_Mechanism = $request->Payment_Mechanism;
         $negotiation->status = 'معلق';
         $negotiation->property_for_sale_id = $request->property_for_sale_id;
         $negotiation->save();
 
-        $this->firebaseNotification->sendToUser($user,'create_negotiation');
+        $property = Property_for_sale::with('user')->find($request->property_for_sale_id);
+        $propertyOwner = $property->user;
+
+        if ($propertyOwner) {
+            $this->firebaseNotification->sendToUser($propertyOwner, 'create_negotiation');
+        }
 
         return response()->json([
             'message' => __('messages.operation_success'),
             'data' => $negotiation,
         ], 201);
-
-
     }
 
     public function updateAgreedNegotiation(Request $request, $id)
