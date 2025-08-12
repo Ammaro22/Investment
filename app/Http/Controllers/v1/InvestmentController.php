@@ -94,7 +94,7 @@ class InvestmentController extends BaseController
             ]
         ]);
     }
-    
+
 
     public function ShowPropertyByType(Request $request)
     {
@@ -143,7 +143,7 @@ class InvestmentController extends BaseController
                     'user_advice' => $userPreference,
                 ]);
 
-            // تسجيل الـ log فقط إذا كان هناك مستخدم مسجل (يوجد token)
+
             if ($user) {
                 DatabaseLogger::log('info', 'search by PropertyType', [
                     'user_id' => $user->id,
