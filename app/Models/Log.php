@@ -21,7 +21,6 @@ class Log extends Model
         'remote_addr',
         'user_agent'
     ];
-    
 
 
     protected $casts = [

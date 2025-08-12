@@ -96,6 +96,7 @@ class InvestmentController extends BaseController
     }
 
 
+    
     public function ShowPropertyByType(Request $request)
     {
         $user = Auth::guard('api')->user();
