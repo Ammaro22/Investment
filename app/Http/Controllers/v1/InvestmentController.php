@@ -94,8 +94,7 @@ class InvestmentController extends BaseController
             ]
         ]);
     }
-
-
+    
 
     public function ShowPropertyByType(Request $request)
     {
