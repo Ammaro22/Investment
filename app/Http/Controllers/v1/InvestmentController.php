@@ -95,14 +95,12 @@ class InvestmentController extends BaseController
         ]);
     }
 
-
     public function ShowPropertyByType(Request $request)
     {
         $user = Auth::guard('api')->user();
 
         $inferenceEngine = new UserPreferenceEngine();
         $propertyAnalyzes = new PropertyAnalysisService();
-
 
         $validator = Validator::make($request->all(), [
             'property_type' => 'required|string'
@@ -114,16 +112,11 @@ class InvestmentController extends BaseController
 
         $property_type = $request->property_type;
 
-
         $property = PropertyForInvestment::with(['property', 'property.economicEvaluation'])
             ->whereHas('property', function ($query) use ($property_type) {
                 $query->where('property_type', $property_type);
             })
             ->paginate(5);
-
-//        if ($property->isEmpty()) {
-//            return response()->json(['message' => trans('messages.no_properties_found')]);
-//        }
 
         $properties = $property->map(function ($item) use ($user, $inferenceEngine, $propertyAnalyzes) {
             if (isset($item->property)) {
@@ -149,15 +142,17 @@ class InvestmentController extends BaseController
                     'user_advice' => $userPreference,
                 ]);
 
-            DatabaseLogger::log('info','search by PropertyType',[
-                'user_id'=>$user->id,
-                'user_name'=>$user->name,
-                'property_id'=>$item->id,
+            // تسجيل الـ log فقط إذا كان هناك مستخدم مسجل (يوجد token)
+            if ($user) {
+                DatabaseLogger::log('info', 'search by PropertyType', [
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'property_id' => $item->id,
+                ]);
+            }
 
-            ]);
             return $rearrangedItem;
         });
-
 
         $data = [
             'message' => trans('messages.properties_found'),
