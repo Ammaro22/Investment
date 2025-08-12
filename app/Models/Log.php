@@ -22,6 +22,7 @@ class Log extends Model
         'user_agent'
     ];
 
+    
 
     protected $casts = [
         'context' => 'array',
