@@ -1,11 +1,4 @@
 <?php return array (
-  'beyondcode/laravel-er-diagram-generator' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'BeyondCode\\ErdGenerator\\ErdGeneratorServiceProvider',
-    ),
-  ),
   'intervention/image' => 
   array (
     'providers' => 

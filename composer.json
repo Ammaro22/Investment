@@ -19,6 +19,7 @@
         "stripe/stripe-php": "^17.1"
     },
     "require-dev": {
+        "doctrine/dbal": "3.3",
         "fakerphp/faker": "^1.9.1",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",
