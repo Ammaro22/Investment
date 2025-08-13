@@ -55,6 +55,10 @@ class User extends Authenticatable
         return $this->hasmany(Property_for_sale::class,'user_id');
     }
 
+    public function deputization(){
+        return $this->hasOne(Deputization::class,'user_id');
+    }
+
     public function investment()
     {
         return $this->hasMany(Investment::class);
