@@ -370,7 +370,7 @@
             ],
             "time": "2022-12-15T16:57:16+00:00"
         },
-        
+
         {
             "name": "dragonmantank/cron-expression",
             "version": "v3.3.2",
