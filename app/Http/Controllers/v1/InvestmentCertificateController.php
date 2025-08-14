@@ -6,11 +6,14 @@ namespace App\Http\Controllers\v1;
 use App\Models\Investment;
 use App\Models\InvestmentCertificate;
 use App\Models\RequestForOwnership;
+use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class InvestmentCertificateController extends Controller
@@ -211,11 +214,58 @@ class InvestmentCertificateController extends Controller
         ]);
     }
 
-    public function approveOwnershipRequest(Request $request,$id)
-    {
+//    public function approveOwnershipRequest(Request $request,$id)
+//    {
+//
+//        $userRole = auth()->user()->role_id;
+//        if ($userRole !== 1 && $userRole !== 4 ) {
+//            return response()->json([
+//                'message' => trans('messages.unauthorized'),
+//            ], 403);
+//        }
+//
+//        $ownershipRequest = RequestForOwnership::find($id);
+//
+//        if(!$ownershipRequest)
+//        {
+//            return response()->json(['message'=>'messages.not_found']);
+//        }
+//
+//        DB::beginTransaction();
+//
+//        try {
+//            $ownershipRequest->status = 'approved';
+//            $ownershipRequest->save();
+//
+//            $certificate = InvestmentCertificate::find($ownershipRequest->investment_certificate_id);
+//            $certificate->user_id = $ownershipRequest->buyer_id;
+//            $certificate->save();
+//
+//            if ($certificate->investment) {
+//                $certificate->investment->user_id = $ownershipRequest->buyer_id;
+//                $certificate->investment->save();
+//            }
+//
+//            DB::commit();
+//
+//            return response()->json([
+//                'message' => trans('messages.operation_success'),
+//                'data' => [
+//                    'request' => $ownershipRequest,
+//                    'certificate' => $certificate
+//                ]
+//            ]);
+//
+//        } catch (\Exception $e) {
+//            DB::rollBack();
+//            return response()->json(['message' => trans('messages.transfer_failed')], 500);
+//        }
+//    }
 
+    public function approveOwnershipRequest(Request $request, $id)
+    {
         $userRole = auth()->user()->role_id;
-        if ($userRole !== 1 && $userRole !== 4 ) {
+        if ($userRole !== 1 && $userRole !== 4) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
@@ -223,25 +273,74 @@ class InvestmentCertificateController extends Controller
 
         $ownershipRequest = RequestForOwnership::find($id);
 
-        if(!$ownershipRequest)
-        {
-            return response()->json(['message'=>'messages.not_found']);
+        if (!$ownershipRequest) {
+            return response()->json(['message' => trans('messages.not_found')], 404);
         }
 
         DB::beginTransaction();
 
-        try {
+
+
             $ownershipRequest->status = 'approved';
             $ownershipRequest->save();
+
 
             $certificate = InvestmentCertificate::find($ownershipRequest->investment_certificate_id);
             $certificate->user_id = $ownershipRequest->buyer_id;
             $certificate->save();
 
+
             if ($certificate->investment) {
                 $certificate->investment->user_id = $ownershipRequest->buyer_id;
                 $certificate->investment->save();
             }
+
+
+            $taxAmount = $ownershipRequest->Tax;
+
+
+            $buyerInvestmentWallet = Wallet::where('user_id', $ownershipRequest->buyer_id)
+                ->where('wallet_type', 'investment')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$buyerInvestmentWallet || $buyerInvestmentWallet->balance < $taxAmount) {
+                DB::rollBack();
+                return response()->json(['message' => trans('messages.insufficient_balance')], 400);
+            }
+
+            $buyerInvestmentWallet->balance -= $taxAmount;
+            $buyerInvestmentWallet->save();
+
+
+            $platformWallet = Wallet::where('wallet_type', 'platform')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$platformWallet) {
+                DB::rollBack();
+                return response()->json(['message' => trans('messages.platform_wallet_not_found')], 400);
+            }
+
+            $platformWallet->balance += $taxAmount;
+            $platformWallet->save();
+
+
+            Transaction::create([
+                'user_id' => $buyerInvestmentWallet->user_id,
+                'wallet_id' => $buyerInvestmentWallet->id,
+                'amount' => -$taxAmount,
+                'type' => 'transfer_out',
+                'status' => 'completed',
+            ]);
+
+            Transaction::create([
+                'user_id' => $platformWallet->user_id,
+                'wallet_id' => $platformWallet->id,
+                'amount' => $taxAmount,
+                'type' => 'transfer_in',
+                'status' => 'completed',
+            ]);
 
             DB::commit();
 
@@ -249,14 +348,12 @@ class InvestmentCertificateController extends Controller
                 'message' => trans('messages.operation_success'),
                 'data' => [
                     'request' => $ownershipRequest,
-                    'certificate' => $certificate
+                    'certificate' => $certificate,
+                    'tax_transferred' => $taxAmount
                 ]
             ]);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => trans('messages.transfer_failed')], 500);
-        }
+
     }
 
 }

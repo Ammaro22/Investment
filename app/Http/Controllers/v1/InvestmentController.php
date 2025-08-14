@@ -906,14 +906,12 @@ class InvestmentController extends BaseController
 
     protected function calculateRewards($user, $investmentAmount)
     {
-        // تحديث أو إنشاء سجل الاستثمار الكلي للمستخدم
         $amountInvested = AmountInvested::firstOrNew(['user_id' => $user->id]);
         $amountInvested->amount_invested += $investmentAmount;
         $amountInvested->save();
 
         $totalInvested = $amountInvested->amount_invested;
 
-        // جلب الجوائز المؤهَّل لها المستخدم
         $rewards = Reward::where('amount_threshold', '<=', $totalInvested)->get();
 
         if ($rewards->isEmpty()) {
