@@ -16,6 +16,7 @@ class Deputization extends Model
         'ID_Number',
         'status',
         'deputization_Content',
+        'deputization_image'
     ];
     public function user()
     {

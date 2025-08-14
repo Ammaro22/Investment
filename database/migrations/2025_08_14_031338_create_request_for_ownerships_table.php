@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('deputizations', function (Blueprint $table) {
+        Schema::create('request_for_ownerships', function (Blueprint $table) {
             $table->id();
-            $table->string('deputization_Content');
-            $table->integer('ID_Number');
+            $table->foreignId('investment_certificate_id')->constrained('investment_certificates')->onDelete('cascade');
+            $table->foreignId('seller_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('buyer_id')->constrained('users')->onDelete('cascade');
+            $table->float('Tax');
             $table->string('status');
-            $table->string('deputization_image')->nullable();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('deputizations');
+        Schema::dropIfExists('request_for_ownerships');
     }
 };

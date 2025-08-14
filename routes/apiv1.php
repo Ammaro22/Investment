@@ -3,6 +3,7 @@
 use App\Http\Controllers\v1\AgreedNegotiationController;
 use App\Http\Controllers\v1\AuthController;
 use App\Http\Controllers\v1\AutomaticInvestmentController;
+use App\Http\Controllers\v1\DeputizationController;
 use App\Http\Controllers\v1\ElectronicPropertyCertificateController;
 use App\Http\Controllers\v1\EmployeeInformationController;
 use App\Http\Controllers\v1\FrequentlyQuestionsController;
@@ -183,8 +184,16 @@ Route::post('/search_about_user', [InvestmentCertificateController::class, 'sear
 Route::group(["middleware"=>["auth:api"]],function() {
     Route::get('/get_all_investment_certificates_for_user', [InvestmentCertificateController::class, 'getInvestmentCertificates']);
     Route::post('/transfer_Investment_Ownership', [InvestmentCertificateController::class, 'transferInvestmentOwnership']);
+    Route::get('/get_all_ownership_requests_for_lawyer', [InvestmentCertificateController::class, 'getOwnershipRequestsForLawyer']);
+    Route::post('/accept_transfer_ownership_requests/{request_id}', [InvestmentCertificateController::class, 'approveOwnershipRequest']);
 });
 
+/*الوكالة*/
+Route::middleware('auth:api')->group(function() {
+    Route::post('/deputizations', [DeputizationController::class, 'createDeputization']);
+    Route::get('/get_all_deputizations_for_lawyer', [DeputizationController::class, 'getDeputizationsWithUsers']);
+    Route::post('/process_deputizations_by_lawyer/{deputizations_id}', [DeputizationController::class, 'acceptDeputization']);
+});
 /*عرض العقارات للاستثمار*/
 Route::get('/ShowProperty',[InvestmentController::class,'ShowProperty']);
 Route::post('/ShowPropertyByType',[InvestmentController::class,'ShowPropertyByType']);

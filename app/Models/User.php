@@ -90,6 +90,11 @@ class User extends Authenticatable
         return $this->hasOne(EmployeeInformation::class, 'user_id');
     }
 
+    public function RequestForOwnership()
+    {
+        return $this->hasMany(RequestForOwnership::class, 'user_id');
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

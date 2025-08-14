@@ -29,4 +29,8 @@ class InvestmentCertificate extends Model
         return $this->belongsTo(user::class,'user_id');
 
     }
+    public function RequestForOwnership()
+    {
+        return $this->hasMany(RequestForOwnership::class, 'investment_certificate_id');
+    }
 }
