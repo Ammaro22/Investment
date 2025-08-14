@@ -16,7 +16,7 @@ class PropertyController extends BaseController
     public function store(Request $request)
     {
 
-        $userId = $request->user()->id;
+        $user= $request->user();
         $validator = Validator::make($request->all(),[
             'property_type' => 'required|string|max:255',
             'area' => 'required|numeric|min:0',
@@ -45,7 +45,7 @@ class PropertyController extends BaseController
             return response(['errors' => $validator->errors()->all()], 422);
         }
         $property = Property_for_sale::create([
-            'user_id' => $userId,
+            'user_id' => $user->id,
             'property_type' => $request->property_type,
             'area' => $request->area,
             'number_of_rooms' => $request->number_of_rooms,
@@ -86,7 +86,7 @@ class PropertyController extends BaseController
         ];
         Requests::create($requestData);
 
-        $this->firebaseNotification->sendToUser($userId,'create_property_for_sale');
+        $this->firebaseNotification->sendToUser($user,'create_property_for_sale');
 
         return response()->json([
             'message' => trans('messages.operation_success'),
@@ -96,7 +96,7 @@ class PropertyController extends BaseController
 
     public function update(Request $request, $id)
     {
-        $userId = $request->user()->id;
+        $user = $request->user();
 
         $property = Property_for_sale::find($id);
 
@@ -106,7 +106,7 @@ class PropertyController extends BaseController
             ], 404);
         }
 
-        if ($property->user_id !== $userId) {
+        if ($property->user_id != $user->id) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
@@ -171,7 +171,7 @@ class PropertyController extends BaseController
         }
         $property->load('Property_image', 'Property_document', 'id_image');
 
-        $this->firebaseNotification->sendToUser($userId,'update_property');
+        $this->firebaseNotification->sendToUser($user,'update_property');
 
         return response()->json([
             'message' => trans('messages.operation_success'),
