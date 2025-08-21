@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('deputizations', function (Blueprint $table) {
             $table->id();
-            $table->string('deputization_Content');
+            $table->longText('deputization_Content');
             $table->integer('ID_Number');
             $table->string('status');
             $table->string('deputization_image')->nullable();

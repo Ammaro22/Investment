@@ -17,7 +17,7 @@ class DeputizationController extends Controller
 
         $validator = Validator::make($request->all(), [
             'ID_Number' => 'required|max:50',
-            'deputization_Content' => 'required|string|max:3000',
+            'deputization_Content' => 'required',
         ]);
 
         if ($validator->fails()) {
