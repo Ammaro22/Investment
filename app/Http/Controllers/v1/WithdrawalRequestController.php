@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
+use App\Models\User;
 use App\Models\WithdrawalRequest;
 use App\Models\Transaction;
 use App\Models\Wallet;
@@ -285,7 +286,51 @@ class WithdrawalRequestController extends BaseController
         return response()->json(['message' => 'تم رفض الطلب وتم استرجاع المبلغ.']);
     }
 
+    public function addInvestmentBalance( Request $request)
+    {
 
+        $admin = Auth::user();
+        if ($admin->role_id !== 1) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+            'amount' => 'required|numeric|min:0.01'
+        ]);
+
+        $userId = $validated['user_id'];
+        $amount = $validated['amount'];
+
+
+        DB::beginTransaction();
+
+            $wallet = Wallet::where('user_id', $userId)
+                ->where('wallet_type', 'investment')
+                ->first();
+
+            $wallet->balance += $amount;
+            $wallet->save();
+
+            $transaction = Transaction::create([
+                'user_id' => $userId,
+                'wallet_id' => $wallet->id,
+                'amount' => $amount,
+                'type' => 'deposit',
+                'status' => 'completed',
+                'stripe_payment_id' => null,
+                'related_transaction_id' => null
+            ]);
+
+            DB::commit();
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => $wallet
+        ]);
+
+
+    }
 }
 
 

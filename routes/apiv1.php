@@ -297,7 +297,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
         Route::get('/showRequestById/{id}', [WithdrawalRequestController::class, 'showRequestById']); //اذا بدي شوف طلب معين
         Route::get('/getAllMyReceipts', [WithdrawalRequestController::class, 'getAllMyReceipts']);// كلشي ايصالات
 
-
+        Route::post('/addInvestmentBalance_for_user', [WithdrawalRequestController::class, 'addInvestmentBalance']);//تعبئة محفظة اليوزر
     });
 
 
