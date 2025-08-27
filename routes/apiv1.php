@@ -172,7 +172,7 @@ Route::group(["middleware"=>["auth:api"]],function (){
     Route::post('/ShowListOfUserInvestmentByInvestMode',[InvestmentController::class,'ShowListOfUserInvestmentByInvestMode']);
     Route::get('/ShowListOfUserProfit',[InvestmentController::class,'ShowListOfUserProfit']);
     Route::post('/ShowListOfUserProfitByInvestMode',[InvestmentController::class,'ShowListOfUserProfitByInvestMode']);
-
+    Route::get('/get_investment_property_info',[InvestmentController::class,'showInvestmentPropertiesOptimized']);
     Route::post('/get_Properties_By_InvestmentMode_for_user',[InvestmentController::class,'getPropertiesByInvestmentMode']);
 
 

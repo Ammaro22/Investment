@@ -1212,8 +1212,49 @@ class InvestmentController extends BaseController
         ], 201);
     }
 
-}
 
+
+    public function showInvestmentPropertiesOptimized()
+    {
+        $user = auth()->user();
+        if (!$user || $user->role_id != 3) {
+            return response()->json(['message' => trans('messages.unauthorized')], 403);
+        }
+
+        $properties = PropertyForInvestment::with(['property:id,property_type,state,exact_position'])
+            ->withCount('completedProperty')
+            ->withSum('investment', 'amount_payed')
+            ->paginate(6);
+
+        $transformedProperties = $properties->map(function($property) {
+            return [
+                'property_id' => $property->id,
+                'property_title' => $property->property->property_type ?? 'N/A',
+                'property_location' => $property->property->state ?? 'N/A',
+                'total_chances' => $property->number_of_chances,
+                'is_completed' => $property->is_completed ? 1 : 0, // هنا التعديل
+                'total_invested' => $property->investment_sum_amount_payed ?? 0,
+                'chance_price' => $property->chance_price,
+                'progress_percent' => $property->progress_percent
+            ];
+        });
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'properties' => $transformedProperties,
+                'pagination' => [
+                    'current_page' => $properties->currentPage(),
+                    'last_page' => $properties->lastPage(),
+                    'per_page' => $properties->perPage(),
+                    'total' => $properties->total(),
+                    'next_page_url' => $properties->nextPageUrl(),
+                    'prev_page_url' => $properties->previousPageUrl(),
+                ]
+            ]
+        ]);
+    }
+}
 
 
 

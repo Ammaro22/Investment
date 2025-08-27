@@ -24,10 +24,10 @@ class DeputizationController extends Controller
             return response()->json(['errors' => $validator->errors()->all()], 422);
         }
         $deputization = Deputization::create([
-            'user_id' =>$userid,
+            'user_id' => $userid,
             'ID_Number' => $request->ID_Number,
             'deputization_Content' => $request->deputization_Content,
-            'status'=>'Stuck',
+            'status' => 'Stuck',
 
         ]);
 
@@ -40,13 +40,13 @@ class DeputizationController extends Controller
     public function getDeputizationsWithUsers()
     {
         $userRole = auth()->user()->role_id;
-        if ($userRole !== 1 && $userRole !== 4 ) {
+        if ($userRole !== 1 && $userRole !== 4) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
         }
 
-        $deputizations = Deputization::with('user')->paginate(5);
+        $deputizations = Deputization::with('user')->paginate(6);
 
         $formattedDeputizations = $deputizations->map(function ($deputization) {
             return [
@@ -55,6 +55,7 @@ class DeputizationController extends Controller
                 'user_name' => $deputization->user ? $deputization->user->name : 'Unknown',
                 'ID_Number' => $deputization->ID_Number,
                 'deputization_Content' => $deputization->deputization_Content,
+                'deputization_image' => $deputization->deputization_image,
                 'status' => $deputization->status,
                 'created_at' => $deputization->created_at,
                 'updated_at' => $deputization->updated_at,
@@ -78,32 +79,47 @@ class DeputizationController extends Controller
         ]);
     }
 
-    public function acceptDeputization($id)
-    {
 
+    public function acceptDeputization(Request $request, $id)
+    {
         $userRole = auth()->user()->role_id;
-        if ($userRole !== 1 && $userRole !== 4 ) {
+        if ($userRole !== 1 && $userRole !== 4) {
             return response()->json([
                 'message' => trans('messages.unauthorized'),
             ], 403);
         }
+        $validator = Validator::make($request->all(), [
+            'deputization_image' => 'required|max:3000',
+        ]);
 
-            $deputization = Deputization::findOrFail($id);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+        $deputization = Deputization::findOrFail($id);
 
-        if(!$deputization)
-        {
-            return response()->json(['message'=>'messages.not_found']);
+        if (!$deputization) {
+            return response()->json(['message' => trans('messages.not_found')], 404);
         }
 
 
-        $deputization->update(['status' => 'Processed']);
+        $deputizationImagePath = null;
+        if (request()->hasFile('deputization_image')) {
+            $deputizationImage = request()->file('deputization_image');
+            $deputizationImageName = time() . '_deputization_' . $deputizationImage->getClientOriginalName();
+            $deputizationImage->move(public_path('images/deputizations'), $deputizationImageName);
+            $deputizationImagePath = "images/deputizations/$deputizationImageName";
+        }
+
+            $deputization->update([
+                'status' => 'Processed',
+                'deputization_image' => $deputizationImagePath
+            ]);
 
             return response()->json([
                 'message' => trans('messages.operation_success'),
                 'data' => $deputization
             ]);
-
-
+        }
 
     }
-}
+
