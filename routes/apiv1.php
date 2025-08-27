@@ -192,6 +192,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
 Route::middleware('auth:api')->group(function() {
     Route::post('/deputizations', [DeputizationController::class, 'createDeputization']);
     Route::get('/get_all_deputizations_for_lawyer', [DeputizationController::class, 'getDeputizationsWithUsers']);
+    Route::get('/get_all_deputizations_for_user', [DeputizationController::class, 'getDeputizationsforUser']);
     Route::post('/process_deputizations_by_lawyer/{deputizations_id}', [DeputizationController::class, 'acceptDeputization']);
 });
 /*عرض العقارات للاستثمار*/

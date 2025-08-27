@@ -79,6 +79,43 @@ class DeputizationController extends Controller
         ]);
     }
 
+    public function getDeputizationsforUser()
+    {
+        $user = auth()->user();
+
+        $deputizations = Deputization::where('user_id', $user->id)
+            ->with('user')
+            ->paginate(6);
+
+        $formattedDeputizations = $deputizations->map(function ($deputization) {
+            return [
+                'id' => $deputization->id,
+                'user_id' => $deputization->user_id,
+                'user_name' => $deputization->user ? $deputization->user->name : 'Unknown',
+                'ID_Number' => $deputization->ID_Number,
+                'deputization_Content' => $deputization->deputization_Content,
+                'deputization_image' => $deputization->deputization_image,
+                'status' => $deputization->status,
+                'created_at' => $deputization->created_at,
+                'updated_at' => $deputization->updated_at,
+            ];
+        });
+
+        return response()->json([
+            'message' => trans('messages.operation_success'),
+            'data' => [
+                'deputizations' => $formattedDeputizations,
+                'pagination' => [
+                    'current_page' => $deputizations->currentPage(),
+                    'last_page' => $deputizations->lastPage(),
+                    'per_page' => $deputizations->perPage(),
+                    'total' => $deputizations->total(),
+                    'next_page_url' => $deputizations->nextPageUrl(),
+                    'prev_page_url' => $deputizations->previousPageUrl(),
+                ]
+            ]
+        ]);
+    }
 
     public function acceptDeputization(Request $request, $id)
     {
