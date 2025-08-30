@@ -1216,9 +1216,12 @@ class InvestmentController extends BaseController
 
     public function showInvestmentPropertiesOptimized()
     {
-        $user = auth()->user();
-        if (!$user || $user->role_id != 3) {
-            return response()->json(['message' => trans('messages.unauthorized')], 403);
+
+        $userRole = auth()->user()->role_id;
+        if ($userRole !== 1 && $userRole !== 3) {
+            return response()->json([
+                'message' => trans('messages.unauthorized'),
+            ], 403);
         }
 
         $properties = PropertyForInvestment::with(['property:id,property_type,state,exact_position'])
