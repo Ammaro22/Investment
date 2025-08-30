@@ -135,6 +135,7 @@ class InvestmentCertificateController extends Controller
     public function searchUser(Request $request)
     {
 
+
         $email = $request->input('email');
         $users = User::where('email', 'LIKE', "%{$email}%")->get();
         if ($users->isEmpty()) {

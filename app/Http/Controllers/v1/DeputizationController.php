@@ -129,6 +129,7 @@ class DeputizationController extends Controller
             'deputization_image' => 'max:3000',
         ]);
 
+
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 400);
         }

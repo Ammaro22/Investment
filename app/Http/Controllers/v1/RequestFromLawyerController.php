@@ -213,6 +213,7 @@ class RequestFromLawyerController extends BaseController
             ], 403);
         }
 
+
         $request = request_from_lawyer::with([
             'property_for_sale.Property_image',
             'property_for_sale.Property_document',

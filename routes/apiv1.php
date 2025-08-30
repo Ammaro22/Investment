@@ -110,6 +110,7 @@ Route::group(["middleware"=>["auth:api"]],function() {
     Route::delete('delete_request_from_lawyer/{request_from_lawyer_id}',[RequestFromLawyerController::class,'deleteRequest']);
 });
 
+
 /*انشاء اتفاق بين المستخدم ولفريق الخبير*/
 
 Route::group(["middleware"=>["auth:api"]],function() {

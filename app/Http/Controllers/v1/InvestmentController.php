@@ -1214,6 +1214,7 @@ class InvestmentController extends BaseController
 
 
 
+
     public function showInvestmentPropertiesOptimized()
     {
 

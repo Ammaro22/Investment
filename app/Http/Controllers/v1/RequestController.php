@@ -101,6 +101,7 @@ class RequestController extends BaseController
         }
 
 
+
         $requests = Requests::with(['property_for_sale.user:id,name'])
             ->orderBy('created_at', 'desc')
             ->get()

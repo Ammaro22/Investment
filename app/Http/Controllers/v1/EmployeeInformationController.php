@@ -330,6 +330,7 @@ class EmployeeInformationController extends BaseController
             return response()->json(['errors' => $validator->errors()], 400);
         }
 
+
         $roleId = $request->input('role_id');
         $active = $request->input('active');
 

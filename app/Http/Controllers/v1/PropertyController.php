@@ -16,7 +16,6 @@ class PropertyController extends BaseController
     public function store(Request $request)
     {
 
-
         $user= $request->user();
         $validator = Validator::make($request->all(),[
             'property_type' => 'required|string|max:255',

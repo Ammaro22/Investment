@@ -72,6 +72,7 @@ class RequestFromExpertController extends BaseController
         $requestFromExpert->save();
 
 
+
         $this->firebaseNotification->sendToUser($user,'create_economic_evaluation');
 
         return response()->json([
