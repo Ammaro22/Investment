@@ -101,7 +101,10 @@ class RequestController extends BaseController
         }
 
 
-        $requests = Requests::with(['property_for_sale.user:id,name'])->get()->map(function ($request) {
+        $requests = Requests::with(['property_for_sale.user:id,name'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($request) {
             return [
                 'id' => $request->id,
                 'status' => $request->status,
@@ -113,7 +116,10 @@ class RequestController extends BaseController
             ];
         });
 
-        $adminRequests = Request_from_admin::with(['proprtsseale.user:id,name'])->get()->map(function ($adminRequest) {
+        $adminRequests = Request_from_admin::with(['proprtsseale.user:id,name'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($adminRequest) {
             return [
                 'id' => $adminRequest->id,
                 'status' => $adminRequest->status,

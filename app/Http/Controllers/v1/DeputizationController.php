@@ -46,7 +46,7 @@ class DeputizationController extends Controller
             ], 403);
         }
 
-        $deputizations = Deputization::with('user')->paginate(6);
+        $deputizations = Deputization::with('user')->paginate(10);
 
         $formattedDeputizations = $deputizations->map(function ($deputization) {
             return [
@@ -126,7 +126,7 @@ class DeputizationController extends Controller
             ], 403);
         }
         $validator = Validator::make($request->all(), [
-            'deputization_image' => 'required|max:3000',
+            'deputization_image' => 'max:3000',
         ]);
 
         if ($validator->fails()) {

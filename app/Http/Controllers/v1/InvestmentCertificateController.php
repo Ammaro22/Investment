@@ -135,15 +135,6 @@ class InvestmentCertificateController extends Controller
     public function searchUser(Request $request)
     {
 
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|max:300',
-        ]);
-
-        if ($validator->fails()) {
-            return response(['errors' => $validator->errors()->all()], 422);
-        }
-
-
         $email = $request->input('email');
         $users = User::where('email', 'LIKE', "%{$email}%")->get();
         if ($users->isEmpty()) {
