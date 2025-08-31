@@ -213,7 +213,6 @@ class RequestFromLawyerController extends BaseController
             ], 403);
         }
 
-
         $request = request_from_lawyer::with([
             'property_for_sale.Property_image',
             'property_for_sale.Property_document',
@@ -221,7 +220,8 @@ class RequestFromLawyerController extends BaseController
             'Request_from_expert.economic_evaluation.property.Property_image',
             'Request_from_expert.economic_evaluation.property.Property_document',
             'Request_from_expert.economic_evaluation.property.id_image',
-            'Request_from_expert.economic_evaluation.agreed_negotiation'
+            'Request_from_expert.economic_evaluation.agreed_negotiation',
+            'Request_from_expert.economic_evaluation.indicatorValues.indicator', // Include indicators
         ])->find($id);
 
         if (!$request) {
@@ -238,17 +238,27 @@ class RequestFromLawyerController extends BaseController
 
         $property = $request->property_for_sale;
 
-
         $propertyData = $property->toArray();
         $propertyData['images'] = $property->Property_image;
         $propertyData['documents'] = $property->Property_document;
         $propertyData['id_images'] = $property->id_image;
 
-
         $expertRequest = $request->Request_from_expert;
         $evaluation = $expertRequest?->economic_evaluation;
         $agreedNegotiation = $evaluation?->agreed_negotiation;
 
+        // Handle indicator values if available
+        $indicatorValues = $evaluation?->indicatorValues?->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'property_id' => $item->property_id,
+                    'economic_evaluation_id' => $item->economic_evaluation_id,
+                    'indicator_id' => $item->indicator_id,
+                    'value' => $item->value,
+                    // Optionally include indicator name/label
+                    'indicator_name' => $item->indicator?->name,
+                ];
+            }) ?? [];
 
         $economicData = [
             'note_admin' => $expertRequest?->note_admin,
@@ -269,6 +279,7 @@ class RequestFromLawyerController extends BaseController
                     'Text_of_the_agreement' => null,
                     'created_at' => null,
                 ],
+                'indicator_values' => $indicatorValues,
             ] : [
                 'number_of_chances' => null,
                 'expected_price' => null,
@@ -286,10 +297,9 @@ class RequestFromLawyerController extends BaseController
                     'Text_of_the_agreement' => null,
                     'created_at' => null,
                 ],
+                'indicator_values' => [],
             ]
         ];
-
-
 
         return response()->json([
             'message' => __('messages.operation_success'),
@@ -299,7 +309,6 @@ class RequestFromLawyerController extends BaseController
             )
         ], 200);
     }
-
 
     public function deleteRequest($id)
     {

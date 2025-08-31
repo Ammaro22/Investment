@@ -352,12 +352,17 @@ class InvestmentController extends BaseController
 
         $this->walletController->transferToPlatform(new Request(['amount' => $amount]));
 
-      $d=Investment::create([
+        $hasDeputization = $user->deputization()->exists();
+        $acceptableValue = $hasDeputization ? 1 : 0;
+
+        $d = Investment::create([
             'user_id' => $user->id,
             'property_for_investment_id' => $property->id,
             'chance_invested' => $request->chance_invested,
             'amount_payed' => $amount,
+            'Acceptable' => $acceptableValue // إضافة قيمة Acceptable بناءً على وجود الوكالة
         ]);
+
         $investmentId = $d->id;
 
         $this->createInvestmentCertificate($investmentId);

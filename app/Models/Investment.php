@@ -17,6 +17,7 @@ class Investment extends Model
         'chance_invested',
         'property_for_investment_id',
         'amount_payed',
+        'Acceptable'
     ];
 
     public function user()

@@ -9,7 +9,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 15, 2);
-            $table->enum('method', ['bank', 'harem', 'western_union', 'crypto', 'manual'])->default('manual');
+            $table->enum('method', ['bank', 'pyramid', 'western_union', 'crypto', 'manual'])->default('manual');
             $table->json('method_details')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected', 'processed'])->default('pending');
             $table->text('admin_notes')->nullable();

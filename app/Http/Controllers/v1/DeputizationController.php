@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1;
 
 
 use App\Models\Deputization;
+use App\Models\Investment;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -153,7 +154,12 @@ class DeputizationController extends Controller
                 'deputization_image' => $deputizationImagePath
             ]);
 
-            return response()->json([
+        $userId = $deputization->user_id;
+        Investment::where('user_id', $userId)
+            ->update(['Acceptable' => 1]);
+
+
+        return response()->json([
                 'message' => trans('messages.operation_success'),
                 'data' => $deputization
             ]);
