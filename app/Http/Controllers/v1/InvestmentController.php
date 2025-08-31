@@ -478,8 +478,7 @@ class InvestmentController extends BaseController
             return response()->json(['message' => trans('messages.unauthorized')]);
         }
 
-        $investments = Investment::with('property_invested.property')->where('user_id', $user->id)->paginate(5);
-
+        $investments = Investment::with('property_invested.property')->where('user_id', $user->id)->where('Acceptable', 1)->paginate(5);
 
 //        if ($investments->isEmpty()) {
 //            return response()->json(['message' => trans('messages.not_found')]);
@@ -1111,7 +1110,8 @@ class InvestmentController extends BaseController
         ])
             ->where('investment_mode', $investmentMode)
             ->whereHas('investment', function($query) use ($userId) {
-                $query->where('user_id', $userId);
+                $query->where('user_id', $userId)
+                    ->where('Acceptable', 1);
             })
             ->get()
             ->map(function ($propertyInvestment) use ($userId) {
