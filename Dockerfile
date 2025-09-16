@@ -2,8 +2,9 @@
 FROM composer:2 AS build
 
 WORKDIR /app
-COPY composer.json composer.lock ./
+COPY composer.json ./
 RUN composer install --no-dev --optimize-autoloader
+
 
 COPY . .
 
